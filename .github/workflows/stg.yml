@@ -1,0 +1,36 @@
+name: Staging CI/CD
+
+on:
+  push:
+    branches: [ staging ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            cd /home/kandor/public_html/
+
+            git pull origin staging
+
+            composer install --no-interaction --prefer-dist --optimize-autoloader
+
+            php artisan migrate --force
+
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
