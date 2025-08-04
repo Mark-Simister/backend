@@ -20,8 +20,9 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
-            cd /home/kandor/public_html/
+            cd /home/beastierated/backend/
 
+            git stash
             git pull origin staging
 
             composer install --no-interaction --prefer-dist --optimize-autoloader
@@ -34,3 +35,4 @@ jobs:
 
             chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} storage bootstrap/cache
             chmod -R 775 storage bootstrap/cache
+
