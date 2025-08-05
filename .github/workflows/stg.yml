@@ -35,4 +35,3 @@ jobs:
 
             chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} storage bootstrap/cache
             chmod -R 775 storage bootstrap/cache
-
