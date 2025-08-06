@@ -4,6 +4,17 @@
 
 @section('content')
     <div class="card">
+
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <strong>Whoops! There were some problems with your input:</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <div class="card-body">
             <h4>Edit Character</h4>
 
@@ -13,8 +24,8 @@
 
                 <div class="form-group">
                     <label>Name</label>
-                    <input type="text" name="name" class="form-control"
-                        value="{{ old('name', $character->name) }}" required>
+                    <input type="text" name="name" class="form-control" value="{{ old('name', $character->name) }}"
+                        required>
                     @error('name')
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
@@ -44,13 +55,15 @@
                     @enderror
 
                     {{-- Display current image if it exists --}}
-                    @if($character->image) 
+                    @if ($character->image)
                         <div class="mt-2">
                             <label>Current Image:</label><br>
-                            <img src="{{ asset($character->image) }}" alt="Current Character Image" style="max-width: 200px; height: auto;">
+                            <img src="{{ asset($character->image) }}" alt="Current Character Image"
+                                style="max-width: 200px; height: auto;">
                         </div>
                         <div class="form-check mt-2">
-                            <input class="form-check-input" type="checkbox" name="remove_image" value="1" id="removeImageCheckbox">
+                            <input class="form-check-input" type="checkbox" name="remove_image" value="1"
+                                id="removeImageCheckbox">
                             <label class="form-check-label" for="removeImageCheckbox">
                                 Remove current image
                             </label>
@@ -340,6 +353,89 @@
                         </div>
                     </div>
                 </div>
+                <div class="form-group mt-3">
+                    <label for="public_private_toggle">Public/Private</label>
+                    <div class="form-check">
+                        <input type="radio" name="public_private_toggle" id="public_toggle" value="1"
+                            class="form-check-input"
+                            {{ old('public_private_toggle', $character->public_private_toggle ?? 0) == '1' ? 'checked' : '' }}>
+                        <label class="form-check-label" for="public_toggle">Public</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" name="public_private_toggle" id="private_toggle" value="0"
+                            class="form-check-input"
+                            {{ old('public_private_toggle', $character->public_private_toggle ?? 0) == '0' ? 'checked' : '' }}>
+                        <label class="form-check-label" for="private_toggle">Private</label>
+                    </div>
+                    @error('public_private_toggle')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="character_launch_date">Character Launch Date</label>
+                    <input type="date" name="character_launch_date" id="character_launch_date" class="form-control"
+                        value="{{ old('character_launch_date', isset($character->character_launch_date) ? \Carbon\Carbon::parse($character->character_launch_date)->format('Y-m-d') : '') }}">
+                    @error('character_launch_date')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="character_popularity_score">Character Popularity Score</label>
+                    <input type="number" name="character_popularity_score" id="character_popularity_score"
+                        class="form-control"
+                        value="{{ old('character_popularity_score', $character->character_popularity_score ?? '') }}">
+                    @error('character_popularity_score')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="editor_notes_content_guidelines">Editor Notes/Content Guidelines</label>
+                    <textarea name="editor_notes_content_guidelines" id="editor_notes_content_guidelines" class="form-control">{{ old('editor_notes_content_guidelines', $character->editor_notes_content_guidelines ?? '') }}</textarea>
+                    @error('editor_notes_content_guidelines')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="character_tag">Character Tag</label>
+                    <select name="character_tag[]" id="character_tag" class="form-control" multiple>
+                        @foreach ($character_tag as $tag_option)
+                            <option value="{{ $tag_option->name }}"
+                                {{ in_array($tag_option->name, old('character_tag', $currentTagNames)) ? 'selected' : '' }}>
+                                {{ $tag_option->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('character_tag')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                    @error('character_tag.*')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="character_role">Character Roles</label><span class="text-info">( Multi Select )</span>
+                    <select name="character_role[]" id="character_role" class="form-control" multiple>
+                        @foreach ($character_role as $role_option)
+                            <option value="{{ $role_option->name }}"
+                                {{ in_array($role_option->name, old('character_role', $currentRoleNames)) ? 'selected' : '' }}>
+                                {{ $role_option->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('character_role')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                    @error('character_role.*')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+
+
 
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary">Update</button>

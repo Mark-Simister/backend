@@ -8,36 +8,47 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-qI1uwIFgUvZK9qKzCBz6uQz4iyQ8ehR5qLuEmy0sU35+9zUu6KxmcWbIMfO88I6f" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
-    <!-- Optional Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&display=swap" rel="stylesheet">
 
     <style>
         body {
             font-family: 'Figtree', sans-serif;
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, #f3f4f6, #dee2e6);
+            min-height: 100vh;
+        }
+
+        .card-custom {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+
+        .logo img {
+            height: 80px;
         }
     </style>
 </head>
 <body>
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <div class="w-100" style="max-width: 480px;">
+            <div class="text-center mb-4 logo">
+                <a href="/">
+                    <img src="{{ asset('admin/assets/images/beastierated_logo.png') }}" alt="BeastieRated Logo" class="img-fluid">
+                </a>
+            </div>
 
-    <div class="container min-vh-100 d-flex flex-column justify-content-center align-items-center">
-        <div class="mb-4 text-center">
-            <a href="/">
-                {{-- Replace with actual logo if needed --}}
-                <x-application-logo class="img-fluid" style="width: 80px; height: 80px;" />
-            </a>
-        </div>
-
-        <div class="card shadow w-100" style="max-width: 500px;">
-            <div class="card-body">
-                {{ $slot }}
+            <div class="card card-custom bg-white">
+                <div class="card-body p-4">
+                    {{ $slot }}
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-V2sPnyMRA58hdcuZ4HgXR+Q4eb6FCfAT5X7xE4STZb/jmvaz2cGy4XzCkKSoGcc2" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>

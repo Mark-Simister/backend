@@ -9,7 +9,7 @@ class Character extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+protected $fillable = [
         'name',
         'persona',
         'details',
@@ -39,9 +39,36 @@ class Character extends Model
         'performance_notes',
         'brand_reputation_score',
         'brand_reputation_notes',
+        // New fields
+        'sex',
+        'page_heading',
+        'page_sub_heading',
+        'preferences',
+        'loved_pet1',
+        'loved_pet2',
+        'loved_pet3',
+        'hated_pet1',
+        'hated_pet2',
+        'hated_pet3',
+        'character_page_url_slug',
+        'public_private_toggle',
+        'character_launch_date',
+        'character_popularity_score',
+        'editor_notes_content_guidelines',
+        'character_role',
+        'character_tag',
     ];
     public function channel()
     {
         return $this->belongsTo(Channel::class);
+    }
+    public function tags()
+    {
+        return $this->belongsToMany(CharacterTag::class);
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(CharacterRole::class);
     }
 }

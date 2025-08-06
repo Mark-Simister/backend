@@ -8,6 +8,8 @@ use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CharacterTagController;
+use App\Http\Controllers\CharacterRoleController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -32,6 +34,8 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::resource('categories', CategoryController::class);
     Route::resource('permissions', PermissionController::class);
     Route::resource('channels', ChannelController::class);
+    Route::resource('character_tags', CharacterTagController::class);
+    Route::resource('character_roles', CharacterRoleController::class);
     Route::resource('characters', CharacterController::class);
     Route::resource('videos', VideoController::class);
     Route::resource('users', UserController::class);

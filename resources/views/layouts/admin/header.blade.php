@@ -6,7 +6,7 @@
                     <img src="{{ asset('admin/assets/images/beastierated_logo.png') }}" class="me-2" alt="logo" />
                 </a>
                 <a class="navbar-brand brand-logo-mini" href="{{ url('admin') }}">
-                    <img src="{{ asset('admin/assets/images/logo-mini.svg') }}" alt="logo" />
+                    <img src="{{ asset('admin/assets/images/beastierated_logo.png') }}" alt="logo" />
                 </a>
             </div>
             <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
@@ -71,21 +71,26 @@
                             </a>
                         </div>
                     </li>
+                    <!-- User Profile Dropdown -->
                     <li class="nav-item nav-profile dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"
-                            id="profileDropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" id="profileDropdown">
                             <img src="{{ asset('admin/assets/images/faces/face28.jpg') }}" alt="profile" />
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right navbar-dropdown"
-                            aria-labelledby="profileDropdown">
-                            <a class="dropdown-item">
-                                <i class="ti-settings text-primary"></i> Settings
+                        <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+                            <div class="dropdown-header text-center">
+                                <div class="fw-bold">{{ Auth::user()->name }}</div>
+                                <div class="text-muted small">{{ Auth::user()->email }}</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+
+                            <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                <i class="ti-settings text-primary me-2"></i> Profile
                             </a>
 
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="dropdown-item">
-                                    <i class="ti-power-off text-primary"></i> Logout
+                                    <i class="ti-power-off text-primary me-2"></i> Logout
                                 </button>
                             </form>
                         </div>

@@ -5,31 +5,30 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Skydash Admin</title>
+
     <!-- plugins:css -->
     <!-- Vendor CSS -->
     <link rel="stylesheet" href="{{ asset('admin/assets/vendors/feather/feather.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/assets/vendors/ti-icons/css/themify-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/assets/vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/assets/vendors/font-awesome/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/assets/vendors/mdi/css/materialdesignicons.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin/assets/vendors/css/vendor.bundle.base.css') }}">
 
     <!-- Plugin CSS for this page -->
     <!-- <link rel="stylesheet" href="{{ asset('admin/assets/vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}"> -->
     {{-- <link rel="stylesheet" href="{{ asset('admin/assets/vendors/datatables.net-bs5/dataTables.bootstrap5.css') }}"> --}}
-    <link rel="stylesheet" href="{{ asset('admin/assets/vendors/ti-icons/css/themify-icons.css') }}">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ asset('admin/assets/js/select.dataTables.min.css') }}">
+
+    <!-- External Plugin CSS -->
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"> 
 
     <!-- Main CSS -->
     <link rel="stylesheet" href="{{ asset('admin/assets/css/style.css') }}">
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('admin/assets/images/favicon.png') }}" />
-
-    <!-- DataTables Bootstrap 5 CSS -->
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"> 
-
 </head>
 <body>
 
@@ -49,32 +48,34 @@
   </div>
 
   <!-- Scripts -->
-     <!-- Core JS -->
-{{-- <script src="{{ asset('admin/assets/vendors/js/vendor.bundle.base.js') }}"></script> --}}
 
-<!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <!-- jQuery (must be loaded before DataTables and other plugins) -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-<!-- Plugin JS -->
-<script src="{{ asset('admin/assets/vendors/chart.js/chart.umd.js') }}"></script>
-{{-- <script src="{{ asset('admin/assets/vendors/datatables.net/jquery.dataTables.js') }}"></script> --}}
-{{-- <!-- <script src="{{ asset('admin/assets/vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script> --> --}}
-{{-- <script src="{{ asset('admin/assets/vendors/datatables.net-bs5/dataTables.bootstrap5.js') }}"></script> --}}
-{{-- <script src="{{ asset('admin/assets/js/dataTables.select.min.js') }}"></script> --}}
+  <!-- Core JS -->
+  <script src="{{ asset('admin/assets/vendors/js/vendor.bundle.base.js') }}"></script>
 
-<!-- Injected JS -->
-<script src="{{ asset('admin/assets/js/off-canvas.js') }}"></script>
-<script src="{{ asset('admin/assets/js/template.js') }}"></script>
-<script src="{{ asset('admin/assets/js/settings.js') }}"></script>
-<script src="{{ asset('admin/assets/js/todolist.js') }}"></script>
+  <!-- Plugin JS -->
+  <script src="{{ asset('admin/assets/vendors/chart.js/chart.umd.js') }}"></script>
+  {{-- <script src="{{ asset('admin/assets/vendors/datatables.net/jquery.dataTables.js') }}"></script> --}}
+  {{-- <!-- <script src="{{ asset('admin/assets/vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script> --> --}}
+  {{-- <script src="{{ asset('admin/assets/vendors/datatables.net-bs5/dataTables.bootstrap5.js') }}"></script> --}}
+  {{-- <script src="{{ asset('admin/assets/js/dataTables.select.min.js') }}"></script> --}}
 
-<!-- Custom JS for this page -->
-<script src="{{ asset('admin/assets/js/jquery.cookie.js') }}" type="text/javascript"></script>
-<script src="{{ asset('admin/assets/js/dashboard.js') }}"></script>
-<!-- <script src="{{ asset('admin/assets/js/Chart.roundedBarCharts.js') }}"></script> -->
+  <!-- External DataTables JS -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+  <!-- Injected JS -->
+  <script src="{{ asset('admin/assets/js/off-canvas.js') }}"></script>
+  <script src="{{ asset('admin/assets/js/template.js') }}"></script>
+  <script src="{{ asset('admin/assets/js/settings.js') }}"></script>
+  <script src="{{ asset('admin/assets/js/todolist.js') }}"></script>
+
+  <!-- Custom JS for this page -->
+  <script src="{{ asset('admin/assets/js/jquery.cookie.js') }}" type="text/javascript"></script>
+  <script src="{{ asset('admin/assets/js/dashboard.js') }}"></script>
+  <!-- <script src="{{ asset('admin/assets/js/Chart.roundedBarCharts.js') }}"></script> -->
 
   @stack('scripts')
 </body>
