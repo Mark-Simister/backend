@@ -10,6 +10,7 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CharacterTagController;
 use App\Http\Controllers\CharacterRoleController;
+use App\Http\Controllers\HighlightTagController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -40,6 +41,8 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::resource('videos', VideoController::class);
     Route::resource('users', UserController::class);
 
+    Route::resource('highlight_tags', HighlightTagController::class);
+
 });
 
 Route::middleware(['auth'])->get('/admin-test', function () {
@@ -47,4 +50,4 @@ Route::middleware(['auth'])->get('/admin-test', function () {
 });
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
