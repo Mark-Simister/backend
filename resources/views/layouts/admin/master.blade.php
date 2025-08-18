@@ -29,6 +29,8 @@
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('admin/assets/images/favicon.png') }}" />
+    
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
 
@@ -51,6 +53,7 @@
 
   <!-- jQuery (must be loaded before DataTables and other plugins) -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
 
   <!-- Core JS -->
   <script src="{{ asset('admin/assets/vendors/js/vendor.bundle.base.js') }}"></script>

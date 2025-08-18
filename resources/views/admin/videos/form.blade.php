@@ -70,7 +70,17 @@
     }
 </style>
 
+
 <div class="">
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-3 ">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     <!-- Progress Bar -->
     <div class="progress">
         <div id="formProgress" class="progress-bar" role="progressbar" style="width: 25%;">
@@ -85,7 +95,7 @@
         <div id="indicator-2" class="step-indicator">Step 3</div>
         <div id="indicator-3" class="step-indicator">Step 4</div>
     </div>
-
+    
     <form action="{{ isset($video) ? route('admin.videos.update', $video) : route('admin.videos.store') }}" method="POST"
         enctype="multipart/form-data" id="stepForm">
         @csrf
@@ -130,54 +140,61 @@
         <div class="form-step">
             <div class="mb-3">
                 <label for="character_id">Character</label>
-                <select name="character_id" id="character_id" class="form-select">
-                    <option value="">-- Select Character --</option>
+                <select name="character_id" id="character_id" class="form-select" required>
+                    <option value="" disabled selected>-- Select Character --</option>
                     @foreach ($characters as $character)
                         <option value="{{ $character->id }}" {{ old('character_id', $video->character_id ?? '') == $character->id ? 'selected' : '' }}>
                             {{ $character->name }}
                         </option>
                     @endforeach
                 </select>
+                <div id="character_error" class="invalid-feedback" style="display:none;">Please select a character.</div>
             </div>
 
             <div class="mb-3">
                 <label for="channel_id">Channel</label>
-                <select name="channel_id" id="channel_id" class="form-select">
-                    <option value="">-- Select Channel --</option>
+                <select name="channel_id" id="channel_id" class="form-select" required>
+                    <option value="" disabled selected>-- Select Channel --</option>
                     @foreach ($channels as $channel)
                         <option value="{{ $channel->id }}" {{ old('channel_id', $video->channel_id ?? '') == $channel->id ? 'selected' : '' }}>
                             {{ $channel->name }}
                         </option>
                     @endforeach
                 </select>
+                <div id="channel_error" class="invalid-feedback" style="display:none;">Please select a channel.</div>
             </div>
 
             <div class="mb-3">
                 <label for="category_id">Category</label>
-                <select name="category_id" id="category_id" class="form-select">
-                    <option value="">-- Select Category --</option>
+                <select name="category_id" id="category_id" class="form-select" required>
+                    <option value="" disabled selected>-- Select Category --</option>
                     @foreach ($categories as $category)
                         <option value="{{ $category->id }}" {{ old('category_id', $video->category_id ?? '') == $category->id ? 'selected' : '' }}>
                             {{ $category->name }}
                         </option>
                     @endforeach
                 </select>
+                <div id="category_error" class="invalid-feedback" style="display:none;">Please select a category.</div>
             </div>
 
             <div class="mb-3">
                 <label for="access_level">Access Level</label>
-                <select name="access_level" id="access_level" class="form-select">
+                <select name="access_level" id="access_level" class="form-select" required>
                     <option value="public" {{ old('access_level', $video->access_level ?? '') == 'public' ? 'selected' : '' }}>Public</option>
                     <option value="premium" {{ old('access_level', $video->access_level ?? '') == 'premium' ? 'selected' : '' }}>Premium</option>
                     <option value="early_access" {{ old('access_level', $video->access_level ?? '') == 'early_access' ? 'selected' : '' }}>Early Access</option>
                 </select>
+                <div id="access_level_error" class="invalid-feedback" style="display:none;">Please select an access level.</div>
             </div>
 
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-secondary prev-step">Back</button>
-                <button type="button" class="btn btn-primary next-step">Next</button>
+                <button type="button" class="btn btn-primary next-step" id="nextStepBtn">Next</button>
             </div>
         </div>
+
+
+
 
         <!-- Step 3 -->
         <div class="form-step">
@@ -188,40 +205,55 @@
                     value="{{ old('affiliate_link', $video->affiliate_link ?? '') }}">
             </div>
 
-            @php
-                $thumbSource = old('thumbnail_option', !empty($video?->thumbnail_image) ? 'image' : 'url');
-            @endphp
+           @php
+    $thumbSource = old('thumbnail_option', !empty($video->thumbnail_image) ? 'image' : 'url');
+@endphp
 
-            <div class="mb-3">
-                <label class="form-label">Thumbnail</label>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="thumbnail_option" id="thumb_url_option"
-                        value="url" {{ $thumbSource == 'url' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="thumb_url_option">Use Thumbnail URL</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="thumbnail_option" id="thumb_image_option"
-                        value="image" {{ $thumbSource == 'image' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="thumb_image_option">Upload Thumbnail Image</label>
-                </div>
-            </div>
+<div class="mb-3">
+    <label class="form-label">Thumbnail</label>
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="thumbnail_option" id="thumb_url_option"
+            value="url" {{ $thumbSource == 'url' ? 'checked' : '' }}>
+        <label class="form-check-label" for="thumb_url_option">Use Thumbnail URL</label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="thumbnail_option" id="thumb_image_option"
+            value="image" {{ $thumbSource == 'image' ? 'checked' : '' }}>
+        <label class="form-check-label" for="thumb_image_option">Upload Thumbnail Image</label>
+    </div>
+</div>
 
-            <div class="mb-3" id="thumb_url_input" style="{{ $thumbSource == 'url' ? '' : 'display:none;' }}">
-                <label for="thumbnail_url" class="form-label">Thumbnail URL</label>
-                <input type="url" name="thumbnail_url" id="thumbnail_url"
-                    class="form-control @error('thumbnail_url') is-invalid @enderror"
-                    placeholder="https://example.com/image.jpg"
-                    value="{{ old('thumbnail_url', $video->thumbnail_url ?? '') }}">
-                @error('thumbnail_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
-            </div>
+<!-- Thumbnail Image Input (Visible if 'image' option is selected) -->
+<div class="mb-3" id="thumb_image_input" style="{{ $thumbSource == 'image' ? '' : 'display:none;' }}">
+    <label for="thumbnail_image" class="form-label">Thumbnail Image</label>
+    <input type="file" name="thumbnail_image" id="thumbnail_image"
+        class="form-control @error('thumbnail_image') is-invalid @enderror"
+        accept="image/*" {{ !empty($video->thumbnail_image) ? '' : 'required' }}>
+    
+    @if (!empty($video->thumbnail_image))
+        <div class="mt-2">
+            <strong>Existing Thumbnail Image:</strong>
+            <img src="{{ asset($video->thumbnail_image) }}" alt="Thumbnail" class="img-thumbnail" style="max-width: 200px;">
+        </div>
+    @endif
+    
+    @error('thumbnail_image') 
+        <div class="invalid-feedback">{{ $message }}</div> 
+    @enderror
+</div>
 
-            <div class="mb-3" id="thumb_image_input" style="{{ $thumbSource == 'image' ? '' : 'display:none;' }}">
-                <label for="thumbnail_image" class="form-label">Thumbnail Image</label>
-                <input type="file" name="thumbnail_image" id="thumbnail_image"
-                    class="form-control @error('thumbnail_image') is-invalid @enderror"
-                    accept="image/*">
-                @error('thumbnail_image') <div class="invalid-feedback">{{ $message }}</div> @enderror
-            </div>
+<!-- Thumbnail URL Input (Visible if 'url' option is selected) -->
+<div class="mb-3" id="thumb_url_input" style="{{ $thumbSource == 'url' ? '' : 'display:none;' }}">
+    <label for="thumbnail_url" class="form-label">Thumbnail URL</label>
+    <input type="url" name="thumbnail_url" id="thumbnail_url"
+        class="form-control @error('thumbnail_url') is-invalid @enderror"
+        placeholder="https://example.com/image.jpg"
+        value="{{ old('thumbnail_url', $video->thumbnail_url ?? '') }}">
+    @error('thumbnail_url') 
+        <div class="invalid-feedback">{{ $message }}</div> 
+    @enderror
+</div>
+
 
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-secondary prev-step">Back</button>
@@ -276,7 +308,7 @@
 @endphp
 
 <div class="mb-3">
-    <label for="tags">Tags</label>
+    <label for="tags">Tags (comma separated)</label>
     <input type="text" name="tags" id="tags" class="form-control"
     value="{{ old('tags', isset($video->tags) ? cleanTags($video->tags) : '') }}">
 </div>
@@ -304,22 +336,48 @@
         <input type="text" name="highlight_tags" id="highlight_tags" class="form-control"
             value="{{ old('highlight_tags', isset($video->highlight_tags) ? implode(',', (array) $video->highlight_tags) : '') }}">
     </div> --}}
-    <div class="mb-3">
-        <label for="highlight_tags">Highlight Tags (comma separated)</label>
-        <input type="text" name="highlight_tags" id="highlight_tags" class="form-control"
-    value="{{ old('highlight_tags', isset($video->highlight_tags) ? cleanTags($video->highlight_tags) : '') }}">
-    </div>
+    @php
+    // Prefer old() (after validation error) else controller-provided $videoHighlightTags
+    $hlSelected = old('highlight_tags', $videoHighlightTags ?? []);
+
+    if (is_string($hlSelected)) {
+        $maybeJson = json_decode($hlSelected, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $hlSelected = is_array($maybeJson) ? $maybeJson : [$maybeJson];
+        } else {
+            $hlSelected = array_filter(array_map('trim', explode(',', $hlSelected)));
+        }
+    }
+@endphp
+
+<div class="mb-3">
+    <label for="highlight_tags">Highlight Tags</label>
+    <select name="highlight_tags[]" id="highlight_tags" class="form-select" multiple>
+        <option value="">-- Select Highlight Tags --</option>
+        @foreach ($highlight_tags as $highlight_tag)
+            <option value="{{ $highlight_tag->id }}"
+                {{ in_array((string) $highlight_tag->id, array_map('strval', $hlSelected)) ? 'selected' : '' }}>
+                {!! $highlight_tag->emoji !!} {{ $highlight_tag->label }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
+
+
+
+
 
     {{-- <div class="mb-3">
         <label for="auto_tags">Auto Tags (comma separated)</label>
         <input type="text" name="auto_tags" id="auto_tags" class="form-control"
             value="{{ old('auto_tags', isset($video->auto_tags) ? implode(',', (array) $video->auto_tags) : '') }}">
     </div> --}}
-    <div class="mb-3">
+    {{-- <div class="mb-3">
         <label for="auto_tags">Auto Tags (comma separated)</label>
         <input type="text" name="auto_tags" id="auto_tags" class="form-control"
     value="{{ old('auto_tags', isset($video->auto_tags) ? cleanTags($video->auto_tags) : '') }}">
-    </div>
+    </div> --}}
 
     <div class="mb-3">
         <label for="video_type">Video Type</label>
@@ -334,22 +392,29 @@
     </div>
 
     @php
-        $selectedPlatforms = old('video_platforms', $video->video_platforms ?? []);
-        if (is_string($selectedPlatforms)) {
-            $selectedPlatforms = explode(',', $selectedPlatforms); // Convert comma-separated string to array
-        }
-    @endphp
+    // Prefer old() (after validation error) else controller-provided $selectedPlatforms
+    $platformsSelected = old('video_platforms', $selectedPlatforms ?? []);
 
-    <div class="mb-3">
-        <label for="video_platforms">Video Platform(s)</label>
-        <select name="video_platforms[]" id="video_platforms" class="form-select" multiple>
-            <option value="YouTube" {{ in_array('YouTube', $selectedPlatforms) ? 'selected' : '' }}>YouTube</option>
-            <option value="TikTok" {{ in_array('TikTok', $selectedPlatforms) ? 'selected' : '' }}>TikTok</option>
-            <option value="Instagram" {{ in_array('Instagram', $selectedPlatforms) ? 'selected' : '' }}>Instagram</option>
-            <option value="Facebook" {{ in_array('Facebook', $selectedPlatforms) ? 'selected' : '' }}>Facebook</option>
-        </select>
-        <small class="form-text text-muted">Hold CTRL (Windows) or CMD (Mac) to select multiple platforms</small>
-    </div>
+    // Normalize to array (handles: array, JSON string, CSV string)
+    if (is_string($platformsSelected)) {
+        $maybeJson = json_decode($platformsSelected, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $platformsSelected = is_array($maybeJson) ? $maybeJson : [$maybeJson];
+        } else {
+            $platformsSelected = array_filter(array_map('trim', explode(',', $platformsSelected)));
+        }
+    }
+@endphp
+
+<div class="mb-3">
+    <label for="video_platforms">Video Platform(s)</label>
+    <select name="video_platforms[]" id="video_platforms" class="form-select" multiple>
+        <option value="YouTube"  {{ in_array('YouTube',  $platformsSelected)  ? 'selected' : '' }}>YouTube</option>
+        <option value="TikTok"   {{ in_array('TikTok',   $platformsSelected)  ? 'selected' : '' }}>TikTok</option>
+        <option value="Instagram"{{ in_array('Instagram',$platformsSelected)  ? 'selected' : '' }}>Instagram</option>
+        <option value="Facebook" {{ in_array('Facebook', $platformsSelected)  ? 'selected' : '' }}>Facebook</option>
+    </select>
+</div>
 
     <div class="mb-3">
         <label for="raw_video_file">Raw Video File</label>
@@ -382,9 +447,9 @@
     </div>
 
     <div class="mb-3 form-check">
-        <input type="checkbox" class="form-check-input" id="is_qa_passed" name="is_qa_passed"
-            value="1" {{ old('is_qa_passed', $video->is_qa_passed ?? false) ? 'checked' : '' }}>
-        <label class="form-check-label" for="is_qa_passed">QA Passed</label>
+        <input type="checkbox" class="form-check-input" id="qa_passed" name="qa_passed"
+            value="1" {{ old('qa_passed', $video->qa_passed ?? false) ? 'checked' : '' }}>
+        <label class="form-check-label" for="qa_passed">QA Passed</label>
     </div>
 
     <div class="mb-3">
@@ -438,6 +503,54 @@
         <textarea name="twitter_description" id="twitter_description" class="form-control">{{ old('twitter_description', $video->twitter_description ?? '') }}</textarea>
     </div>
 
+    {{-- <div class="mb-3">
+    <label for="product_name">Product Name</label>
+    <input type="text" name="product_name" id="product_name" class="form-control" placeholder="Enter product name" value="{{ old('product_name', isset($video) ? $video->product_name : '') }}">
+</div>
+
+<div class="mb-3">
+    <label for="product_asin_sku">Product ASIN / SKU</label>
+    <input type="text" name="product_asin_sku" id="product_asin_sku" class="form-control" placeholder="Enter ASIN/SKU" value="{{ old('product_asin_sku', isset($video) ? $video->product_asin_sku : '') }}">
+</div>
+
+<div class="mb-3">
+    <label for="affiliate_link">Affiliate Link</label>
+    <input type="url" name="affiliate_link" id="affiliate_link" class="form-control" placeholder="Enter affiliate link (e.g., Amazon, ShareASale)" value="{{ old('affiliate_link', isset($video) ? $video->affiliate_link : '') }}">
+</div>
+
+<div class="mb-3">
+    <label for="public_rating">Public Rating</label>
+    <input type="number" name="public_rating" id="public_rating" class="form-control" placeholder="Enter public rating (1-5)" min="1" max="5" step="0.1" value="{{ old('public_rating', isset($video) ? $video->public_rating : '') }}">
+</div>
+
+<div class="mb-3">
+    <label for="character_score">Character Score</label>
+    <input type="number" name="character_score" id="character_score" class="form-control" placeholder="Enter character score" value="{{ old('character_score', isset($video) ? $video->character_score : '') }}">
+</div>
+
+<div class="mb-3">
+    <label for="editorial_score">Editorial Score</label>
+    <input type="number" name="editorial_score" id="editorial_score" class="form-control" placeholder="Enter editorial score" value="{{ old('editorial_score', isset($video) ? $video->editorial_score : '') }}">
+</div>
+
+<div class="mb-3">
+    <label for="final_beastiescore">Final BeastieScore</label>
+    <input type="text" name="final_beastiescore" id="final_beastiescore" class="form-control" placeholder="Auto-calculated based on score formula" readonly value="{{ old('final_beastiescore', isset($video) ? $video->final_beastiescore : '') }}">
+</div>
+
+<div class="mb-3">
+    <label for="product_thumbnail">Product Thumbnail</label>
+    <input type="file" name="product_thumbnail" id="product_thumbnail" class="form-control" accept="image/*">
+    
+    @if (isset($video) && $video->product_thumbnail) 
+        <div class="mt-2">
+            <label>Current Thumbnail:</label>
+            <img src="{{ asset($video->product_thumbnail) }}" alt="Current Thumbnail" style="max-width: 150px; height: auto;">
+        </div>
+    @endif
+</div> --}}
+
+
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-secondary prev-step">Back</button>
                 <button type="submit" class="btn btn-success">Submit</button>
@@ -446,6 +559,22 @@
     </form>
 </div>
 
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for the Highlight Tags dropdown
+        $('#highlight_tags').select2({
+            placeholder: '-- Select Highlight Tags --',
+            allowClear: true
+        });
+
+        // Initialize Select2 for the Video Platforms dropdown
+        $('#video_platforms').select2({
+            placeholder: '-- Select Video Platforms --',
+            allowClear: true
+        });
+    });
+</script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const steps = document.querySelectorAll(".form-step");
@@ -461,6 +590,10 @@
         const thumbImageOption = document.getElementById("thumb_image_option");
         const thumbUrlInput = document.getElementById("thumb_url_input");
         const thumbImageInput = document.getElementById("thumb_image_input");
+
+        // Store old image and URL for validation
+        const oldThumbnailImage = '{{ $video->thumbnail_image ?? "" }}'; // Get the old thumbnail image if exists
+        const oldThumbnailUrl = '{{ $video->thumbnail_url ?? "" }}'; // Get the old thumbnail URL if exists
 
         function toggleThumbnailInputs() {
             if (thumbUrlOption.checked) {
@@ -537,6 +670,7 @@
                 }
             });
 
+            // Thumbnail validation step
             if (stepIndex === 2) {
                 const thumbOption = document.querySelector('input[name="thumbnail_option"]:checked');
                 const urlInput = document.getElementById("thumbnail_url");
@@ -547,11 +681,12 @@
                 const hasUrl = urlInput && urlInput.value.trim();
                 const hasImage = imageInput && imageInput.files.length > 0;
 
-                if (thumbOption.value === "url" && !hasUrl) {
+                // If no new image is selected, just use the old image or URL
+                if (thumbOption.value === "url" && !hasUrl && !oldThumbnailUrl) {
                     alert("Please enter a valid Thumbnail URL.");
                     urlInput.classList.add("is-invalid");
                     valid = false;
-                } else if (thumbOption.value === "image" && !hasImage) {
+                } else if (thumbOption.value === "image" && !hasImage && !oldThumbnailImage) {
                     alert("Please upload a Thumbnail Image.");
                     imageInput.classList.add("is-invalid");
                     valid = false;
@@ -592,5 +727,96 @@
         });
 
         showStep(currentStep);
+    });
+</script>
+
+
+<!-- JavaScript for Validation -->
+<script>
+    document.getElementById('nextStepBtn').addEventListener('click', function() {
+        let isValid = true;
+
+        // Reset all error messages
+        document.querySelectorAll('.invalid-feedback').forEach(function(error) {
+            error.style.display = 'none';
+        });
+
+        // Check if Character is selected
+        let characterSelect = document.getElementById('character_id');
+        if (!characterSelect.value) {
+            isValid = false;
+            document.getElementById('character_error').style.display = 'block';
+            characterSelect.classList.add('is-invalid');
+        } else {
+            characterSelect.classList.remove('is-invalid');
+        }
+
+        // Check if Channel is selected
+        let channelSelect = document.getElementById('channel_id');
+        if (!channelSelect.value) {
+            isValid = false;
+            document.getElementById('channel_error').style.display = 'block';
+            channelSelect.classList.add('is-invalid');
+        } else {
+            channelSelect.classList.remove('is-invalid');
+        }
+
+        // Check if Category is selected
+        let categorySelect = document.getElementById('category_id');
+        if (!categorySelect.value) {
+            isValid = false;
+            document.getElementById('category_error').style.display = 'block';
+            categorySelect.classList.add('is-invalid');
+        } else {
+            categorySelect.classList.remove('is-invalid');
+        }
+
+        // Check if Access Level is selected
+        let accessLevelSelect = document.getElementById('access_level');
+        if (!accessLevelSelect.value) {
+            isValid = false;
+            document.getElementById('access_level_error').style.display = 'block';
+            accessLevelSelect.classList.add('is-invalid');
+        } else {
+            accessLevelSelect.classList.remove('is-invalid');
+        }
+
+    });
+
+    // Event listeners to remove error messages once the user selects a valid option
+    document.getElementById('character_id').addEventListener('change', function() {
+        let characterSelect = this;
+        let characterError = document.getElementById('character_error');
+        if (characterSelect.value) {
+            characterSelect.classList.remove('is-invalid');
+            characterError.style.display = 'none';
+        }
+    });
+
+    document.getElementById('channel_id').addEventListener('change', function() {
+        let channelSelect = this;
+        let channelError = document.getElementById('channel_error');
+        if (channelSelect.value) {
+            channelSelect.classList.remove('is-invalid');
+            channelError.style.display = 'none';
+        }
+    });
+
+    document.getElementById('category_id').addEventListener('change', function() {
+        let categorySelect = this;
+        let categoryError = document.getElementById('category_error');
+        if (categorySelect.value) {
+            categorySelect.classList.remove('is-invalid');
+            categoryError.style.display = 'none';
+        }
+    });
+
+    document.getElementById('access_level').addEventListener('change', function() {
+        let accessLevelSelect = this;
+        let accessLevelError = document.getElementById('access_level_error');
+        if (accessLevelSelect.value) {
+            accessLevelSelect.classList.remove('is-invalid');
+            accessLevelError.style.display = 'none';
+        }
     });
 </script>

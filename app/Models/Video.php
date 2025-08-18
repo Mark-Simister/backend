@@ -109,12 +109,12 @@ protected $casts = [
     // }
 
 
-    public function setHighlightTagsAttribute($value)
-{
-    $this->attributes['highlight_tags'] = $value
-        ? json_encode(array_filter(array_map('trim', explode(',', $value))))
-        : null;
-}
+//     public function setHighlightTagsAttribute($value)
+// {
+//     $this->attributes['highlight_tags'] = $value
+//         ? json_encode(array_filter(array_map('trim', explode(',', $value))))
+//         : null;
+// }
 
 public function setAutoTagsAttribute($value)
 {

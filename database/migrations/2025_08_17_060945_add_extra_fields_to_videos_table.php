@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('videos', function (Blueprint $table) {
             // Tags / metadata
-           $table->json('tags')->nullable()->after('affiliate_link');
+        //    $table->json('tags')->nullable()->after('affiliate_link');
             $table->enum('rating_type', ['rating', 'review'])->default('rating')->after('tags');
             $table->enum('sponsorship_type', ['sponsored', 'unsponsored'])->default('unsponsored')->after('rating_type');
             $table->json('highlight_tags')->nullable()->after('sponsorship_type');

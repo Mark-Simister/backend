@@ -404,13 +404,14 @@
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                 </div>
+                {{-- {{dd($character, $character_tag, $character->character_tag, $character_role,$character->character_role)}} --}}
 
                 <div class="form-group mt-3">
                     <label for="character_tag">Character Tag</label>
                     <select name="character_tag[]" id="character_tag" class="form-control" multiple>
                         @foreach ($character_tag as $tag_option)
                             <option value="{{ $tag_option->name }}"
-                                {{ in_array($tag_option->name, old('character_tag', $currentTagNames)) ? 'selected' : '' }}>
+                                {{ in_array($tag_option->name, old('character_tag', $currentTagNames ?? [])) ? 'selected' : '' }}>
                                 {{ $tag_option->name }}
                             </option>
                         @endforeach
@@ -428,7 +429,7 @@
                     <select name="character_role[]" id="character_role" class="form-control" multiple>
                         @foreach ($character_role as $role_option)
                             <option value="{{ $role_option->name }}"
-                                {{ in_array($role_option->name, old('character_role', $currentRoleNames)) ? 'selected' : '' }}>
+                                {{ in_array($role_option->name, old('character_role', $currentRoleNames ?? [])) ? 'selected' : '' }}>
                                 {{ $role_option->name }}
                             </option>
                         @endforeach
@@ -440,6 +441,7 @@
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                 </div>
+
 
 
 

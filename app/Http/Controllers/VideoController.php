@@ -8,6 +8,7 @@ use App\Models\Video;
 use App\Models\Character;
 use App\Models\Channel;
 use App\Models\Category;
+use App\Models\HighlightTag;
 use Illuminate\Http\Request;
 
 class VideoController extends Controller
@@ -23,11 +24,13 @@ class VideoController extends Controller
         $channels = Channel::all();
         $characters = Character::all();
         $categories = Category::all();
-        return view('admin.videos.create', compact('channels', 'characters', 'categories'));
+        $highlight_tags = HighlightTag::all();
+        return view('admin.videos.create', compact('channels', 'characters', 'categories','highlight_tags'));
     }
 
    public function store(Request $request)
 {
+    // dd($request);
     //  Use Validator instead of request->validate
     $validator = \Validator::make($request->all(), [
         'title' => 'required|string|max:255',
@@ -56,7 +59,10 @@ class VideoController extends Controller
         'tags.*'           => 'string',
         'rating_type'      => 'required|in:rating,review',
         'sponsorship_type' => 'required|in:sponsored,unsponsored',
-        'highlight_tags'   => 'nullable|string', //  fixed
+        // 'highlight_tags'   => 'nullable|string', //  fixed
+        'highlight_tags' => 'nullable|array',  // Validate as an array
+        'highlight_tags.*' => 'exists:highlight_tags,id', // Validate each ID exists in the highlight_tags table
+
         'auto_tags'        => 'nullable|string', //  fixed
         'video_type'       => 'required|in:short,full_review,reel,live,compilation',
         'video_platforms'  => 'nullable|array',
@@ -68,7 +74,7 @@ class VideoController extends Controller
         'status'           => 'required|in:draft,published',
         'is_ai_generated'  => 'boolean',
         'is_finalized'     => 'boolean',
-        'is_qa_passed'     => 'boolean',
+        'qa_passed'     => 'boolean',
         'post_schedule_at' => 'nullable|date',
 
         'seo_title'        => 'nullable|string|max:255',
@@ -85,28 +91,39 @@ class VideoController extends Controller
     //     dd('Validation Failed:', $validator->errors()->all());
     // }
     if ($validator->fails()) {
-    return redirect()->back()
-        ->withErrors($validator)
-        ->withInput();
-}
+        dd($validator->errors()->all());
+    }
+    if ($validator->fails()) {
+        return redirect()->back()
+            ->withErrors($validator)
+            ->withInput();
+    }
 
     $validated = $validator->validated();
 
     //  Convert comma-separated strings into arrays
-    $highlight_tags = $request->highlight_tags 
-        ? array_map('trim', explode(',', $request->highlight_tags)) 
-        : [];
-    $auto_tags = $request->auto_tags 
-        ? array_map('trim', explode(',', $request->auto_tags)) 
-        : [];
-    $hashtags = $request->hashtags 
-        ? array_map('trim', explode(',', $request->hashtags)) 
-        : [];
+    // $highlight_tags = $request->highlight_tags 
+    //     ? array_map('trim', explode(',', $request->highlight_tags)) 
+    //     : [];
+    // $auto_tags = $request->auto_tags 
+    //     ? array_map('trim', explode(',', $request->auto_tags)) 
+    //     : [];
+    // $hashtags = $request->hashtags 
+    //     ? array_map('trim', explode(',', $request->hashtags)) 
+    //     : [];
+    $highlight_tags = $request->highlight_tags ?? [];  // This already comes as an array, no need for explode
+    $auto_tags = $request->auto_tags ? array_map('trim', explode(',', $request->auto_tags)) : [];
+    $hashtags = $request->hashtags ? array_map('trim', explode(',', $request->hashtags)) : [];
 
     // Replace in validated array
     $validated['highlight_tags'] = $highlight_tags;
     $validated['auto_tags'] = $auto_tags;
     $validated['hashtags'] = $hashtags;
+
+    // Normalize post_schedule_at to MySQL DATETIME if provided
+    if (!empty($validated['post_schedule_at'])) {
+        $validated['post_schedule_at'] = \Carbon\Carbon::parse($validated['post_schedule_at'])->format('Y-m-d H:i:s');
+    }
 
     // dd('Validated Successfully ', $validated);
 
@@ -140,10 +157,22 @@ class VideoController extends Controller
     }
 
     //  Convert arrays to JSON before saving
-    foreach (['tags','highlight_tags','auto_tags','video_platforms','hashtags'] as $jsonField) {
-        if (isset($validated[$jsonField])) {
-            $validated[$jsonField] = json_encode($validated[$jsonField]);
+    // foreach (['tags','highlight_tags','auto_tags','video_platforms','hashtags'] as $jsonField) {
+    //     if (isset($validated[$jsonField])) {
+    //         $validated[$jsonField] = json_encode($validated[$jsonField]);
+    //     }
+    // }
+    // Convert arrays into comma-separated strings instead of JSON
+    foreach (['tags','highlight_tags','auto_tags','hashtags'] as $field) {
+        if (isset($validated[$field]) && is_array($validated[$field])) {
+            $validated[$field] = implode(',', $validated[$field]);
         }
+    }
+
+    // Keep video_platforms as JSON to satisfy DB CHECK constraint
+    if (isset($validated['video_platforms']) && is_array($validated['video_platforms'])) {
+        // ensure simple array of strings, remove empties/spaces
+        $validated['video_platforms'] = json_encode(array_values(array_filter(array_map('trim', $validated['video_platforms']))));
     }
 
     Video::create($validated);
@@ -152,17 +181,74 @@ class VideoController extends Controller
 }
 
 
+
     public function edit(Video $video)
-    {
-        $channels = Channel::all();
-        $characters = Character::all();
-        $categories = Category::all();
-        return view('admin.videos.edit', compact('video', 'channels', 'characters', 'categories'));
+{
+    $channels = Channel::all();
+    $characters = Character::all();
+    $categories = Category::all();
+    $highlight_tags = HighlightTag::all();
+
+    // --- normalize video_platforms to array of strings ---
+    $selectedPlatforms = [];
+    if (!empty($video->video_platforms)) {
+        if (is_array($video->video_platforms)) {
+            $selectedPlatforms = $video->video_platforms;
+        } elseif (is_string($video->video_platforms)) {
+            $decoded = json_decode($video->video_platforms, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                if (is_array($decoded)) {
+                    $selectedPlatforms = $decoded;
+                } elseif (is_string($decoded) && $decoded !== '') {
+                    // handles case where DB has JSON-encoded string: "\"YouTube,Instagram\""
+                    $selectedPlatforms = array_map('trim', explode(',', $decoded));
+                }
+            } else {
+                // CSV fallback
+                $selectedPlatforms = array_map('trim', explode(',', $video->video_platforms));
+            }
+        }
     }
 
-    public function update(Request $request, Video $video)
+    // --- normalize highlight_tags to array of IDs (strings/ints) ---
+    $videoHighlightTags = [];
+    if (!empty($video->highlight_tags)) {
+        if (is_array($video->highlight_tags)) {
+            $videoHighlightTags = $video->highlight_tags;
+        } elseif (is_string($video->highlight_tags)) {
+            $decoded = json_decode($video->highlight_tags, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                if (is_array($decoded)) {
+                    $videoHighlightTags = $decoded;
+                } elseif ($decoded !== null && $decoded !== '') {
+                    // DB might have a single json string: "\"7\"" or number: 7
+                    $videoHighlightTags = [$decoded];
+                }
+            } else {
+                // CSV fallback (e.g. "7" or "1,5,8,9")
+                $videoHighlightTags = array_filter(
+                    array_map('trim', explode(',', $video->highlight_tags)),
+                    fn ($v) => $v !== ''
+                );
+            }
+        }
+    }
+
+    return view('admin.videos.edit', compact(
+        'video',
+        'channels',
+        'characters',
+        'categories',
+        'highlight_tags',
+        'selectedPlatforms',
+        'videoHighlightTags'
+    ));
+}
+
+
+    public function update(Request $request, Video $video) 
 {
-    // Use Validator (same as store)
+    // Use Validator 
     $validator = \Validator::make($request->all(), [
         // Step 1
         'title' => 'required|string|max:255',
@@ -178,21 +264,20 @@ class VideoController extends Controller
 
         // Step 3
         'affiliate_link'   => 'nullable|url',
-        'thumbnail_url'    => 'nullable|required_without:thumbnail_image|url',
-        'thumbnail_image'  => 'nullable|required_without:thumbnail_url|image|mimes:jpg,jpeg,png|max:2048',
+        // 'thumbnail_url'    => 'nullable|url|required_without:thumbnail_image', // Required without image
+        'thumbnail_url'    => 'nullable|url', // Required without image
+        // 'thumbnail_image'  => 'nullable|image|mimes:jpg,jpeg,png|max:2048|required_without:thumbnail_url', // Required without URL
+        'thumbnail_image'  => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Required without URL
 
-        // Step 4 (SEO)
-        // 'meta_title'       => 'nullable|string|max:70',
-        // 'meta_description' => 'nullable|string|max:160',
-        // 'keywords'         => 'nullable|string',
-
-        // ---- New Fields ----
+        // Other Fields
         'tags'             => 'nullable|string',
         'tags.*'           => 'string',
         'rating_type'      => 'required|in:rating,review',
         'sponsorship_type' => 'required|in:sponsored,unsponsored',
-        'highlight_tags'   => 'nullable|string', // fixed (same as store)
-        'auto_tags'        => 'nullable|string', // fixed (same as store)
+        'highlight_tags' => 'nullable|array', 
+        'highlight_tags.*' => 'exists:highlight_tags,id', 
+
+        'auto_tags'        => 'nullable|string', 
         'video_type'       => 'required|in:short,full_review,reel,live,compilation',
         'video_platforms'  => 'nullable|array',
         'video_platforms.*'=> 'string',
@@ -203,21 +288,18 @@ class VideoController extends Controller
         'status'           => 'required|in:draft,published',
         'is_ai_generated'  => 'boolean',
         'is_finalized'     => 'boolean',
-        'is_qa_passed'     => 'boolean',
+        'qa_passed'     => 'boolean',
         'post_schedule_at' => 'nullable|date',
 
         'seo_title'        => 'nullable|string|max:255',
         'seo_description'  => 'nullable|string|max:500',
-        'hashtags'         => 'nullable|string', // fixed (same as store)
+        'hashtags'         => 'nullable|string', 
         'cta_text'         => 'nullable|string|max:255',
         'og_image_url'     => 'nullable|url',
         'twitter_title'    => 'nullable|string|max:255',
         'twitter_description' => 'nullable|string|max:500',
     ]);
 
-    if ($validator->fails()) {
-        dd('Validation Failed:', $validator->errors()->all());
-    }
     if ($validator->fails()) {
         return redirect()->back()
             ->withErrors($validator)
@@ -228,7 +310,7 @@ class VideoController extends Controller
 
     // Convert comma-separated strings into arrays
     $highlight_tags = $request->highlight_tags 
-        ? array_map('trim', explode(',', $request->highlight_tags)) 
+        ? $request->highlight_tags 
         : [];
     $auto_tags = $request->auto_tags 
         ? array_map('trim', explode(',', $request->auto_tags)) 
@@ -241,8 +323,14 @@ class VideoController extends Controller
     $validated['auto_tags'] = $auto_tags;
     $validated['hashtags'] = $hashtags;
 
+    // Normalize post_schedule_at to MySQL DATETIME if provided
+    if (!empty($validated['post_schedule_at'])) {
+        $validated['post_schedule_at'] = \Carbon\Carbon::parse($validated['post_schedule_at'])->format('Y-m-d H:i:s');
+    }
+
     // Handle thumbnail logic
     if ($request->hasFile('thumbnail_image')) {
+        // If a new thumbnail image is uploaded
         $directory = public_path('thumbnails');
         if (!file_exists($directory)) {
             mkdir($directory, 0777, true);
@@ -253,12 +341,19 @@ class VideoController extends Controller
         $file->move($directory, $filename);
 
         $validated['thumbnail_image'] = 'thumbnails/' . $filename;
-        $validated['thumbnail_url'] = null;
+        $validated['thumbnail_url'] = null; // If image is uploaded, clear the URL
     } elseif ($request->filled('thumbnail_url')) {
-        $validated['thumbnail_image'] = null;
+        // If thumbnail URL is provided, use it
+        $validated['thumbnail_image'] = null; // Ensure image is not used
     } else {
-        unset($validated['thumbnail_image']);
-        unset($validated['thumbnail_url']);
+        // If no new image or URL is uploaded, keep the old image if it exists
+        if (!$video->thumbnail_image) {
+            unset($validated['thumbnail_image']); // If no old image exists, unset both
+        }
+
+        if (!$video->thumbnail_url) {
+            unset($validated['thumbnail_url']); // If no old URL exists, unset it
+        }
     }
 
     // Handle raw video upload
@@ -275,17 +370,24 @@ class VideoController extends Controller
         $validated['caption_file'] = 'videos/captions/' . $filename;
     }
 
-    // Convert arrays to JSON before saving
-    foreach (['tags','highlight_tags','auto_tags','video_platforms','hashtags'] as $jsonField) {
-        if (isset($validated[$jsonField])) {
-            $validated[$jsonField] = json_encode($validated[$jsonField]);
+    // Convert arrays into comma-separated strings instead of JSON
+    foreach (['tags','highlight_tags','auto_tags','hashtags'] as $field) {
+        if (isset($validated[$field]) && is_array($validated[$field])) {
+            $validated[$field] = implode(',', $validated[$field]);
         }
     }
 
+    // Keep video_platforms as JSON to satisfy DB CHECK constraint
+    if (isset($validated['video_platforms']) && is_array($validated['video_platforms'])) {
+        $validated['video_platforms'] = json_encode(array_values(array_filter(array_map('trim', $validated['video_platforms']))));
+    }
+
+    // Update the video with validated data
     $video->update($validated);
 
     return redirect()->route('admin.videos.index')->with('success', 'Video updated successfully.');
 }
+
 
 
     public function destroy(Video $video)
