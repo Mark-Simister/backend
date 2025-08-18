@@ -56,7 +56,8 @@
                             <th>Performance Notes</th>
                             <th>Brand Reputation Score</th>
                             <th>Brand Reputation Notes</th> --}}
-                            <th style="width: 180px;">Actions</th>
+                            <th>Image</th>
+                            <th style="width: 20px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -91,6 +92,8 @@
                                 <td>{{ Str::limit($character->performance_notes ?? 'N/A', 50) }}</td>
                                 <td>{{ $character->brand_reputation_score ?? 'N/A' }}</td>
                                 <td>{{ Str::limit($character->brand_reputation_notes ?? 'N/A', 50) }}</td> --}}
+                                <td><img src="{{ asset($character->image) }}" alt="Current Character Image"
+                                style="max-width: 200px; height: auto;"></td>
                                 <td>
                                     <a href="{{ route('admin.characters.edit', $character) }}"
                                         class="btn btn-warning me-1">

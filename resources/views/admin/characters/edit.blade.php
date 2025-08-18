@@ -1,5 +1,11 @@
 @extends('layouts.admin.master')
-
+@push('styles')
+<style>
+    .form-check .form-check-input {
+    margin-left: 0em !important;
+}
+</style>
+@endpush
 @section('title', 'Edit Character')
 
 @section('content')

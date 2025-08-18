@@ -24,7 +24,7 @@
                         <th style="width: 60px;">#</th>
                         <th>Emoji</th>
                         <th>Label</th>
-                        <th>Automated</th>
+                        {{-- <th>Automated</th> --}}
                         <th style="width: 180px;">Actions</th>
                     </tr>
                 </thead>
@@ -34,7 +34,7 @@
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $highlightTag->emoji }}</td>
                             <td>{{ $highlightTag->label }}</td>
-                            <td>{{ $highlightTag->automated ? 'Yes' : 'No' }}</td>
+                            {{-- <td>{{ $highlightTag->automated ? 'Yes' : 'No' }}</td> --}}
                             <td>
                                 <a href="{{ route('admin.highlight_tags.edit', $highlightTag) }}" class="btn btn-warning me-1">
                                     <i class="bi bi-pencil-square"></i> Edit

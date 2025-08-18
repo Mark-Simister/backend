@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
 {
@@ -14,10 +15,10 @@ class CategoryController extends Controller
     //     return view('admin.categories.index', compact('categories'));
     // }
     public function index()
-{
-    $categories = Category::latest()->get(); 
-    return view('admin.categories.index', compact('categories'));
-}
+    {
+        $categories = Category::latest()->get(); 
+        return view('admin.categories.index', compact('categories'));
+    }
 
     public function create()
     {
@@ -61,5 +62,139 @@ class CategoryController extends Controller
     {
         $category->delete();
         return redirect()->route('admin.categories.index')->with('success', 'Category deleted.');
+    }
+
+
+
+    /**
+     * Get all categories.
+     */
+    public function index_api()
+    {
+        $categories = Category::latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Categories fetched successfully',
+            'data' => $categories
+        ], 200);
+    }
+
+    /**
+     * Store a new category.
+     */
+    public function store_api(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:categories,name',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $category = Category::create([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Category created successfully',
+            'data' => $category
+        ], 201);
+    }
+
+    /**
+     * Show category details.
+     */
+    public function show_api($id)
+    {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Category not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Category details fetched successfully',
+            'data' => $category
+        ], 200);
+    }
+
+    /**
+     * Update a category.
+     */
+    public function update_api(Request $request, $id)
+    {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Category not found',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:categories,name,' . $id,
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $category->update([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Category updated successfully',
+            'data' => $category
+        ], 200);
+    }
+
+    /**
+     * Delete a category.
+     */
+    public function destroy_api($id)
+    {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Category not found',
+            ], 404);
+        }
+
+        try {
+            $category->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Category deleted successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to delete category',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

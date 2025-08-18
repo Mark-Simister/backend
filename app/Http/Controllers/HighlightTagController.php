@@ -23,7 +23,7 @@ class HighlightTagController extends Controller
         $request->validate([
             'label' => 'required|string',
             'emoji' => 'required|string',
-            'automated' => 'boolean',
+            'automated' => 'boolean', 
         ]);
 
         HighlightTag::create($request->all());

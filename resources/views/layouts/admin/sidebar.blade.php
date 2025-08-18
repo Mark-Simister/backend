@@ -123,12 +123,12 @@
                 </ul>
             </div>
         </li>
-        <li class="nav-item">
+        {{-- <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.permissions.index') }}">
                 <i class="ti-lock menu-icon"></i>
                 <span class="menu-title">Permissions</span>
             </a>
-        </li>
+        </li> --}}
 
     </ul>
 </nav>

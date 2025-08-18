@@ -6,6 +6,12 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Spatie\Permission\Middlewares\RoleMiddleware;
 use Spatie\Permission\Middlewares\PermissionMiddleware;
 use Spatie\Permission\Middlewares\RoleOrPermissionMiddleware;
+// JWT Exceptions
+use Illuminate\Auth\AuthenticationException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Exceptions\JWTException;
+
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,5 +29,40 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Apply only for API requests
+        $exceptions->render(function (AuthenticationException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized: Token is missing or invalid'
+                ], 401);
+            }
+        });
+
+        $exceptions->render(function (TokenExpiredException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Token has expired'
+                ], 401);
+            }
+        });
+
+        $exceptions->render(function (TokenInvalidException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Token is invalid'
+                ], 401);
+            }
+        });
+
+        $exceptions->render(function (JWTException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Token is missing'
+                ], 401);
+            }
+        });
     })->create();

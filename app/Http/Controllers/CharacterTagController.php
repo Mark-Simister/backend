@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CharacterTag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CharacterTagController extends Controller
 {
@@ -86,4 +87,96 @@ class CharacterTagController extends Controller
         $characterTag->delete();
         return redirect()->route('admin.character_tags.index')->with('success', 'Character Tag deleted.');
     }
+
+    // Character API's
+
+    public function index_api()
+    {
+        $characterTags = CharacterTag::latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Character tags fetched successfully',
+            'data' => $characterTags
+        ]);
+    }
+
+    public function store_api(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|unique:character_tags,name',
+        ]);
+
+        $characterTag = CharacterTag::create([
+            'name' => $request->name,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Character tag created successfully',
+            'data' => $characterTag
+        ], 201);
+    }
+
+    public function show_api(CharacterTag $characterTag)
+    {
+        return response()->json([
+            'status' => true,
+            'message' => 'Character tag details fetched successfully',
+            'data' => $characterTag
+        ]);
+    }
+
+    public function update_api(Request $request, $id)
+{
+    $characterTag = CharacterTag::find($id);
+
+    if (!$characterTag) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Character tag not found'
+        ], 404);
+    }
+
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|unique:character_tags,name,' . $characterTag->id,
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Validation errors',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    $characterTag->update([
+        'name' => $request->name,
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Character tag updated successfully',
+        'data' => $characterTag
+    ]);
+}
+
+public function destroy_api($id)
+{
+    $characterTag = CharacterTag::find($id);
+
+    if (!$characterTag) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Character tag not found'
+        ], 404);
+    }
+
+    $characterTag->delete();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Character tag deleted successfully'
+    ]);
+}
 }

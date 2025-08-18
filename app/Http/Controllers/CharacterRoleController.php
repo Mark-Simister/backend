@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\CharacterRole;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class CharacterRoleController extends Controller
 {
@@ -79,5 +80,114 @@ class CharacterRoleController extends Controller
     {
         $characterRole->delete();
         return redirect()->route('admin.character_roles.index')->with('success', 'Character Role deleted.');
+    }
+
+    // Character Role Api's
+
+    public function index_api()
+    {
+        $characterRoles = CharacterRole::latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Character roles fetched successfully',
+            'data' => $characterRoles
+        ]);
+    }
+
+    public function store_api(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|unique:character_roles,name',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $characterRole = CharacterRole::create([
+            'name' => $request->name,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Character role created successfully',
+            'data' => $characterRole
+        ], 201);
+    }
+
+    public function show_api($id)
+    {
+        $characterRole = CharacterRole::find($id);
+
+        if (!$characterRole) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Character role not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Character role details fetched successfully',
+            'data' => $characterRole
+        ]);
+    }
+
+    public function update_api(Request $request, $id)
+    {
+        $characterRole = CharacterRole::find($id);
+
+        if (!$characterRole) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Character role not found'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|unique:character_roles,name,' . $characterRole->id,
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $characterRole->update([
+            'name' => $request->name,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Character role updated successfully',
+            'data' => $characterRole
+        ]);
+    }
+
+    public function destroy_api($id)
+    {
+        $characterRole = CharacterRole::find($id);
+
+        if (!$characterRole) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Character role not found'
+            ], 404);
+        }
+
+        $characterRole->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Character role deleted successfully'
+        ]);
     }
 }
