@@ -90,9 +90,16 @@ Route::prefix('admin')->middleware(['auth','role:super_admin|sub_admin'])->name(
     Route::patch('reviews/{review}/reject',  [ReviewController::class, 'reject'])->name('reviews.reject');
 });
 
+// Stripe apyment related hooks
 Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])
     ->withoutMiddleware(['auth:api', 'auth:sanctum','auth']) // list any auth middlewares you use
     ->name('stripe.webhook');
+
+Route::get('/pm-maker', function () {
+    return view('pm-maker', [
+        'stripeKey' => config('services.stripe.key'),
+    ]);
+})->name('pm.maker');
 
 Route::middleware(['auth'])->get('/admin-test', function () {
     return 'Welcome Admin';
