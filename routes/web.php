@@ -14,6 +14,7 @@ use App\Http\Controllers\HighlightTagController;
 use App\Http\Controllers\SubscriptionListingController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\StripeWebhookController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -89,7 +90,9 @@ Route::prefix('admin')->middleware(['auth','role:super_admin|sub_admin'])->name(
     Route::patch('reviews/{review}/reject',  [ReviewController::class, 'reject'])->name('reviews.reject');
 });
 
-
+Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])
+    ->withoutMiddleware(['auth:api', 'auth:sanctum','auth']) // list any auth middlewares you use
+    ->name('stripe.webhook');
 
 Route::middleware(['auth'])->get('/admin-test', function () {
     return 'Welcome Admin';
