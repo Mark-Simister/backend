@@ -15,6 +15,7 @@ use App\Http\Controllers\SubscriptionListingController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Middleware\VerifyCsrfToken;
 
 Route::get('/', function () {
     return view('welcome');
@@ -91,8 +92,10 @@ Route::prefix('admin')->middleware(['auth','role:super_admin|sub_admin'])->name(
 });
 
 // Stripe apyment related hooks
+// Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])
+//     ->withoutMiddleware(['auth:api', 'auth:sanctum','auth']) // list any auth middlewares you use
+//     ->name('stripe.webhook');
 Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])
-    ->withoutMiddleware(['auth:api', 'auth:sanctum','auth']) // list any auth middlewares you use
     ->name('stripe.webhook');
 
 Route::get('/pm-maker', function () {
