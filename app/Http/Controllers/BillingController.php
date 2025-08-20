@@ -447,49 +447,100 @@ class BillingController extends Controller
         'subscription_id' => ['required','integer','exists:subscriptions,id'],
     ]);
 
-    $sub = Subscription::findOrFail($data['subscription_id']);
+    $sub = \App\Models\Subscription::findOrFail($data['subscription_id']);
 
-    Stripe::setApiKey(config('services.stripe.secret'));
+    \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
-    // Retrieve latest invoice to locate PI
-    if (!$sub->stripe_invoice_id) {
-        return response()->json(['message' => 'No invoice on record yet.'], 422);
+    $invoice = null;
+    $piId    = null;
+
+    // 1) Try the invoice saved on our row, but EXPAND payment_intent so we’re sure
+    if (!empty($sub->stripe_invoice_id)) {
+        $invoice = \Stripe\Invoice::retrieve([
+            'id'     => $sub->stripe_invoice_id,
+            'expand' => ['payment_intent'],
+        ]);
+
+        if (isset($invoice->payment_intent)) {
+            // Could be object or string depending on expansion
+            $piId = is_object($invoice->payment_intent)
+                ? $invoice->payment_intent->id
+                : $invoice->payment_intent;
+        }
     }
 
-    $invoice = \Stripe\Invoice::retrieve($sub->stripe_invoice_id);
-    $piId = $invoice->payment_intent ?? null;
+    // 2) Fallback: pull the subscription and expand latest_invoice.payment_intent
+    if (!$piId && !empty($sub->stripe_subscription_id)) {
+        $stripeSub = \Stripe\Subscription::retrieve([
+            'id'     => $sub->stripe_subscription_id,
+            'expand' => ['latest_invoice.payment_intent'],
+        ]);
 
+        if (isset($stripeSub->latest_invoice)) {
+            $invoice = $stripeSub->latest_invoice;
+
+            if (isset($invoice->payment_intent)) {
+                $piId = is_object($invoice->payment_intent)
+                    ? $invoice->payment_intent->id
+                    : $invoice->payment_intent;
+            }
+        }
+    }
+
+    // 3) Still no PI? Then the invoice likely has no charge (amount 0 / send_invoice)
     if (!$piId) {
-        return response()->json(['message' => 'No payment_intent found on invoice.'], 422);
+        return response()->json([
+            'status'                    => 'no_payment_intent',
+            'message'                   => 'No PaymentIntent found on the invoice.',
+            'invoice_id'                => $invoice->id ?? $sub->stripe_invoice_id,
+            'invoice_status'            => $invoice->status ?? null,
+            'invoice_collection_method' => $invoice->collection_method ?? null,
+            'amount_due'                => $invoice->amount_due ?? null,
+        ], 422);
     }
 
-    $pi = PaymentIntent::retrieve($piId);
+    // 4) Retrieve & confirm if needed (instance methods, not static)
+    $pi = \Stripe\PaymentIntent::retrieve($piId);
 
-    // If PI still needs confirmation, try confirming with the default PM on the customer
-    if (in_array($pi->status, ['requires_action','requires_confirmation'])) {
-        $pi = PaymentIntent::retrieve($pi->id);
-        $pi = $pi->confirm(); // or ->confirm(['payment_method' => $pmId])
-    }
-
-    // Update local state
+    // Track current status
     $sub->update([
-        'last_payment_status' => $pi->status,
-        'last_payment_at'     => now(),
+        'stripe_payment_intent_id' => $pi->id, // ensure we persist it now
+        'last_payment_status'      => $pi->status,
+        'last_payment_at'          => now(),
     ]);
+
+    if (in_array($pi->status, ['requires_action','requires_confirmation'])) {
+        // Relies on customer's default_payment_method you set during purchase()
+        $pi = $pi->confirm();
+
+        $sub->update([
+            'last_payment_status' => $pi->status,
+            'last_payment_at'     => now(),
+        ]);
+    }
 
     if ($pi->status === 'succeeded') {
         $sub->update([
             'payment_status'      => 'succeeded',
             'subscription_status' => 'active',
         ]);
-        return response()->json(['status' => 'active']);
+
+        return response()->json(['status' => 'active'], 200);
     }
 
     if ($pi->status === 'requires_payment_method') {
-        return response()->json(['status' => 'requires_payment_method', 'message' => 'Provide a new payment method.'], 402);
+        return response()->json([
+            'status'  => 'requires_payment_method',
+            'message' => 'Payment failed/declined. Attach a new payment method and retry.',
+        ], 402);
     }
 
-    return response()->json(['status' => $pi->status]);
+    // Otherwise inform current state (may be processing, requires_action, etc.)
+    return response()->json([
+        'status'         => $pi->status,
+        'client_secret'  => $pi->client_secret ?? null,
+    ], 202);
 }
+
 
 }
