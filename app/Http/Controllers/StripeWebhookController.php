@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Stripe\Webhook;
+use Stripe\Exception\SignatureVerificationException;
+use UnexpectedValueException;
 
 class StripeWebhookController extends Controller
 {
@@ -15,11 +17,34 @@ class StripeWebhookController extends Controller
         $payload = $request->getContent();
         $secret = config('services.stripe.webhook_secret');
 
+        // try {
+        //     $event = Webhook::constructEvent($payload, $sig, $secret);
+        // } catch (\Throwable $e) {
+        //     return response('Invalid', 400);
+        // }
         try {
-            $event = Webhook::constructEvent($payload, $sig, $secret);
-        } catch (\Throwable $e) {
-            return response('Invalid', 400);
-        }
+                $event = Webhook::constructEvent($payload, $sig, $secret);
+            } catch (UnexpectedValueException $e) {
+                // Invalid JSON payload
+                return response()->json([
+                    'ok'       => false,
+                    'error'    => 'invalid_payload',
+                    'message'  => $e->getMessage(),
+                    'endpoint' => $request->url(),
+                    // helpful but safe: do NOT echo secrets
+                    'sig_header_received' => $sig,
+                ], 400);
+            } catch (SignatureVerificationException $e) {
+                // Signature didn’t match the signing secret
+                return response()->json([
+                    'ok'       => false,
+                    'error'    => 'signature_verification_failed',
+                    'message'  => $e->getMessage(),
+                    'endpoint' => $request->url(),
+                    'sig_header_received' => $sig,
+                    'secret_hint' => substr((string) $secret, 0, 6).'…', // hint only, not the full secret
+                ], 400);
+            }
 
         switch ($event->type) {
             case 'invoice.payment_succeeded':
