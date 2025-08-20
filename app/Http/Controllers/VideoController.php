@@ -59,6 +59,8 @@ class VideoController extends Controller
         'tags.*'           => 'string',
         'rating_type'      => 'required|in:rating,review',
         'sponsorship_type' => 'required|in:sponsored,unsponsored',
+        'public_rating' => 'nullable|numeric|min:1|max:5', 
+        'review_details' => 'nullable|string', 
         // 'highlight_tags'   => 'nullable|string', //  fixed
         'highlight_tags' => 'nullable|array',  // Validate as an array
         'highlight_tags.*' => 'exists:highlight_tags,id', // Validate each ID exists in the highlight_tags table
@@ -84,6 +86,13 @@ class VideoController extends Controller
         'og_image_url'     => 'nullable|url',
         'twitter_title'    => 'nullable|string|max:255',
         'twitter_description' => 'nullable|string|max:500',
+
+        'product_name' => 'nullable|string|max:255',
+        'product_asin_sku' => 'nullable|string|max:255',
+        'character_score' => 'nullable|numeric',
+        'editorial_score' => 'nullable|numeric',
+        'final_beastiescore' => 'nullable|string|max:255',
+        'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', // For thumbnail image
     ]);
 
     //  If validation fails, dump errors instead of redirect
@@ -100,6 +109,16 @@ class VideoController extends Controller
     }
 
     $validated = $validator->validated();
+
+    if ($validated['rating_type'] === 'rating') {
+        // Only store public_rating for 'rating' type
+        $validated['public_rating'] = $request->input('public_rating');
+        $validated['review_details'] = null; // Make sure review_details is null if rating is selected
+    } elseif ($validated['rating_type'] === 'review') {
+        // Only store review_details for 'review' type
+        $validated['review_details'] = $request->input('review_details');
+        $validated['public_rating'] = null; // Make sure public_rating is null if review is selected
+    }
 
     //  Convert comma-separated strings into arrays
     // $highlight_tags = $request->highlight_tags 
@@ -155,6 +174,19 @@ class VideoController extends Controller
         $request->file('caption_file')->move(public_path('videos/captions'), $filename);
         $validated['caption_file'] = 'videos/captions/' . $filename;
     }
+
+    // Handle product_thumbnail upload
+    if ($request->hasFile('product_thumbnail')) {
+        $destinationPath = public_path('thumbnails');
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0755, true);
+        }
+        $thumbnailFilename = time() . '_' . uniqid() . '.' . $request->file('product_thumbnail')->getClientOriginalExtension();
+        $request->file('product_thumbnail')->move($destinationPath, $thumbnailFilename);
+
+        $validated['product_thumbnail'] = 'thumbnails/' . $thumbnailFilename;
+    }
+
 
     //  Convert arrays to JSON before saving
     // foreach (['tags','highlight_tags','auto_tags','video_platforms','hashtags'] as $jsonField) {
@@ -273,6 +305,8 @@ class VideoController extends Controller
         'tags'             => 'nullable|string',
         'tags.*'           => 'string',
         'rating_type'      => 'required|in:rating,review',
+        'public_rating' => 'nullable|numeric|min:1|max:5', 
+        'review_details' => 'nullable|string', 
         'sponsorship_type' => 'required|in:sponsored,unsponsored',
         'highlight_tags' => 'nullable|array', 
         'highlight_tags.*' => 'exists:highlight_tags,id', 
@@ -298,6 +332,13 @@ class VideoController extends Controller
         'og_image_url'     => 'nullable|url',
         'twitter_title'    => 'nullable|string|max:255',
         'twitter_description' => 'nullable|string|max:500',
+
+        'product_name' => 'nullable|string|max:255',
+        'product_asin_sku' => 'nullable|string|max:255',
+        'character_score' => 'nullable|numeric',
+        'editorial_score' => 'nullable|numeric',
+        'final_beastiescore' => 'nullable|string|max:255',
+        'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', 
     ]);
 
     if ($validator->fails()) {
@@ -307,6 +348,16 @@ class VideoController extends Controller
     }
 
     $validated = $validator->validated();
+
+    if ($validated['rating_type'] === 'rating') {
+        // Only store public_rating for 'rating' type
+        $validated['public_rating'] = $request->input('public_rating');
+        $validated['review_details'] = null; // Make sure review_details is null if rating is selected
+    } elseif ($validated['rating_type'] === 'review') {
+        // Only store review_details for 'review' type
+        $validated['review_details'] = $request->input('review_details');
+        $validated['public_rating'] = null; // Make sure public_rating is null if review is selected
+    }
 
     // Convert comma-separated strings into arrays
     $highlight_tags = $request->highlight_tags 
@@ -354,6 +405,18 @@ class VideoController extends Controller
         if (!$video->thumbnail_url) {
             unset($validated['thumbnail_url']); // If no old URL exists, unset it
         }
+    }
+
+     // Handle product_thumbnail upload
+    if ($request->hasFile('product_thumbnail')) {
+        $destinationPath = public_path('thumbnails');
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0777, true);
+        }
+        $thumbnailFilename = time() . '_' . uniqid() . '.' . $request->file('product_thumbnail')->getClientOriginalExtension();
+        $request->file('product_thumbnail')->move($destinationPath, $thumbnailFilename);
+
+        $validated['product_thumbnail'] = 'thumbnails/' . $thumbnailFilename;
     }
 
     // Handle raw video upload

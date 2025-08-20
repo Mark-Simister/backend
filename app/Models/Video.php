@@ -54,7 +54,9 @@ class Video extends Model
     'auto_tags',        // JSON/string
 
 
-    'review_type', // rating or review
+    'review_type', 
+    'public_rating', 
+    'review_details', 
     'sponsored', // true/false
     'sponsorship_type',
 

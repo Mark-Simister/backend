@@ -95,9 +95,9 @@
         <div id="indicator-2" class="step-indicator">Step 3</div>
         <div id="indicator-3" class="step-indicator">Step 4</div>
     </div>
-    
-    <form action="{{ isset($video) ? route('admin.videos.update', $video) : route('admin.videos.store') }}" method="POST"
-        enctype="multipart/form-data" id="stepForm">
+
+    <form action="{{ isset($video) ? route('admin.videos.update', $video) : route('admin.videos.store') }}"
+        method="POST" enctype="multipart/form-data" id="stepForm">
         @csrf
         @if (isset($video))
             @method('PUT')
@@ -120,8 +120,10 @@
                 <label for="type">Video Platform Type <span class="text-danger">*</span></label>
                 <select name="type" id="type" class="form-select" required>
                     <option value="">-- Select Platform --</option>
-                    <option value="youtube" {{ old('type', $video->type ?? '') == 'youtube' ? 'selected' : '' }}>YouTube</option>
-                    <option value="vimeo" {{ old('type', $video->type ?? '') == 'vimeo' ? 'selected' : '' }}>Vimeo</option>
+                    <option value="youtube" {{ old('type', $video->type ?? '') == 'youtube' ? 'selected' : '' }}>YouTube
+                    </option>
+                    <option value="vimeo" {{ old('type', $video->type ?? '') == 'vimeo' ? 'selected' : '' }}>Vimeo
+                    </option>
                 </select>
             </div>
 
@@ -143,12 +145,14 @@
                 <select name="character_id" id="character_id" class="form-select" required>
                     <option value="" disabled selected>-- Select Character --</option>
                     @foreach ($characters as $character)
-                        <option value="{{ $character->id }}" {{ old('character_id', $video->character_id ?? '') == $character->id ? 'selected' : '' }}>
+                        <option value="{{ $character->id }}"
+                            {{ old('character_id', $video->character_id ?? '') == $character->id ? 'selected' : '' }}>
                             {{ $character->name }}
                         </option>
                     @endforeach
                 </select>
-                <div id="character_error" class="invalid-feedback" style="display:none;">Please select a character.</div>
+                <div id="character_error" class="invalid-feedback" style="display:none;">Please select a character.
+                </div>
             </div>
 
             <div class="mb-3">
@@ -156,7 +160,8 @@
                 <select name="channel_id" id="channel_id" class="form-select" required>
                     <option value="" disabled selected>-- Select Channel --</option>
                     @foreach ($channels as $channel)
-                        <option value="{{ $channel->id }}" {{ old('channel_id', $video->channel_id ?? '') == $channel->id ? 'selected' : '' }}>
+                        <option value="{{ $channel->id }}"
+                            {{ old('channel_id', $video->channel_id ?? '') == $channel->id ? 'selected' : '' }}>
                             {{ $channel->name }}
                         </option>
                     @endforeach
@@ -169,7 +174,8 @@
                 <select name="category_id" id="category_id" class="form-select" required>
                     <option value="" disabled selected>-- Select Category --</option>
                     @foreach ($categories as $category)
-                        <option value="{{ $category->id }}" {{ old('category_id', $video->category_id ?? '') == $category->id ? 'selected' : '' }}>
+                        <option value="{{ $category->id }}"
+                            {{ old('category_id', $video->category_id ?? '') == $category->id ? 'selected' : '' }}>
                             {{ $category->name }}
                         </option>
                     @endforeach
@@ -180,11 +186,18 @@
             <div class="mb-3">
                 <label for="access_level">Access Level</label>
                 <select name="access_level" id="access_level" class="form-select" required>
-                    <option value="public" {{ old('access_level', $video->access_level ?? '') == 'public' ? 'selected' : '' }}>Public</option>
-                    <option value="premium" {{ old('access_level', $video->access_level ?? '') == 'premium' ? 'selected' : '' }}>Premium</option>
-                    <option value="early_access" {{ old('access_level', $video->access_level ?? '') == 'early_access' ? 'selected' : '' }}>Early Access</option>
+                    <option value="public"
+                        {{ old('access_level', $video->access_level ?? '') == 'public' ? 'selected' : '' }}>Public
+                    </option>
+                    <option value="premium"
+                        {{ old('access_level', $video->access_level ?? '') == 'premium' ? 'selected' : '' }}>Premium
+                    </option>
+                    <option value="early_access"
+                        {{ old('access_level', $video->access_level ?? '') == 'early_access' ? 'selected' : '' }}>Early
+                        Access</option>
                 </select>
-                <div id="access_level_error" class="invalid-feedback" style="display:none;">Please select an access level.</div>
+                <div id="access_level_error" class="invalid-feedback" style="display:none;">Please select an access
+                    level.</div>
             </div>
 
             <div class="d-flex justify-content-between">
@@ -205,11 +218,11 @@
                     value="{{ old('affiliate_link', $video->affiliate_link ?? '') }}">
             </div>
 
-           @php
-    $thumbSource = old('thumbnail_option', !empty($video->thumbnail_image) ? 'image' : 'url');
-@endphp
+            @php
+                $thumbSource = old('thumbnail_option', !empty($video->thumbnail_image) ? 'image' : 'url');
+            @endphp
 
-<div class="mb-3">
+            {{-- <div class="mb-3">
     <label class="form-label">Thumbnail</label>
     <div class="form-check">
         <input class="form-check-input" type="radio" name="thumbnail_option" id="thumb_url_option"
@@ -221,29 +234,31 @@
             value="image" {{ $thumbSource == 'image' ? 'checked' : '' }}>
         <label class="form-check-label" for="thumb_image_option">Upload Thumbnail Image</label>
     </div>
-</div>
+</div> --}}
 
-<!-- Thumbnail Image Input (Visible if 'image' option is selected) -->
-<div class="mb-3" id="thumb_image_input" style="{{ $thumbSource == 'image' ? '' : 'display:none;' }}">
-    <label for="thumbnail_image" class="form-label">Thumbnail Image</label>
-    <input type="file" name="thumbnail_image" id="thumbnail_image"
-        class="form-control @error('thumbnail_image') is-invalid @enderror"
-        accept="image/*" {{ !empty($video->thumbnail_image) ? '' : 'required' }}>
-    
-    @if (!empty($video->thumbnail_image))
-        <div class="mt-2">
-            <strong>Existing Thumbnail Image:</strong>
-            <img src="{{ asset($video->thumbnail_image) }}" alt="Thumbnail" class="img-thumbnail" style="max-width: 200px;">
-        </div>
-    @endif
-    
-    @error('thumbnail_image') 
-        <div class="invalid-feedback">{{ $message }}</div> 
-    @enderror
-</div>
+            <!-- Thumbnail Image Input (Visible if 'image' option is selected) -->
+            {{-- <div class="mb-3" id="thumb_image_input" style="{{ $thumbSource == 'image' ? '' : 'display:none;' }}"> --}}
+            <div class="mb-3" id="thumb_image_input">
+                <label for="thumbnail_image" class="form-label">Thumbnail Image</label>
+                <input type="file" name="thumbnail_image" id="thumbnail_image"
+                    class="form-control @error('thumbnail_image') is-invalid @enderror" accept="image/*"
+                    {{ !empty($video->thumbnail_image) ? '' : 'required' }}>
 
-<!-- Thumbnail URL Input (Visible if 'url' option is selected) -->
-<div class="mb-3" id="thumb_url_input" style="{{ $thumbSource == 'url' ? '' : 'display:none;' }}">
+                @if (!empty($video->thumbnail_image))
+                    <div class="mt-2">
+                        <strong>Existing Thumbnail Image:</strong>
+                        <img src="{{ asset($video->thumbnail_image) }}" alt="Thumbnail" class="img-thumbnail"
+                            style="max-width: 200px;">
+                    </div>
+                @endif
+
+                @error('thumbnail_image')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <!-- Thumbnail URL Input (Visible if 'url' option is selected) -->
+            {{-- <div class="mb-3" id="thumb_url_input" style="{{ $thumbSource == 'url' ? '' : 'display:none;' }}">
     <label for="thumbnail_url" class="form-label">Thumbnail URL</label>
     <input type="url" name="thumbnail_url" id="thumbnail_url"
         class="form-control @error('thumbnail_url') is-invalid @enderror"
@@ -252,7 +267,7 @@
     @error('thumbnail_url') 
         <div class="invalid-feedback">{{ $message }}</div> 
     @enderror
-</div>
+</div> --}}
 
 
             <div class="d-flex justify-content-between">
@@ -280,275 +295,334 @@
                     value="{{ old('keywords', $video->keywords ?? '') }}">
             </div> --}}
 
-            
-  @php
-    function cleanTags($value) {
-        if (empty($value)) return '';
 
-        // If already array
-        if (is_array($value)) {
-            return implode(', ', $value);
-        }
+            @php
+                function cleanTags($value)
+                {
+                    if (empty($value)) {
+                        return '';
+                    }
 
-        // If JSON encoded array (["tag1","tag2"])
-        $decoded = json_decode($value, true);
-        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-            return implode(', ', $decoded);
-        }
+                    // If already array
+                    if (is_array($value)) {
+                        return implode(', ', $value);
+                    }
 
-        // If JSON encoded string ("tag1, tag2, tag3")
-        $decodedString = json_decode($value, true);
-        if (json_last_error() === JSON_ERROR_NONE && is_string($decodedString)) {
-            return $decodedString;
-        }
+                    // If JSON encoded array (["tag1","tag2"])
+                    $decoded = json_decode($value, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        return implode(', ', $decoded);
+                    }
 
-        // Fallback → remove extra quotes/slashes
-        return trim($value, "\"'[]");
-    }
-@endphp
+                    // If JSON encoded string ("tag1, tag2, tag3")
+                    $decodedString = json_decode($value, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_string($decodedString)) {
+                        return $decodedString;
+                    }
 
-<div class="mb-3">
-    <label for="tags">Tags (comma separated)</label>
-    <input type="text" name="tags" id="tags" class="form-control"
-    value="{{ old('tags', isset($video->tags) ? cleanTags($video->tags) : '') }}">
-</div>
+                    // Fallback → remove extra quotes/slashes
+                    return trim($value, "\"'[]");
+                }
+            @endphp
 
-    <div class="mb-3">
-        <label for="rating_type">Rating Type</label>
-        <select name="rating_type" id="rating_type" class="form-select">
-            <option value="">-- Select Rating Type --</option>
-            <option value="rating" {{ old('rating_type', $video->rating_type ?? '') == 'rating' ? 'selected' : '' }}>Rating</option>
-            <option value="review" {{ old('rating_type', $video->rating_type ?? '') == 'review' ? 'selected' : '' }}>Review</option>
-        </select>
-    </div>
+            <div class="mb-3">
+                <label for="tags">Tags (comma separated)</label>
+                <input type="text" name="tags" id="tags" class="form-control"
+                    value="{{ old('tags', isset($video->tags) ? cleanTags($video->tags) : '') }}">
+            </div>
 
-    <div class="mb-3">
-        <label for="sponsorship_type">Sponsorship Type</label>
-        <select name="sponsorship_type" id="sponsorship_type" class="form-select">
-            <option value="">-- Select Sponsorship Type --</option>
-            <option value="sponsored" {{ old('sponsorship_type', $video->sponsorship_type ?? '') == 'sponsored' ? 'selected' : '' }}>Sponsored</option>
-            <option value="unsponsored" {{ old('sponsorship_type', $video->sponsorship_type ?? '') == 'unsponsored' ? 'selected' : '' }}>Unsponsored</option>
-        </select>
-    </div>
+            <div class="mb-3">
+                <label for="rating_type">Rating Type</label>
+                <select name="rating_type" id="rating_type" class="form-select">
+                    <option value="" disabled selected>-- Select Rating Type --</option>
+                    <option value="rating"
+                        {{ old('rating_type', $video->rating_type ?? '') == 'rating' ? 'selected' : '' }}>Rating
+                    </option>
+                    <option value="review"
+                        {{ old('rating_type', $video->rating_type ?? '') == 'review' ? 'selected' : '' }}>Review
+                    </option>
+                </select>
+            </div>
 
-    {{-- <div class="mb-3">
+            <!-- Rating Input Fields (will be displayed when "rating" is selected) -->
+            <div id="rating_fields" class="form-group"
+                style="{{ old('rating_type', $video->rating_type ?? '') === 'rating' ? '' : 'display:none;' }}">
+                <div class="mb-3">
+                    <label for="public_rating">Public Rating</label>
+                    <input type="number" name="public_rating" id="public_rating" class="form-control"
+                        placeholder="Enter public rating (1-5)" min="1" max="5" step="0.1"
+                        value="{{ old('public_rating', $video->public_rating ?? '') }}">
+                </div>
+            </div>
+
+            <!-- Review Input Fields (will be displayed when "review" is selected) -->
+            <div id="review_fields" class="form-group"
+                style="{{ old('rating_type', $video->rating_type ?? '') === 'review' ? '' : 'display:none;' }}">
+                <div class="mb-3">
+                    <label for="review_details">Review Details</label>
+                    <textarea name="review_details" id="review_details" class="form-control" placeholder="Enter review details">{{ old('review_details', $video->review_details ?? '') }}</textarea>
+                </div>
+            </div>
+
+
+            <div class="mb-3">
+                <label for="sponsorship_type">Sponsorship Type</label>
+                <select name="sponsorship_type" id="sponsorship_type" class="form-select">
+                    <option value="">-- Select Sponsorship Type --</option>
+                    <option value="sponsored"
+                        {{ old('sponsorship_type', $video->sponsorship_type ?? '') == 'sponsored' ? 'selected' : '' }}>
+                        Sponsored</option>
+                    <option value="unsponsored"
+                        {{ old('sponsorship_type', $video->sponsorship_type ?? '') == 'unsponsored' ? 'selected' : '' }}>
+                        Unsponsored</option>
+                </select>
+            </div>
+
+            {{-- <div class="mb-3">
         <label for="highlight_tags">Highlight Tags (comma separated)</label>
         <input type="text" name="highlight_tags" id="highlight_tags" class="form-control"
             value="{{ old('highlight_tags', isset($video->highlight_tags) ? implode(',', (array) $video->highlight_tags) : '') }}">
     </div> --}}
-    @php
-    // Prefer old() (after validation error) else controller-provided $videoHighlightTags
-    $hlSelected = old('highlight_tags', $videoHighlightTags ?? []);
+            @php
+                // Prefer old() (after validation error) else controller-provided $videoHighlightTags
+                $hlSelected = old('highlight_tags', $videoHighlightTags ?? []);
 
-    if (is_string($hlSelected)) {
-        $maybeJson = json_decode($hlSelected, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            $hlSelected = is_array($maybeJson) ? $maybeJson : [$maybeJson];
-        } else {
-            $hlSelected = array_filter(array_map('trim', explode(',', $hlSelected)));
-        }
-    }
-@endphp
+                if (is_string($hlSelected)) {
+                    $maybeJson = json_decode($hlSelected, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $hlSelected = is_array($maybeJson) ? $maybeJson : [$maybeJson];
+                    } else {
+                        $hlSelected = array_filter(array_map('trim', explode(',', $hlSelected)));
+                    }
+                }
+            @endphp
 
-<div class="mb-3">
-    <label for="highlight_tags">Highlight Tags</label>
-    <select name="highlight_tags[]" id="highlight_tags" class="form-select" multiple>
-        <option value="">-- Select Highlight Tags --</option>
-        @foreach ($highlight_tags as $highlight_tag)
-            <option value="{{ $highlight_tag->id }}"
-                {{ in_array((string) $highlight_tag->id, array_map('strval', $hlSelected)) ? 'selected' : '' }}>
-                {!! $highlight_tag->emoji !!} {{ $highlight_tag->label }}
-            </option>
-        @endforeach
-    </select>
-</div>
-
-
+            <div class="mb-3">
+                <label for="highlight_tags">Highlight Tags</label>
+                <select name="highlight_tags[]" id="highlight_tags" class="form-select" multiple>
+                    <option value="">-- Select Highlight Tags --</option>
+                    @foreach ($highlight_tags as $highlight_tag)
+                        <option value="{{ $highlight_tag->id }}"
+                            {{ in_array((string) $highlight_tag->id, array_map('strval', $hlSelected)) ? 'selected' : '' }}>
+                            {!! $highlight_tag->emoji !!} {{ $highlight_tag->label }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
 
 
 
-    {{-- <div class="mb-3">
+
+
+            {{-- <div class="mb-3">
         <label for="auto_tags">Auto Tags (comma separated)</label>
         <input type="text" name="auto_tags" id="auto_tags" class="form-control"
             value="{{ old('auto_tags', isset($video->auto_tags) ? implode(',', (array) $video->auto_tags) : '') }}">
     </div> --}}
-    {{-- <div class="mb-3">
+            {{-- <div class="mb-3">
         <label for="auto_tags">Auto Tags (comma separated)</label>
         <input type="text" name="auto_tags" id="auto_tags" class="form-control"
     value="{{ old('auto_tags', isset($video->auto_tags) ? cleanTags($video->auto_tags) : '') }}">
     </div> --}}
 
-    <div class="mb-3">
-        <label for="video_type">Video Type</label>
-        <select name="video_type" id="video_type" class="form-select">
-            <option value="">-- Select Video Type --</option>
-            <option value="short" {{ old('video_type', $video->video_type ?? '') == 'short' ? 'selected' : '' }}>Short</option>
-            <option value="full_review" {{ old('video_type', $video->video_type ?? '') == 'full_review' ? 'selected' : '' }}>Full Review</option>
-            <option value="reel" {{ old('video_type', $video->video_type ?? '') == 'reel' ? 'selected' : '' }}>Reel</option>
-            <option value="live" {{ old('video_type', $video->video_type ?? '') == 'live' ? 'selected' : '' }}>Live</option>
-            <option value="compilation" {{ old('video_type', $video->video_type ?? '') == 'compilation' ? 'selected' : '' }}>Compilation</option>
-        </select>
-    </div>
+            <div class="mb-3">
+                <label for="video_type">Video Type</label>
+                <select name="video_type" id="video_type" class="form-select">
+                    <option value="">-- Select Video Type --</option>
+                    <option value="short"
+                        {{ old('video_type', $video->video_type ?? '') == 'short' ? 'selected' : '' }}>Short</option>
+                    <option value="full_review"
+                        {{ old('video_type', $video->video_type ?? '') == 'full_review' ? 'selected' : '' }}>Full
+                        Review</option>
+                    <option value="reel"
+                        {{ old('video_type', $video->video_type ?? '') == 'reel' ? 'selected' : '' }}>Reel</option>
+                    <option value="live"
+                        {{ old('video_type', $video->video_type ?? '') == 'live' ? 'selected' : '' }}>Live</option>
+                    <option value="compilation"
+                        {{ old('video_type', $video->video_type ?? '') == 'compilation' ? 'selected' : '' }}>
+                        Compilation</option>
+                </select>
+            </div>
 
-    @php
-    // Prefer old() (after validation error) else controller-provided $selectedPlatforms
-    $platformsSelected = old('video_platforms', $selectedPlatforms ?? []);
+            @php
+                // Prefer old() (after validation error) else controller-provided $selectedPlatforms
+                $platformsSelected = old('video_platforms', $selectedPlatforms ?? []);
 
-    // Normalize to array (handles: array, JSON string, CSV string)
-    if (is_string($platformsSelected)) {
-        $maybeJson = json_decode($platformsSelected, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            $platformsSelected = is_array($maybeJson) ? $maybeJson : [$maybeJson];
-        } else {
-            $platformsSelected = array_filter(array_map('trim', explode(',', $platformsSelected)));
-        }
-    }
-@endphp
+                // Normalize to array (handles: array, JSON string, CSV string)
+                if (is_string($platformsSelected)) {
+                    $maybeJson = json_decode($platformsSelected, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $platformsSelected = is_array($maybeJson) ? $maybeJson : [$maybeJson];
+                    } else {
+                        $platformsSelected = array_filter(array_map('trim', explode(',', $platformsSelected)));
+                    }
+                }
+            @endphp
 
-<div class="mb-3">
-    <label for="video_platforms">Video Platform(s)</label>
-    <select name="video_platforms[]" id="video_platforms" class="form-select" multiple>
-        <option value="YouTube"  {{ in_array('YouTube',  $platformsSelected)  ? 'selected' : '' }}>YouTube</option>
-        <option value="TikTok"   {{ in_array('TikTok',   $platformsSelected)  ? 'selected' : '' }}>TikTok</option>
-        <option value="Instagram"{{ in_array('Instagram',$platformsSelected)  ? 'selected' : '' }}>Instagram</option>
-        <option value="Facebook" {{ in_array('Facebook', $platformsSelected)  ? 'selected' : '' }}>Facebook</option>
-    </select>
-</div>
+            <div class="mb-3">
+                <label for="video_platforms">Video Platform(s)</label>
+                <select name="video_platforms[]" id="video_platforms" class="form-select" multiple>
+                    <option value="YouTube" {{ in_array('YouTube', $platformsSelected) ? 'selected' : '' }}>YouTube
+                    </option>
+                    <option value="TikTok" {{ in_array('TikTok', $platformsSelected) ? 'selected' : '' }}>TikTok
+                    </option>
+                    <option value="Instagram"{{ in_array('Instagram', $platformsSelected) ? 'selected' : '' }}>
+                        Instagram</option>
+                    <option value="Facebook" {{ in_array('Facebook', $platformsSelected) ? 'selected' : '' }}>
+                        Facebook</option>
+                </select>
+            </div>
 
-    <div class="mb-3">
-        <label for="raw_video_file">Raw Video File</label>
-        <input type="file" name="raw_video_file" id="raw_video_file" class="form-control" accept="video/*">
-    </div>
+            <div class="mb-3">
+                <label for="raw_video_file">Raw Video File</label>
+                <input type="file" name="raw_video_file" id="raw_video_file" class="form-control"
+                    accept="video/*">
+            </div>
 
-    <div class="mb-3">
-        <label for="caption_file">Caption File</label>
-        <input type="file" name="caption_file" id="caption_file" class="form-control" accept=".srt,.vtt">
-    </div>
+            <div class="mb-3">
+                <label for="caption_file">Caption File</label>
+                <input type="file" name="caption_file" id="caption_file" class="form-control"
+                    accept=".srt,.vtt">
+            </div>
 
-    <div class="mb-3">
-        <label for="status">Status</label>
-        <select name="status" id="status" class="form-select">
-            <option value="draft" {{ old('status', $video->status ?? '') == 'draft' ? 'selected' : '' }}>Draft</option>
-            <option value="published" {{ old('status', $video->status ?? '') == 'published' ? 'selected' : '' }}>Published</option>
-        </select>
-    </div>
+            <div class="mb-3">
+                <label for="status">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="draft" {{ old('status', $video->status ?? '') == 'draft' ? 'selected' : '' }}>
+                        Draft</option>
+                    <option value="published"
+                        {{ old('status', $video->status ?? '') == 'published' ? 'selected' : '' }}>Published</option>
+                </select>
+            </div>
 
-    <div class="mb-3 form-check">
-        <input type="checkbox" class="form-check-input" id="is_ai_generated" name="is_ai_generated"
-            value="1" {{ old('is_ai_generated', $video->is_ai_generated ?? false) ? 'checked' : '' }}>
-        <label class="form-check-label" for="is_ai_generated">AI Generated</label>
-    </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="is_ai_generated" name="is_ai_generated"
+                    value="1" {{ old('is_ai_generated', $video->is_ai_generated ?? false) ? 'checked' : '' }}>
+                <label class="form-check-label" for="is_ai_generated">AI Generated</label>
+            </div>
 
-    <div class="mb-3 form-check">
-        <input type="checkbox" class="form-check-input" id="is_finalized" name="is_finalized"
-            value="1" {{ old('is_finalized', $video->is_finalized ?? false) ? 'checked' : '' }}>
-        <label class="form-check-label" for="is_finalized">Finalized</label>
-    </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="is_finalized" name="is_finalized"
+                    value="1" {{ old('is_finalized', $video->is_finalized ?? false) ? 'checked' : '' }}>
+                <label class="form-check-label" for="is_finalized">Finalized</label>
+            </div>
 
-    <div class="mb-3 form-check">
-        <input type="checkbox" class="form-check-input" id="qa_passed" name="qa_passed"
-            value="1" {{ old('qa_passed', $video->qa_passed ?? false) ? 'checked' : '' }}>
-        <label class="form-check-label" for="qa_passed">QA Passed</label>
-    </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="qa_passed" name="qa_passed" value="1"
+                    {{ old('qa_passed', $video->qa_passed ?? false) ? 'checked' : '' }}>
+                <label class="form-check-label" for="qa_passed">QA Passed</label>
+            </div>
 
-    <div class="mb-3">
-        <label for="post_schedule_at">Post Schedule At</label>
-        <input type="datetime-local" name="post_schedule_at" id="post_schedule_at" class="form-control"
-            value="{{ old('post_schedule_at', isset($video->post_schedule_at) ? \Carbon\Carbon::parse($video->post_schedule_at)->format('Y-m-d\TH:i') : '') }}">
-    </div>
+            <div class="mb-3">
+                <label for="post_schedule_at">Post Schedule At</label>
+                <input type="datetime-local" name="post_schedule_at" id="post_schedule_at" class="form-control"
+                    value="{{ old('post_schedule_at', isset($video->post_schedule_at) ? \Carbon\Carbon::parse($video->post_schedule_at)->format('Y-m-d\TH:i') : '') }}">
+            </div>
 
-    <div class="mb-3">
-        <label for="seo_title">SEO Title</label>
-        <input type="text" name="seo_title" id="seo_title" class="form-control"
-            value="{{ old('seo_title', $video->seo_title ?? '') }}">
-    </div>
+            <h3 class="section-heading">SEO Information</h3>
 
-    <div class="mb-3">
-        <label for="seo_description">SEO Description</label>
-        <textarea name="seo_description" id="seo_description" class="form-control">{{ old('seo_description', $video->seo_description ?? '') }}</textarea>
-    </div>
+            <div class="mb-3">
+                <label for="seo_title">SEO Title</label>
+                <input type="text" name="seo_title" id="seo_title" class="form-control"
+                    value="{{ old('seo_title', $video->seo_title ?? '') }}">
+            </div>
 
-    {{-- <div class="mb-3">
+            <div class="mb-3">
+                <label for="seo_description">SEO Description</label>
+                <textarea name="seo_description" id="seo_description" class="form-control">{{ old('seo_description', $video->seo_description ?? '') }}</textarea>
+            </div>
+
+            {{-- <div class="mb-3">
         <label for="hashtags">Hashtags (comma separated)</label>
         <input type="text" name="hashtags" id="hashtags" class="form-control"
             value="{{ old('hashtags', isset($video->hashtags) ? implode(',', (array) $video->hashtags) : '') }}">
     </div> --}}
-    <div class="mb-3">
-        <label for="hashtags">Hashtags (comma separated)</label>
-        <input type="text" name="hashtags" id="hashtags" class="form-control"
-            value="{{ old('hashtags', isset($video->hashtags) ? (is_array($video->hashtags) ? implode(', ', $video->hashtags) : $video->hashtags) : '') }}">
-    </div>
+            <div class="mb-3">
+                <label for="hashtags">Hashtags (comma separated)</label>
+                <input type="text" name="hashtags" id="hashtags" class="form-control"
+                    value="{{ old('hashtags', isset($video->hashtags) ? (is_array($video->hashtags) ? implode(', ', $video->hashtags) : $video->hashtags) : '') }}">
+            </div>
 
-    <div class="mb-3">
-        <label for="cta_text">CTA Text</label>
-        <input type="text" name="cta_text" id="cta_text" class="form-control"
-            value="{{ old('cta_text', $video->cta_text ?? '') }}">
-    </div>
+            <div class="mb-3">
+                <label for="cta_text">CTA Text</label>
+                <input type="text" name="cta_text" id="cta_text" class="form-control"
+                    value="{{ old('cta_text', $video->cta_text ?? '') }}">
+            </div>
 
-    <div class="mb-3">
-        <label for="og_image_url">OG Image URL</label>
-        <input type="url" name="og_image_url" id="og_image_url" class="form-control"
-            value="{{ old('og_image_url', $video->og_image_url ?? '') }}">
-    </div>
+            <div class="mb-3">
+                <label for="og_image_url">OG Image URL</label>
+                <input type="url" name="og_image_url" id="og_image_url" class="form-control"
+                    value="{{ old('og_image_url', $video->og_image_url ?? '') }}">
+            </div>
 
-    <div class="mb-3">
-        <label for="twitter_title">Twitter Title</label>
-        <input type="text" name="twitter_title" id="twitter_title" class="form-control"
-            value="{{ old('twitter_title', $video->twitter_title ?? '') }}">
-    </div>
+            <div class="mb-3">
+                <label for="twitter_title">Twitter Title</label>
+                <input type="text" name="twitter_title" id="twitter_title" class="form-control"
+                    value="{{ old('twitter_title', $video->twitter_title ?? '') }}">
+            </div>
 
-    <div class="mb-3">
-        <label for="twitter_description">Twitter Description</label>
-        <textarea name="twitter_description" id="twitter_description" class="form-control">{{ old('twitter_description', $video->twitter_description ?? '') }}</textarea>
-    </div>
+            <div class="mb-3">
+                <label for="twitter_description">Twitter Description</label>
+                <textarea name="twitter_description" id="twitter_description" class="form-control">{{ old('twitter_description', $video->twitter_description ?? '') }}</textarea>
+            </div>
 
-    {{-- <div class="mb-3">
-    <label for="product_name">Product Name</label>
-    <input type="text" name="product_name" id="product_name" class="form-control" placeholder="Enter product name" value="{{ old('product_name', isset($video) ? $video->product_name : '') }}">
-</div>
+            <h3 class="section-heading">Product Information</h3>
+            <div class="mb-3">
+                <label for="product_name">Product Name</label>
+                <input type="text" name="product_name" id="product_name" class="form-control"
+                    placeholder="Enter product name"
+                    value="{{ old('product_name', isset($video) ? $video->product_name : '') }}">
+            </div>
 
-<div class="mb-3">
-    <label for="product_asin_sku">Product ASIN / SKU</label>
-    <input type="text" name="product_asin_sku" id="product_asin_sku" class="form-control" placeholder="Enter ASIN/SKU" value="{{ old('product_asin_sku', isset($video) ? $video->product_asin_sku : '') }}">
-</div>
+            <div class="mb-3">
+                <label for="product_asin_sku">Product ASIN / SKU</label>
+                <input type="text" name="product_asin_sku" id="product_asin_sku" class="form-control"
+                    placeholder="Enter ASIN/SKU"
+                    value="{{ old('product_asin_sku', isset($video) ? $video->product_asin_sku : '') }}">
+            </div>
 
-<div class="mb-3">
-    <label for="affiliate_link">Affiliate Link</label>
-    <input type="url" name="affiliate_link" id="affiliate_link" class="form-control" placeholder="Enter affiliate link (e.g., Amazon, ShareASale)" value="{{ old('affiliate_link', isset($video) ? $video->affiliate_link : '') }}">
-</div>
+            <div class="mb-3">
+                <label for="public_rating">Public Rating</label>
+                <input type="number" name="public_rating" id="public_rating" class="form-control"
+                    placeholder="Enter public rating (1-5)" min="1" max="5" step="0.1"
+                    value="{{ old('public_rating', isset($video) ? $video->public_rating : '') }}">
+            </div>
 
-<div class="mb-3">
-    <label for="public_rating">Public Rating</label>
-    <input type="number" name="public_rating" id="public_rating" class="form-control" placeholder="Enter public rating (1-5)" min="1" max="5" step="0.1" value="{{ old('public_rating', isset($video) ? $video->public_rating : '') }}">
-</div>
+            <div class="mb-3">
+                <label for="product_thumbnail">Product Thumbnail</label>
+                <input type="file" name="product_thumbnail" id="product_thumbnail" class="form-control"
+                    accept="image/*">
 
-<div class="mb-3">
-    <label for="character_score">Character Score</label>
-    <input type="number" name="character_score" id="character_score" class="form-control" placeholder="Enter character score" value="{{ old('character_score', isset($video) ? $video->character_score : '') }}">
-</div>
+                @if (isset($video) && $video->product_thumbnail)
+                    <div class="mt-2">
+                        <label>Current Thumbnail:</label>
+                        <img src="{{ asset($video->product_thumbnail) }}" alt="Current Thumbnail"
+                            style="max-width: 150px; height: auto;">
+                    </div>
+                @endif
+            </div>
 
-<div class="mb-3">
-    <label for="editorial_score">Editorial Score</label>
-    <input type="number" name="editorial_score" id="editorial_score" class="form-control" placeholder="Enter editorial score" value="{{ old('editorial_score', isset($video) ? $video->editorial_score : '') }}">
-</div>
+            <div class="mb-3">
+                <label for="character_score">Character Score</label>
+                <input type="number" name="character_score" id="character_score" class="form-control"
+                    placeholder="Enter character score"
+                    value="{{ old('character_score', isset($video) ? $video->character_score : '') }}">
+            </div>
 
-<div class="mb-3">
-    <label for="final_beastiescore">Final BeastieScore</label>
-    <input type="text" name="final_beastiescore" id="final_beastiescore" class="form-control" placeholder="Auto-calculated based on score formula" readonly value="{{ old('final_beastiescore', isset($video) ? $video->final_beastiescore : '') }}">
-</div>
+            <div class="mb-3">
+                <label for="editorial_score">Editorial Score</label>
+                <input type="number" name="editorial_score" id="editorial_score" class="form-control"
+                    placeholder="Enter editorial score"
+                    value="{{ old('editorial_score', isset($video) ? $video->editorial_score : '') }}">
+            </div>
 
-<div class="mb-3">
-    <label for="product_thumbnail">Product Thumbnail</label>
-    <input type="file" name="product_thumbnail" id="product_thumbnail" class="form-control" accept="image/*">
-    
-    @if (isset($video) && $video->product_thumbnail) 
-        <div class="mt-2">
-            <label>Current Thumbnail:</label>
-            <img src="{{ asset($video->product_thumbnail) }}" alt="Current Thumbnail" style="max-width: 150px; height: auto;">
-        </div>
-    @endif
-</div> --}}
+            {{-- <div class="mb-3">
+        <label for="final_beastiescore">Final BeastieScore</label>
+        <input type="text" name="final_beastiescore" id="final_beastiescore" class="form-control" placeholder="Auto-calculated based on score formula" readonly value="{{ old('final_beastiescore', isset($video) ? $video->final_beastiescore : '') }}">
+    </div> --}}
+
+
 
 
             <div class="d-flex justify-content-between">
@@ -592,22 +666,49 @@
         const thumbImageInput = document.getElementById("thumb_image_input");
 
         // Store old image and URL for validation
-        const oldThumbnailImage = '{{ $video->thumbnail_image ?? "" }}'; // Get the old thumbnail image if exists
-        const oldThumbnailUrl = '{{ $video->thumbnail_url ?? "" }}'; // Get the old thumbnail URL if exists
+        const oldThumbnailImage =
+        '{{ $video->thumbnail_image ?? '' }}'; // Get the old thumbnail image if exists
+        const oldThumbnailUrl = '{{ $video->thumbnail_url ?? '' }}'; // Get the old thumbnail URL if exists
 
-        function toggleThumbnailInputs() {
-            if (thumbUrlOption.checked) {
-                thumbUrlInput.style.display = "";
-                thumbImageInput.style.display = "none";
-            } else if (thumbImageOption.checked) {
-                thumbUrlInput.style.display = "none";
-                thumbImageInput.style.display = "";
+        const ratingTypeSelect = document.getElementById('rating_type');
+        const ratingFields = document.getElementById('rating_fields');
+        const reviewFields = document.getElementById('review_fields');
+
+        // Function to toggle the visibility of input fields based on the rating type selection
+        function toggleRatingReviewFields() {
+            const selectedType = ratingTypeSelect.value;
+
+            // Reset fields visibility
+            ratingFields.style.display = 'none';
+            reviewFields.style.display = 'none';
+
+            // Show relevant fields based on selection
+            if (selectedType === 'rating') {
+                ratingFields.style.display = 'block';
+            } else if (selectedType === 'review') {
+                reviewFields.style.display = 'block';
             }
         }
 
-        thumbUrlOption.addEventListener("change", toggleThumbnailInputs);
-        thumbImageOption.addEventListener("change", toggleThumbnailInputs);
-        toggleThumbnailInputs(); // init on page load
+        // Listen for changes on the rating type select
+        ratingTypeSelect.addEventListener('change', toggleRatingReviewFields);
+
+        // Initialize visibility based on the current selection
+        toggleRatingReviewFields();
+
+        // function toggleThumbnailInputs() {
+        //     if (thumbUrlOption.checked) {
+        //         thumbUrlInput.style.display = "";
+        //         thumbImageInput.style.display = "none";
+        //     } else if (thumbImageOption.checked) {
+        //         thumbUrlInput.style.display = "none";
+        //         thumbImageInput.style.display = "";
+        //     }
+        // }
+
+        // thumbUrlOption.addEventListener("change", toggleThumbnailInputs);
+        // thumbImageOption.addEventListener("change", toggleThumbnailInputs);
+        // toggleThumbnailInputs(); // init on page load
 
         let currentStep = 0;
 
@@ -643,7 +744,8 @@
                     }
 
                     if (i === stepIndex) {
-                        if (input.dataset.wasRequired === "true" || input.hasAttribute("required")) {
+                        if (input.dataset.wasRequired === "true" || input.hasAttribute(
+                                "required")) {
                             input.setAttribute("required", "required");
                         }
                     } else {
@@ -671,27 +773,27 @@
             });
 
             // Thumbnail validation step
-            if (stepIndex === 2) {
-                const thumbOption = document.querySelector('input[name="thumbnail_option"]:checked');
-                const urlInput = document.getElementById("thumbnail_url");
-                const imageInput = document.getElementById("thumbnail_image");
+            // if (stepIndex === 2) {
+            //     const thumbOption = document.querySelector('input[name="thumbnail_option"]:checked');
+            //     const urlInput = document.getElementById("thumbnail_url");
+            //     const imageInput = document.getElementById("thumbnail_image");
 
-                if (!thumbOption) return valid;
+            //     if (!thumbOption) return valid;
 
-                const hasUrl = urlInput && urlInput.value.trim();
-                const hasImage = imageInput && imageInput.files.length > 0;
+            //     const hasUrl = urlInput && urlInput.value.trim();
+            //     const hasImage = imageInput && imageInput.files.length > 0;
 
-                // If no new image is selected, just use the old image or URL
-                if (thumbOption.value === "url" && !hasUrl && !oldThumbnailUrl) {
-                    alert("Please enter a valid Thumbnail URL.");
-                    urlInput.classList.add("is-invalid");
-                    valid = false;
-                } else if (thumbOption.value === "image" && !hasImage && !oldThumbnailImage) {
-                    alert("Please upload a Thumbnail Image.");
-                    imageInput.classList.add("is-invalid");
-                    valid = false;
-                }
-            }
+            //     // If no new image is selected, just use the old image or URL
+            //     if (thumbOption.value === "url" && !hasUrl && !oldThumbnailUrl) {
+            //         alert("Please enter a valid Thumbnail URL.");
+            //         urlInput.classList.add("is-invalid");
+            //         valid = false;
+            //     } else if (thumbOption.value === "image" && !hasImage && !oldThumbnailImage) {
+            //         alert("Please upload a Thumbnail Image.");
+            //         imageInput.classList.add("is-invalid");
+            //         valid = false;
+            //     }
+            // }
             return valid;
         }
 

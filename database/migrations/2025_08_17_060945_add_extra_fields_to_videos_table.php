@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::table('videos', function (Blueprint $table) {
             // Tags / metadata
         //    $table->json('tags')->nullable()->after('affiliate_link');
-            $table->enum('rating_type', ['rating', 'review'])->default('rating')->after('tags');
-            $table->enum('sponsorship_type', ['sponsored', 'unsponsored'])->default('unsponsored')->after('rating_type');
-            $table->json('highlight_tags')->nullable()->after('sponsorship_type');
-            $table->json('auto_tags')->nullable()->after('highlight_tags');
+           // $table->enum('rating_type', ['rating', 'review'])->default('rating')->after('tags');
+           // $table->enum('sponsorship_type', ['sponsored', 'unsponsored'])->default('unsponsored')->after('rating_type');
+           // $table->json('highlight_tags')->nullable()->after('sponsorship_type');
+           // $table->json('auto_tags')->nullable()->after('highlight_tags');
             // $table->enum('video_type', ['short', 'full_review', 'reel', 'live', 'compilation'])->default('short')->after('auto_tags');
             $table->json('video_platforms')->nullable()->after('video_type');
 
@@ -52,8 +52,8 @@ return new class extends Migration
             $table->dropColumn([
                 'tags',
                 'rating_type',
-                'sponsorship_type',
-                'highlight_tags',
+               // 'sponsorship_type',
+               // 'highlight_tags',
                 'auto_tags',
               //  'video_type',
                 'video_platforms',
