@@ -405,8 +405,8 @@ class BillingController extends Controller
         if (!$subscription) return response()->json(['message' => 'Not found'], 404);
 
         if ($subscription->billing_cycle === 'recurring' && $subscription->stripe_subscription_id) {
-            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-            \Stripe\Subscription::update($subscription->stripe_subscription_id, [
+            Stripe::setApiKey(config('services.stripe.secret'));
+            StripeSubscription::update($subscription->stripe_subscription_id, [
                 'cancel_at_period_end' => true,
             ]);
         }
@@ -440,4 +440,56 @@ class BillingController extends Controller
             default          => 'month',
         };
     }
+
+    public function confirm(Request $req)
+{
+    $data = $req->validate([
+        'subscription_id' => ['required','integer','exists:subscriptions,id'],
+    ]);
+
+    $sub = Subscription::findOrFail($data['subscription_id']);
+
+    Stripe::setApiKey(config('services.stripe.secret'));
+
+    // Retrieve latest invoice to locate PI
+    if (!$sub->stripe_invoice_id) {
+        return response()->json(['message' => 'No invoice on record yet.'], 422);
+    }
+
+    $invoice = \Stripe\Invoice::retrieve($sub->stripe_invoice_id);
+    $piId = $invoice->payment_intent ?? null;
+
+    if (!$piId) {
+        return response()->json(['message' => 'No payment_intent found on invoice.'], 422);
+    }
+
+    $pi = PaymentIntent::retrieve($piId);
+
+    // If PI still needs confirmation, try confirming with the default PM on the customer
+    if (in_array($pi->status, ['requires_action','requires_confirmation'])) {
+        $pi = PaymentIntent::retrieve($pi->id);
+        $pi = $pi->confirm(); // or ->confirm(['payment_method' => $pmId])
+    }
+
+    // Update local state
+    $sub->update([
+        'last_payment_status' => $pi->status,
+        'last_payment_at'     => now(),
+    ]);
+
+    if ($pi->status === 'succeeded') {
+        $sub->update([
+            'payment_status'      => 'succeeded',
+            'subscription_status' => 'active',
+        ]);
+        return response()->json(['status' => 'active']);
+    }
+
+    if ($pi->status === 'requires_payment_method') {
+        return response()->json(['status' => 'requires_payment_method', 'message' => 'Provide a new payment method.'], 402);
+    }
+
+    return response()->json(['status' => $pi->status]);
+}
+
 }

@@ -62,6 +62,7 @@ Route::middleware(['auth:api'])->group(function () {
     // Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])
     // ->withoutMiddleware(['auth:api', 'auth:sanctum', ]) 
     // ->name('stripe.webhook.api');
+    Route::post('purchase/confirm', [BillingController::class, 'confirm']);
 
     // Catch-all for undefined API routes
     Route::any('{any}', function () {
