@@ -13,18 +13,19 @@ use App\Http\Controllers\CharacterRoleController;
 use App\Http\Controllers\HighlightTagController;
 use App\Http\Controllers\SubscriptionListingController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ReviewController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
 
-// Authenticated User Dashboard
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Authenticated Profile Routes
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -49,21 +50,13 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 });
 
 Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Route for displaying sub-admin list
+   
     Route::get('sub-admins', [UserController::class, 'index_sub_admin'])->name('sub_admins.index');
-
-    // Route for creating sub-admin
     Route::get('sub-admins/create', [UserController::class, 'create_sub_admin'])->name('sub_admins.create');
     Route::post('sub-admins', [UserController::class, 'store_sub_admin'])->name('sub_admins.store');
-
-    // Route for editing sub-admin
     Route::get('sub-admins/{user}/edit', [UserController::class, 'edit_sub_admin'])->name('sub_admins.edit');
     Route::put('sub-admins/{user}', [UserController::class, 'update_sub_admin'])->name('sub_admins.update');
-
-    // Route for viewing sub-admin details
     Route::get('sub-admins/{user}/show', [UserController::class, 'show_sub_admin'])->name('sub_admins.show');
-
-    // Route for deleting sub-admin
     Route::delete('sub-admins/{user}', [UserController::class, 'destroy_sub_admin'])->name('sub_admins.destroy');
 
     //Route::get('sub-admins/assign-roles', [UserController::class, 'assignRoles'])->name('sub_admins.assign_roles');
@@ -77,9 +70,41 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 });
 
 
+
+
+// USER submits review (always pending)
+Route::middleware('auth')->post('/videos/{video}/reviews', [ReviewController::class, 'store'])
+    ->name('reviews.store');
+
+// PUBLIC fetch approved reviews for a video
+Route::get('/videos/{video}/reviews', [ReviewController::class, 'publicIndex'])
+    ->name('reviews.public.index');
+
+// ADMIN moderation
+Route::prefix('admin')->middleware(['auth','role:super_admin|sub_admin'])->name('admin.')->group(function () {
+    Route::resource('reviews', ReviewController::class)->only(['index','create','store','edit','update','destroy']);
+
+    // Extra moderation actions
+    Route::patch('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
+    Route::patch('reviews/{review}/reject',  [ReviewController::class, 'reject'])->name('reviews.reject');
+});
+
+
+
 Route::middleware(['auth'])->get('/admin-test', function () {
     return 'Welcome Admin';
 });
+
+
+// users
+
+// // user submits review
+// Route::middleware('auth')->post('/videos/{video}/reviews', [ReviewController::class, 'store'])
+//     ->name('reviews.store');
+
+// // public: fetch approved reviews
+// Route::get('/videos/{video}/reviews', [ReviewController::class, 'publicIndex'])
+//     ->name('reviews.public.index');
 
 
 require __DIR__ . '/auth.php';

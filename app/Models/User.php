@@ -50,4 +50,9 @@ class User extends Authenticatable
         'is_verified' => 'boolean',
         ];
     }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
 }

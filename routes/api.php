@@ -7,6 +7,9 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\CharacterTagController;
 use App\Http\Controllers\CharacterRoleController;
+use App\Http\Controllers\SubscriptionListingController;
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\StripeWebhookController;
 
 
 Route::get('/user', function (Request $request) {
@@ -15,6 +18,8 @@ Route::get('/user', function (Request $request) {
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('otp/resend', [AuthController::class, 'resendOtp']);
+Route::post('otp/verify', [AuthController::class, 'verifyOtp']);
 
 Route::middleware(['auth:api'])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
@@ -49,4 +54,17 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('character-roles/{characterRole}', [CharacterRoleController::class, 'show_api']);
     Route::put('character-roles/{characterRole}', [CharacterRoleController::class, 'update_api']);
     Route::delete('character-roles/{characterRole}', [CharacterRoleController::class, 'destroy_api']);
+
+    Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
+    Route::post('/purchase', [BillingController::class, 'purchase']);
+    Route::post('/subscriptions/{id}/cancel', [BillingController::class, 'cancel']);
+    Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook'); // no CSRF on api routes
+
+    // Catch-all for undefined API routes
+    Route::any('{any}', function () {
+        return response()->json([
+            'message' => 'The requested API route could not be found.'
+        ], 404);
+    })->where('any', '.*');
+
 });

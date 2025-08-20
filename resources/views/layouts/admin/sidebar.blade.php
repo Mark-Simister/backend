@@ -67,6 +67,13 @@
                 <span class="menu-title">Sub-admin Management</span>
             </a>
         </li>
+        <li class="nav-item {{ request()->is('admin/reviews*') ? 'active' : '' }}">
+            <a class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}"
+            href="{{ route('admin.reviews.index') }}">
+                <i class="ti-star menu-icon"></i>
+                <span class="menu-title">Ratings &amp; Reviews</span>
+            </a>
+        </li>
         <li class="nav-item">
             <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
                 aria-controls="form-elements">

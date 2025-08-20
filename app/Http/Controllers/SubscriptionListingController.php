@@ -6,6 +6,9 @@ use App\Models\SubscriptionListing;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 class SubscriptionListingController extends Controller
 {
     public function index()
@@ -64,5 +67,15 @@ class SubscriptionListingController extends Controller
         $subscription->delete();
 
         return redirect()->route('admin.subscription_listing.index')->with('success', 'Subscription Package deleted successfully!');
+    }
+
+    public function index_api()
+    {
+        $plans = DB::table('subscription_listing')
+            ->select('id','subscription_name','sub_description','price','duration','duration_unit','type')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json($plans);
     }
 }
