@@ -25,16 +25,32 @@ class ReviewController extends Controller
         'status'   => ['nullable','in:pending,approved,rejected'],
     ]);
 
+    $userId = $request->user()->id;
+
+    // ✅ Check if review already exists
+    $exists = Review::where('video_id', $data['video_id'])
+        ->where('user_id', $userId)
+        ->exists();
+
+    if ($exists) {
+        return back()->withErrors([
+            'video_id' => 'You have already submitted a review for this video.'
+        ])->withInput();
+    }
+
     Review::create([
         'video_id' => $data['video_id'],
-        'user_id'  => $request->user()->id, // force logged-in user
+        'user_id'  => $userId,
         'rating'   => $data['rating'],
         'review'   => $data['review'],
         'status'   => $data['status'] ?? 'pending',
     ]);
 
-    return redirect()->route('admin.reviews.index')->with('success', 'Review submitted and awaiting approval.');
+    return redirect()
+        ->route('admin.reviews.index')
+        ->with('success', 'Review submitted and awaiting approval.');
 }
+
 
 
 
@@ -103,20 +119,22 @@ class ReviewController extends Controller
                 'required',
                 'exists:videos,id',
                 Rule::unique('reviews', 'video_id')
-                    ->where(fn($q) => $q->where('user_id', $request->user_id))
-                    ->ignore($review->id),
+                    ->where(fn($q) => $q->where('user_id', $request->user()->id))
+                    ->ignore($review->id), // ✅ allow current review
             ],
-            'rating'   => ['required','integer','min:1','max:5'],
-            'review'   => ['required','string','max:1000'],
-            'status'   => ['required','in:pending,approved,rejected'],
+            'rating' => ['required','integer','between:1,5'],
+            'review' => ['required','string','max:1000'],
+            'status' => ['required','in:pending,approved,rejected'],
         ]);
 
         DB::transaction(function () use ($review, $validated) {
             $review->update($validated);
-            $this->syncVideoAggregates($review->video); // recompute from approved reviews
+            $this->syncVideoAggregates($review->video); // ✅ recompute averages
         });
 
-        return redirect()->route('admin.reviews.index')->with('success', 'Review updated successfully.');
+        return redirect()
+            ->route('admin.reviews.index')
+            ->with('success', 'Review updated successfully.');
     }
 
     /**

@@ -25,7 +25,7 @@
                 <span class="menu-title">Character Tags</span>
             </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item {{ request()->routeIs('admin.character_roles.*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
                 <i class="icon-layout menu-icon"></i>
                 <span class="menu-title">Character Roles</span>
@@ -56,6 +56,12 @@
             </a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.subscriptions.index') }}">
+                <i class="ti-credit-card menu-icon"></i>
+                <span class="menu-title">Subscriptions</span>
+            </a>
+        </li>
+        <li class="nav-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('admin.roles.index') }}">
                 <i class="ti-lock menu-icon"></i>
                 <span class="menu-title">Role Management</span>
@@ -108,8 +114,7 @@
             </a>
             <div class="collapse" id="tables">
                 <ul class="nav flex-column sub-menu">
-                    <li class="nav-item"> <a class="nav-link" href="pages/tables/basic-table.html">Basic
-                            table</a></li>
+                    <li class="nav-item"> <a class="nav-link" href="{{ route('pm.maker') }}">PM Maker</a></li>
                 </ul>
             </div>
         </li>

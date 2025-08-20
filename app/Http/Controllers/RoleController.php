@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role as SpatieRole;
 
 class RoleController extends Controller
 {
@@ -66,17 +67,45 @@ class RoleController extends Controller
     }
 
     // Remove the specified role from storage
+    // public function destroy(Role $role)
+    // {
+    //     // You can prevent deleting roles that are required like 'super_admin' or 'user'
+    //     if (in_array($role->name, ['user', 'super_admin'])) {
+    //         return redirect()->route('admin.roles.index')->with('error', 'You cannot delete this role.');
+    //     }
+
+    //     $role->delete();
+
+    //     return redirect()->route('admin.roles.index')->with('success', 'Role deleted successfully.');
+    // }
     public function destroy(Role $role)
     {
-        // You can prevent deleting roles that are required like 'super_admin' or 'user'
+        // Prevent deleting critical roles
         if (in_array($role->name, ['user', 'super_admin'])) {
-            return redirect()->route('admin.roles.index')->with('error', 'You cannot delete this role.');
+            return redirect()
+                ->route('admin.roles.index')
+                ->with('error', 'You cannot delete this role.');
+        }
+
+        // Check if role is assigned to any user
+        $assignedUsers = \DB::table('model_has_roles')
+            ->where('role_id', $role->id)
+            ->count();
+
+        if ($assignedUsers > 0) {
+            return redirect()
+                ->route('admin.roles.index')
+                ->with('error', 'This role has users assigned. Please reassign or remove users before deleting.');
         }
 
         $role->delete();
 
-        return redirect()->route('admin.roles.index')->with('success', 'Role deleted successfully.');
+        return redirect()
+            ->route('admin.roles.index')
+            ->with('success', 'Role deleted successfully.');
     }
+
+
 
     public function editPermissions(Role $role)
     {

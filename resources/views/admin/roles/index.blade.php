@@ -8,11 +8,34 @@
     <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">+ Add Role</a>
 </div>
 
+{{-- Success Message --}}
 @if(session('success'))
-    <div class="alert alert-success">
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 @endif
+
+{{-- Error Message (from controller flashes) --}}
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+{{-- Validation Errors --}}
+@if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <ul class="mb-0">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 
 @if($roles->count())
     <div class="card shadow-sm border-0">

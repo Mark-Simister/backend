@@ -46,8 +46,10 @@ class VideoController extends Controller
 
         // Step 3 optional fields
         'affiliate_link'   => 'nullable|url',
-        'thumbnail_url'    => 'nullable|required_without:thumbnail_image|url',
-        'thumbnail_image'  => 'nullable|required_without:thumbnail_url|image|mimes:jpg,jpeg,png|max:2048',
+        'thumbnail_url'    => 'nullable',
+        // 'thumbnail_url'    => 'nullable|required_without:thumbnail_image|url',
+        'thumbnail_image'  => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        // 'thumbnail_image'  => 'nullable|required_without:thumbnail_url|image|mimes:jpg,jpeg,png|max:2048',
 
         // Step 4 meta fields
         // 'meta_title'       => 'nullable|string|max:70',
@@ -95,13 +97,10 @@ class VideoController extends Controller
         'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', // For thumbnail image
     ]);
 
-    //  If validation fails, dump errors instead of redirect
+    
     // if ($validator->fails()) {
-    //     dd('Validation Failed:', $validator->errors()->all());
+    //     dd($validator->errors()->all());
     // }
-    if ($validator->fails()) {
-        dd($validator->errors()->all());
-    }
     if ($validator->fails()) {
         return redirect()->back()
             ->withErrors($validator)

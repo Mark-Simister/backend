@@ -15,6 +15,7 @@ use App\Http\Controllers\SubscriptionListingController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Middleware\VerifyCsrfToken;
 
 Route::get('/', function () {
@@ -52,7 +53,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 });
 
 Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
-   
+
     Route::get('sub-admins', [UserController::class, 'index_sub_admin'])->name('sub_admins.index');
     Route::get('sub-admins/create', [UserController::class, 'create_sub_admin'])->name('sub_admins.create');
     Route::post('sub-admins', [UserController::class, 'store_sub_admin'])->name('sub_admins.store');
@@ -83,12 +84,13 @@ Route::get('/videos/{video}/reviews', [ReviewController::class, 'publicIndex'])
     ->name('reviews.public.index');
 
 // ADMIN moderation
-Route::prefix('admin')->middleware(['auth','role:super_admin|sub_admin'])->name('admin.')->group(function () {
-    Route::resource('reviews', ReviewController::class)->only(['index','create','store','edit','update','destroy']);
-
-    // Extra moderation actions
+Route::prefix('admin')->middleware(['auth', 'role:super_admin|sub_admin'])->name('admin.')->group(function () {
+    Route::resource('reviews', ReviewController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
     Route::patch('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
-    Route::patch('reviews/{review}/reject',  [ReviewController::class, 'reject'])->name('reviews.reject');
+    Route::patch('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('reviews.reject');
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
 });
 
 // Stripe apyment related hooks
