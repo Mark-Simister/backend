@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Add Category</h4>
+        @can('category.create')
         <form action="{{ route('admin.categories.store') }}" method="POST">
             @csrf
             <div class="form-group">
@@ -14,6 +15,7 @@
             </div>
             <button class="btn btn-success mt-3">Save</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

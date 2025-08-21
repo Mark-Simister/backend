@@ -51,6 +51,9 @@
                                         class="btn btn-warning me-1">
                                         <i class="bi bi-pencil-square"></i> Edit
                                     </a>
+                                    <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
                                     <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
                                         class="d-inline" onsubmit="return confirm('Delete this user?')">
                                         @csrf

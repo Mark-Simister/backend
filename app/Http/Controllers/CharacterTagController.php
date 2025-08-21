@@ -6,9 +6,25 @@ namespace App\Http\Controllers;
 use App\Models\CharacterTag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
 class CharacterTagController extends Controller
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth'),
+
+            // web CRUD
+            new Middleware('permission:character_tag.view',   only: ['index']),
+            new Middleware('permission:character_tag.create', only: ['create','store']),
+            new Middleware('permission:character_tag.edit',   only: ['edit','update']),
+            new Middleware('permission:character_tag.delete', only: ['destroy']),
+
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */

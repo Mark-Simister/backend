@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Edit Category</h4>
+        @can('category.edit')
         <form action="{{ route('admin.categories.update', $category) }}" method="POST">
             @csrf @method('PUT')
             <div class="form-group">
@@ -14,6 +15,7 @@
             </div>
             <button class="btn btn-primary mt-3">Update</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

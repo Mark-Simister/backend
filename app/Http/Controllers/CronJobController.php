@@ -18,9 +18,9 @@ class CronJobController extends Controller
 
     public function cancelOverdueRenewals(Request $request)
 {
-    //  $today  = Carbon::today();
-    $today = Carbon::today()->addMonth()->addDay();
-    $cutoff = $today->copy()->subDay(); // grace: cancel the day after end date
+     $today  = Carbon::today();
+    // $today = Carbon::today()->addMonth()->addDay();
+    $cutoff = $today->copy()->subDay(); 
 
     $unpaidStatuses       = ['renew_pending', 'past_due', 'incomplete', 'unpaid', 'requires_payment_method'];
     $notAlreadyCanceled   = ['active', 'renew_pending', 'past_due', 'incomplete', 'cancel_scheduled'];

@@ -6,9 +6,24 @@ use Illuminate\Http\Request;
 use App\Models\CharacterRole;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
 class CharacterRoleController extends Controller
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth'),
+
+            // web CRUD
+            new Middleware('permission:character_role.view',   only: ['index']),
+            new Middleware('permission:character_role.create', only: ['create','store']),
+            new Middleware('permission:character_role.edit',   only: ['edit','update']),
+            new Middleware('permission:character_role.delete', only: ['destroy']),
+
+        ];
+    }
     /**
      * Display a listing of the resource.
      */

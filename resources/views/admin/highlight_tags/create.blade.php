@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Add Highlight Tag</h4>
+        @can('highlight_tag.create')
         <form action="{{ route('admin.highlight_tags.store') }}" method="POST">
             @csrf
 
@@ -36,6 +37,7 @@
 
             <button type="submit" class="btn btn-success mt-3">Save Highlight Tag</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

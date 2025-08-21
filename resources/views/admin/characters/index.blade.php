@@ -11,28 +11,30 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Characters</h2>
+        @can('character.create')
         <a href="{{ route('admin.characters.create') }}" class="btn btn-primary">+ Add Character</a>
+        @endcan
     </div>
-
+    
     @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     @endif
-
+    
     @if ($characters->count())
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <table id="characters-table" class="table table-hover table-bordered align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width: 60px;">#</th>
-                            <th>Name</th>
-                            <th>Persona</th>
-                            {{-- <th>Channel</th>
-                            <th>Mini Bio</th>
-                            <th>Location</th>
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <table id="characters-table" class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th>Name</th>
+                        <th>Persona</th>
+                        {{-- <th>Channel</th>
+                        <th>Mini Bio</th>
+                        <th>Location</th>
                             <th>Age</th>
                             <th>Species</th>
                             <th>Style/Vibe</th>
@@ -62,14 +64,14 @@
                     </thead>
                     <tbody>
                         @foreach ($characters as $index => $character)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $character->name }}</td>
-                                <td>{{ Str::limit($character->persona, 50) }}</td>
-                                {{-- <td>{{ Str::limit($character->details, 50) }}</td>
-                                <td>{{ $character->channel->name ?? 'N/A' }}</td>
-                                <td>{{ $character->location ?? 'N/A' }}</td>
-                                <td>{{ $character->age ?? 'N/A' }}</td>
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td>{{ $character->name }}</td>
+                            <td>{{ Str::limit($character->persona, 50) }}</td>
+                            {{-- <td>{{ Str::limit($character->details, 50) }}</td>
+                            <td>{{ $character->channel->name ?? 'N/A' }}</td>
+                            <td>{{ $character->location ?? 'N/A' }}</td>
+                            <td>{{ $character->age ?? 'N/A' }}</td>
                                 <td>{{ $character->species ?? 'N/A' }}</td>
                                 <td>{{ $character->style_vibe ?? 'N/A' }}</td>
                                 <td>{{ $character->durability_score ?? 'N/A' }}</td>
@@ -93,12 +95,15 @@
                                 <td>{{ $character->brand_reputation_score ?? 'N/A' }}</td>
                                 <td>{{ Str::limit($character->brand_reputation_notes ?? 'N/A', 50) }}</td> --}}
                                 <td><img src="{{ asset($character->image) }}" alt="Current Character Image"
-                                style="max-width: 200px; height: auto;"></td>
-                                <td>
-                                    <a href="{{ route('admin.characters.edit', $character) }}"
+                                    style="max-width: 200px; height: auto;"></td>
+                                    <td>
+                                        @can('character.edit')
+                                        <a href="{{ route('admin.characters.edit', $character) }}"
                                         class="btn btn-warning me-1">
                                         <i class="bi bi-pencil-square"></i> Edit
                                     </a>
+                                    @endcan
+                                    @can('character.delete')
                                     <form action="{{ route('admin.characters.destroy', $character) }}" method="POST"
                                         class="d-inline" onsubmit="return confirm('Delete this character?')">
                                         @csrf
@@ -107,6 +112,7 @@
                                             <i class="bi bi-trash"></i> Delete
                                         </button>
                                     </form>
+                                    @endcan
                                 </td>
                             </tr>
                         @endforeach
@@ -132,9 +138,9 @@
                 responsive: true,
                 pageLength: 10,
                 ordering: true,
-                order: [
-                    [0, 'desc']
-                ], // Latest entries on top
+                // order: [
+                //     [0, 'desc']
+                // ], // Latest entries on top
                 autoWidth: false,
                 language: {
                     search: "_INPUT_",

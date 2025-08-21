@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Add Character Tag</h4>
+        @can('character_tag.create')
         <form action="{{ route('admin.character_tags.store') }}" method="POST">
             @csrf
             <div class="form-group mt-3">
@@ -16,6 +17,7 @@
             </div>
             <button type="submit" class="btn btn-success mt-3">Save Tag</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

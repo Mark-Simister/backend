@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
@@ -10,6 +12,7 @@ use App\Http\Controllers\CharacterRoleController;
 use App\Http\Controllers\SubscriptionListingController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\VideoController;
 
 
 Route::get('/user', function (Request $request) {
@@ -64,11 +67,25 @@ Route::middleware(['auth:api'])->group(function () {
     // ->name('stripe.webhook.api');
     Route::post('purchase/confirm', [BillingController::class, 'confirm']);
 
+    Route::get('videos', [VideoController::class, 'index_api']);
+    Route::get('videos/free', [VideoController::class, 'freeVideos']);
+    Route::get('videos/paid', [VideoController::class, 'paidVideos']);
+    Route::post('reviews', [ReviewController::class, 'store_api']);
+    Route::get('my-reviews', [ReviewController::class, 'myReviews']);
+
+    Route::get('users/{id}', [UserController::class, 'show_api'])->whereNumber('id');
+    Route::get('me/profile', [UserController::class, 'me_api']);
+
+
+
+
+
+});
+    
     // Catch-all for undefined API routes
     Route::any('{any}', function () {
         return response()->json([
             'message' => 'The requested API route could not be found.'
         ], 404);
     })->where('any', '.*');
-
-});
+    

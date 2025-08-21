@@ -160,4 +160,8 @@ public function setTagsAttribute($value)
 //     return $value ? implode(', ', json_decode($value, true)) : '';
 // }
 
+public function reviews()
+{
+    return $this->hasMany(\App\Models\Review::class, 'video_id', 'id');
+}
 }

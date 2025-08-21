@@ -5,7 +5,9 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Character Tags</h2>
+    @can('character_tag.create')
     <a href="{{ route('admin.character_tags.create') }}" class="btn btn-primary">+ Add Character Tag</a>
+    @endcan
 </div>
 
 @if(session('success'))
@@ -28,13 +30,16 @@
                 </thead>
                 <tbody>
                     @foreach($characterTags as $index => $characterTag)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $characterTag->name }}</td>
-                            <td>
-                                <a href="{{ route('admin.character_tags.edit', $characterTag) }}" class="btn btn-warning me-1">
-                                    <i class="bi bi-pencil-square"></i> Edit
-                                </a>
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $characterTag->name }}</td>
+                        <td>
+                            @can('character_tag.edit')
+                            <a href="{{ route('admin.character_tags.edit', $characterTag) }}" class="btn btn-warning me-1">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+                            @endcan
+                            @can('character_tag.create')
                                 <form action="{{ route('admin.character_tags.destroy', $characterTag) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this character tag?')">
                                     @csrf
                                     @method('DELETE')
@@ -42,6 +47,7 @@
                                         <i class="bi bi-trash"></i> Delete
                                     </button>
                                 </form>
+                            @endcan
                             </td>
                         </tr>
                     @endforeach
@@ -57,21 +63,8 @@
 @endsection
 
 
-{{-- @push('styles') --}}
-    <!-- DataTables Bootstrap 5 CSS -->
-    {{-- <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"> --}}
-{{-- @endpush --}}
-
 @push('scripts')
-    <!-- jQuery -->
-    {{-- <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script> --}}
-
+    
     <script>
         $(document).ready(function() {
             $('#character-tags-table').DataTable({

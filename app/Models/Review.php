@@ -30,4 +30,8 @@ class Review extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function user_api()
+    {
+        return $this->belongsTo(\App\Models\ApiUser::class, 'user_id', 'id');
+    }
 }

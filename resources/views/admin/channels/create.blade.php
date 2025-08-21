@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Create Channel</h4>
+        @can('channel.create')
         <form action="{{ route('admin.channels.store') }}" method="POST">
             @csrf
 
@@ -29,6 +30,7 @@
 
             <button type="submit" class="btn btn-success mt-4">Save</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

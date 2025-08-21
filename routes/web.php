@@ -37,21 +37,67 @@ Route::middleware('auth')->group(function () {
 });
 
 // Admin Routes — Protected by auth + role:admin
-Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Category CRUD Routes
-    Route::resource('categories', CategoryController::class);
-    Route::resource('permissions', PermissionController::class);
-    Route::resource('channels', ChannelController::class);
-    Route::resource('character_tags', CharacterTagController::class);
-    Route::resource('character_roles', CharacterRoleController::class);
-    Route::resource('characters', CharacterController::class);
-    Route::resource('videos', VideoController::class);
-    Route::resource('users', UserController::class);
+// Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
+//     // Category CRUD Routes
+//     Route::resource('categories', CategoryController::class);
+//     Route::resource('permissions', PermissionController::class);
+//     Route::resource('channels', ChannelController::class);
+//     Route::resource('character_tags', CharacterTagController::class);
+//     Route::resource('character_roles', CharacterRoleController::class);
+//     Route::resource('characters', CharacterController::class);
+//     Route::resource('videos', VideoController::class);
+//     Route::resource('users', UserController::class);
 
-    Route::resource('highlight_tags', HighlightTagController::class);
-    Route::resource('subscription_listing', SubscriptionListingController::class);
+//     Route::resource('highlight_tags', HighlightTagController::class);
+//     Route::resource('subscription_listing', SubscriptionListingController::class);
 
-});
+// });
+
+Route::middleware(['auth'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        
+        // Category CRUD
+        Route::resource('categories', CategoryController::class)
+            ->middleware('permission:category.view|category.create|category.edit|category.delete');
+
+        // Permissions management (restrict to super_admin only if you want)
+        Route::resource('permissions', PermissionController::class)
+            ->middleware('role:super_admin');
+
+        // Channels
+        Route::resource('channels', ChannelController::class)
+            ->middleware('permission:channel.view|channel.create|channel.edit|channel.delete');
+
+        // Character tags
+        Route::resource('character_tags', CharacterTagController::class)
+            ->middleware('permission:character_tag.view|character_tag.create|character_tag.edit|character_tag.delete');
+
+        // Character roles
+        Route::resource('character_roles', CharacterRoleController::class)
+            ->middleware('permission:character_role.view|character_role.create|character_role.edit|character_role.delete');
+
+        // Characters
+        Route::resource('characters', CharacterController::class)
+            ->middleware('permission:character.view|character.create|character.edit|character.delete');
+
+        // Videos
+        Route::resource('videos', VideoController::class)
+            ->middleware('permission:video.view|video.create|video.edit|video.delete');
+
+        // Users (maybe only super_admin + managers)
+        Route::resource('users', UserController::class)
+            ->middleware('permission:user.view|user.create|user.edit|user.delete');
+
+        // Highlight tags
+        Route::resource('highlight_tags', HighlightTagController::class)
+            ->middleware('permission:highlight_tag.view|highlight_tag.create|highlight_tag.edit|highlight_tag.delete');
+
+        // Subscription listing
+        Route::resource('subscription_listing', SubscriptionListingController::class)
+            ->middleware('permission:subscription_list.view|subscription_list.create|subscription_list.edit|subscription_list.delete');
+    });
 
 Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
 
@@ -77,22 +123,49 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 
 
 // USER submits review (always pending)
-Route::middleware('auth')->post('/videos/{video}/reviews', [ReviewController::class, 'store'])
-    ->name('reviews.store');
+// Route::middleware('auth')->post('/videos/{video}/reviews', [ReviewController::class, 'store'])
+//     ->name('reviews.store');
 
 // PUBLIC fetch approved reviews for a video
-Route::get('/videos/{video}/reviews', [ReviewController::class, 'publicIndex'])
-    ->name('reviews.public.index');
+// Route::get('/videos/{video}/reviews', [ReviewController::class, 'publicIndex'])
+//     ->name('reviews.public.index');
 
-// ADMIN moderation
-Route::prefix('admin')->middleware(['auth', 'role:super_admin|sub_admin'])->name('admin.')->group(function () {
-    Route::resource('reviews', ReviewController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-    Route::patch('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
-    Route::patch('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('reviews.reject');
-    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
-    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
-    Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
+
+// Route::prefix('admin')->middleware(['auth', 'role:super_admin|sub_admin'])->name('admin.')->group(function () {
+//     Route::resource('reviews', ReviewController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+//     Route::patch('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
+//     Route::patch('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('reviews.reject');
+//     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+//     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+//     Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
+// });
+
+Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
+    // Reviews (any of these perms can access the resource routes you enabled)
+    Route::resource('reviews', ReviewController::class)
+        ->only(['index','create','store','edit','update','destroy'])
+        ->middleware('permission:rating_review.view|rating_review.create|rating_review.edit|rating_review.delete');
+
+    // Review approve/reject (separate explicit permissions)
+    Route::patch('reviews/{review}/approve', [ReviewController::class, 'approve'])
+        ->name('reviews.approve')
+        ->middleware('permission:rating_review.approve');
+
+    Route::patch('reviews/{review}/reject', [ReviewController::class, 'reject'])
+        ->name('reviews.reject')
+        ->middleware('permission:rating_review.reject');
+
+    // Subscriptions (read-only here)
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])
+        ->name('subscriptions.index')
+        ->middleware('permission:subscription.view');
+
+    Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])
+        ->name('subscriptions.show')
+        ->middleware('permission:subscription.view');
 });
+
+
 
 // Stripe apyment related hooks
 // Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])

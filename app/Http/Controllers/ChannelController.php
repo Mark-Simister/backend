@@ -6,9 +6,24 @@ use App\Models\Channel;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
 class ChannelController extends Controller
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth'),
+
+            // web CRUD
+            new Middleware('permission:channel.view',   only: ['index']),
+            new Middleware('permission:channel.create', only: ['create','store']),
+            new Middleware('permission:channel.edit',   only: ['edit','update']),
+            new Middleware('permission:channel.delete', only: ['destroy']),
+
+        ];
+    }
     public function index()
     {
         $channels = Channel::with('category')->latest()->get();

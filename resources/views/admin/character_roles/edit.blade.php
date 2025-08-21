@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Edit Character Role</h4>
+        @can('character_role.edit')
         <form action="{{ route('admin.character_roles.update', $characterRole) }}" method="POST">
             @csrf
             @method('PUT') 
@@ -17,6 +18,7 @@
             </div>
             <button type="submit" class="btn btn-primary mt-3">Update Role</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

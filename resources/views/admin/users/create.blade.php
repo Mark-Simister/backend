@@ -47,19 +47,19 @@
                 </div>
 
                 <div class="form-group mt-3">
-    <label>Role <span class="text-danger">*</span></label>
-    <select name="role" class="form-control" required>
-        <option value="">Select Role</option>
-        @foreach ($roles as $key => $role)
-            <option value="{{ $key }}" {{ old('role') == $key ? 'selected' : '' }}>
-                {{ ucfirst(str_replace('_', ' ', $role)) }}
-            </option>
-        @endforeach
-    </select>
-    @error('role')
-        <span class="text-danger">{{ $message }}</span>
-    @enderror
-</div>
+                    <label>Role <span class="text-danger">*</span></label>
+                    <select name="role" class="form-control" required>
+                        <option value="">Select Role</option>
+                        @foreach ($roles as $key => $role)
+                            <option value="{{ $key }}" {{ old('role') == $key ? 'selected' : '' }}>
+                                {{ ucfirst(str_replace('_', ' ', $role)) }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('role')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
 
 
                 {{-- Hidden field (optional if handled in controller) --}}

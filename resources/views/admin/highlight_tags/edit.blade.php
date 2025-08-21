@@ -5,7 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Edit Highlight Tag</h4>
-
+        @can('highlight_tag.view')
         <form action="{{ route('admin.highlight_tags.update', $highlightTag) }}" method="POST">
             @csrf
             @method('PUT')
@@ -40,6 +40,7 @@
 
             <button type="submit" class="btn btn-primary mt-3">Update Highlight Tag</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

@@ -10,9 +10,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File; 
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
 class CharacterController extends Controller
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth'),
+
+            // web CRUD
+            new Middleware('permission:character.view',   only: ['index']),
+            new Middleware('permission:character.create', only: ['create','store']),
+            new Middleware('permission:character.edit',   only: ['edit','update']),
+            new Middleware('permission:character.delete', only: ['destroy']),
+
+        ];
+    }
     public function index() {
     $characters = Character::with('channel')->latest()->get();
     return view('admin.characters.index', compact('characters'));
@@ -133,24 +148,6 @@ public function store(Request $request)
         return redirect()->route('admin.characters.index')->with('success', 'Character created successfully.');
     }
 
-// public function edit(Character $character)
-//     {
-//         $channels = Channel::all(); 
-//         $character_roles = CharacterRole::all();
-//         $character_tags = CharacterTag::all();   
-//         $currentTagNames = $character->character_tag ? explode(',', $character->character_tag) : [];
-        
-//         $currentRoleNames = $character->character_role ? explode(',', $character->character_role) : [];
-
-//         return view('admin.characters.edit', compact(
-//             'character',
-//             'channels',
-//             'character_roles',
-//             'character_tags',
-//             'currentTagNames', 
-//             'currentRoleNames' 
-//         ));
-//     }
 public function edit(Character $character)
 {
     $channels = Channel::all(); 

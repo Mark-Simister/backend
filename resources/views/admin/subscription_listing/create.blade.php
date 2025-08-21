@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Add Subscription</h4>
+        @can('subscription_list.create')
         <form action="{{ route('admin.subscription_listing.store') }}" method="POST">
             @csrf
             <div class="form-group">
@@ -51,6 +52,7 @@
 
             <button type="submit" class="btn btn-success mt-3">Save</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

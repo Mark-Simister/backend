@@ -23,6 +23,7 @@
         @endif
         <div class="card-body">
             <h4>Edit Character</h4>
+            @can('character.edit')
 
             <form action="{{ route('admin.characters.update', $character) }}" method="POST" enctype="multipart/form-data">
                 @csrf
@@ -444,12 +445,13 @@
 
 
 
-
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-primary">Update</button>
-                    <a href="{{ route('admin.characters.index') }}" class="btn btn-secondary">Back</a>
-                </div>
             </form>
+            @endcan
+            
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">Update</button>
+                                <a href="{{ route('admin.characters.index') }}" class="btn btn-secondary">Back</a>
+                            </div>
         </div>
     </div>
 @endsection

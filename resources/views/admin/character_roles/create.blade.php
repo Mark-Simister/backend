@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Add Character Role</h4>
+        @can('character_role.create')
         <form action="{{ route('admin.character_roles.store') }}" method="POST">
             @csrf
             <div class="form-group mt-3">
@@ -16,6 +17,7 @@
             </div>
             <button type="submit" class="btn btn-success mt-3">Save Role</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

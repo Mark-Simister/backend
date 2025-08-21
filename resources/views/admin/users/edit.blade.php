@@ -13,7 +13,7 @@
 
                 <div class="form-group">
                     <label>Name <span class="text-danger">*</span></label>
-                    <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required readonly>
+                    <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required >
                     @error('name')
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
@@ -21,7 +21,7 @@
 
                 <div class="form-group mt-3">
                     <label>Email <span class="text-danger">*</span></label>
-                    <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
+                    <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required readonly>
                     @error('email')
                         <span class="text-danger">{{ $message }}</span>
                     @enderror

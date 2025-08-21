@@ -7,60 +7,79 @@
                 <span class="menu-title">Dashboard</span>
             </a>
         </li>
+        @can('category.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.categories.index') }}">
                 <i class="icon-layout menu-icon"></i>
                 <span class="menu-title">Categories</span>
             </a>
         </li>
+        @endcan
+        @can('channel.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.channels.index') }}">
                 <i class="ti-video-camera menu-icon"></i>
                 <span class="menu-title">Channels</span>
             </a>
         </li>
+        @endcan
+        @can('character_tag.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.character_tags.index') }}">
                 <i class="icon-layout menu-icon"></i>
                 <span class="menu-title">Character Tags</span>
             </a>
         </li>
+        @endcan
+        @can('character_role.view')
         <li class="nav-item {{ request()->routeIs('admin.character_roles.*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
                 <i class="icon-layout menu-icon"></i>
                 <span class="menu-title">Character Roles</span>
             </a>
         </li>
+        @endcan
+        @can('character.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.characters.index') }}">
                 <i class="ti-user menu-icon"></i>
                 <span class="menu-title">Characters</span>
             </a>
         </li>
+        @endcan
+        @can('highlight_tag.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.highlight_tags.index') }}">
                 <i class="ti-tag menu-icon"></i>
                 <span class="menu-title">Highlight Tags</span>
             </a>
         </li>
+        @endcan
+        @can('video.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.videos.index') }}">
                 <i class="ti-video-clapper menu-icon"></i>
                 <span class="menu-title">Videos</span>
             </a>
         </li>
+        @endcan
+        @can('subscription_list.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.subscription_listing.index') }}">
                 <i class="ti-package menu-icon"></i>
                 <span class="menu-title">Subscription Listings</span>
             </a>
         </li>
+        @endcan
+        @can('subscription.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.subscriptions.index') }}">
                 <i class="ti-credit-card menu-icon"></i>
                 <span class="menu-title">Subscriptions</span>
             </a>
         </li>
+        @endcan
+        @role('super_admin')
         <li class="nav-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('admin.roles.index') }}">
                 <i class="ti-lock menu-icon"></i>
@@ -73,6 +92,8 @@
                 <span class="menu-title">Sub-admin Management</span>
             </a>
         </li>
+        @endrole
+        @can('rating_review.view')
         <li class="nav-item {{ request()->is('admin/reviews*') ? 'active' : '' }}">
             <a class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}"
             href="{{ route('admin.reviews.index') }}">
@@ -80,6 +101,7 @@
                 <span class="menu-title">Ratings &amp; Reviews</span>
             </a>
         </li>
+        @endcan
         <li class="nav-item">
             <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
                 aria-controls="form-elements">
@@ -153,12 +175,14 @@
                 </ul>
             </div>
         </li>
-        {{-- <li class="nav-item">
+        {{-- @role('super_admin')
+        <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.permissions.index') }}">
                 <i class="ti-lock menu-icon"></i>
                 <span class="menu-title">Permissions</span>
             </a>
-        </li> --}}
+        </li>
+        @endrole --}}
 
     </ul>
 </nav>

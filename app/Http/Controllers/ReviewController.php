@@ -3,15 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\VideoResource;
 use App\Models\Review;
 use App\Models\Video;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+use Illuminate\Support\Facades\Validator;
 
 class ReviewController extends Controller
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth'),
+
+            // web CRUD
+            new Middleware('permission:rating_review.view',   only: ['index']),
+            new Middleware('permission:rating_review.create', only: ['create','store']),
+            new Middleware('permission:rating_review.edit',   only: ['edit','update']),
+            new Middleware('permission:rating_review.delete', only: ['destroy']),
+            new Middleware('permission:rating_review.approve', only: ['approve']),
+            new Middleware('permission:rating_review.reject', only: ['reject']),
+
+        ];
+    }
+    
     /**
      * USER: Submit or update own review for a video (always resets to pending).
      * Route model binding: /videos/{video}/reviews
@@ -27,7 +48,7 @@ class ReviewController extends Controller
 
     $userId = $request->user()->id;
 
-    // ✅ Check if review already exists
+    // Check if review already exists
     $exists = Review::where('video_id', $data['video_id'])
         ->where('user_id', $userId)
         ->exists();
@@ -242,4 +263,88 @@ class ReviewController extends Controller
         return redirect()->route('admin.reviews.index')
                          ->with('success','Review created successfully.');
     }
+
+
+    
+    
+    
+    // api's
+
+    public function store_api(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'video_id' => ['required','exists:videos,id'],
+            'rating'   => ['required','integer','between:1,5'],
+            'review'   => ['required','string'],
+            'status'   => ['nullable','in:pending,approved,rejected'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Validation failed',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $data  = $validator->validated();
+        $user  = $request->user();
+        $userId = $user->id;
+
+        // Prevent duplicate review by same user for same video
+        $exists = Review::where('video_id', $data['video_id'])
+            ->where('user_id',  $userId)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'You have already submitted a review for this video.',
+            ], 409);
+        }
+
+        $review = Review::create([
+            'video_id' => $data['video_id'],
+            'user_id'  => $userId,
+            'rating'   => $data['rating'],
+            'review'   => $data['review'],
+            'status'   => $data['status'] ?? 'pending',
+        ]);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Review submitted and awaiting approval.',
+            'data'    => $review,
+        ], 201);
+    }
+
+    public function myReviews(Request $request)
+    {
+        $user = $request->user();
+
+        $reviews = Review::with(['video']) 
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
+
+        $data = $reviews->map(function ($review) {
+            return [
+                'id'         => $review->id,
+                'rating'     => $review->rating,
+                'review'     => $review->review,
+                'status'     => $review->status,
+                'created_at' => $review->created_at?->toDateTimeString(),
+                'video'      => new VideoResource($review->video), 
+            ];
+        });
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Your reviews fetched successfully',
+            'data'    => $data,
+        ], 200);
+    }
+
+
+
 }

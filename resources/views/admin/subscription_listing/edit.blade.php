@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Edit Subscription</h4>
+        @can('subscription_list.edit')
         <form action="{{ route('admin.subscription_listing.update', $subscriptionListing->id) }}" method="POST">
             @csrf
             @method('PUT')
@@ -53,6 +54,7 @@
 
             <button type="submit" class="btn btn-success mt-3">Update</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

@@ -8,9 +8,24 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
 class SubscriptionListingController extends Controller
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth'),
+
+            // web CRUD
+            new Middleware('permission:subscription_list.view',   only: ['index']),
+            new Middleware('permission:subscription_list.create', only: ['create','store']),
+            new Middleware('permission:subscription_list.edit',   only: ['edit','update']),
+            new Middleware('permission:subscription_list.delete', only: ['destroy']),
+
+        ];
+    }
     public function index()
     {
         $subscriptionListings = SubscriptionListing::all();

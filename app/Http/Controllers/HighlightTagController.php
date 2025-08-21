@@ -4,9 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\HighlightTag;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
 class HighlightTagController extends Controller
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth'),
+
+            // web CRUD
+            new Middleware('permission:highlight_tag.view',   only: ['index']),
+            new Middleware('permission:highlight_tag.create', only: ['create','store']),
+            new Middleware('permission:highlight_tag.edit',   only: ['edit','update']),
+            new Middleware('permission:highlight_tag.delete', only: ['destroy']),
+
+        ];
+    }
     public function index()
     {
         $tags = HighlightTag::all();

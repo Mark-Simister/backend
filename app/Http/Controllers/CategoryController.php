@@ -6,9 +6,25 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
 class CategoryController extends Controller
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth'),
+
+            // web CRUD
+            new Middleware('permission:category.view',   only: ['index']),
+            new Middleware('permission:category.create', only: ['create','store']),
+            new Middleware('permission:category.edit',   only: ['edit','update']),
+            new Middleware('permission:category.delete', only: ['destroy']),
+
+        ];
+    }
+
     // public function index()
     // {
     //     $categories = Category::latest()->paginate(10);

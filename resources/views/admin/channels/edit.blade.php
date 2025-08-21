@@ -5,6 +5,7 @@
 <div class="card">
     <div class="card-body">
         <h4>Edit Channel</h4>
+        @can('channel.edit')
         <form action="{{ route('admin.channels.update', $channel) }}" method="POST">
             @csrf @method('PUT')
 
@@ -28,6 +29,7 @@
 
             <button class="btn btn-primary mt-3">Update</button>
         </form>
+        @endcan
     </div>
 </div>
 @endsection

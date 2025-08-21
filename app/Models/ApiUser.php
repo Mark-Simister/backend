@@ -35,8 +35,8 @@ class ApiUser extends Authenticatable implements JWTSubject
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_verified'       => 'boolean',
+            'password' => 'hashed',
+            'is_verified' => 'boolean',
         ];
     }
 
@@ -55,4 +55,17 @@ class ApiUser extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+    public function subscriptions_api()
+    {
+        // FK column in subscriptions = 'user_id'
+        return $this->hasMany(\App\Models\Subscription::class, 'user_id', 'id');
+    }
+
+    public function reviews_api()
+    {
+        // FK column in reviews = 'user_id'
+        return $this->hasMany(\App\Models\Review::class, 'user_id', 'id');
+    }
+
 }

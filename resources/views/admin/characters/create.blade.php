@@ -17,6 +17,7 @@
 
         <div class="card-body">
             <h4>Add Character</h4>
+            @can('character.create')
             <form action="{{ route('admin.characters.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
@@ -496,14 +497,12 @@
                     @enderror
                 </div>
 
-
-
-
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-success">Save</button>
-                    <a href="{{ route('admin.characters.index') }}" class="btn btn-secondary">Back</a>
-                </div>
             </form>
+            @endcan
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success">Save</button>
+                <a href="{{ route('admin.characters.index') }}" class="btn btn-secondary">Back</a>
+            </div>
         </div>
     </div>
 @endsection
