@@ -204,6 +204,7 @@ class BillingController extends Controller
         'payment_method' => ['required','string'],   // PaymentMethod ID from Stripe Elements
         'auto_renew' => ['nullable','boolean'],
     ]);
+    
 
     // Get the currently authenticated user from the token
     $user = Auth::guard('api')->user();

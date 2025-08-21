@@ -12,3 +12,5 @@ Artisan::command('inspire', function () {
 Artisan::command('video:auto-tag', function () {
     $this->call('app:auto-tagging-job');
 })->purpose('Automatically assign tags to videos');
+
+// Schedule::command('subs:cancel-overdue-renewals')->dailyAt('02:15');

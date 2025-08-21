@@ -16,6 +16,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\CronJobController;
 use App\Http\Middleware\VerifyCsrfToken;
 
 Route::get('/', function () {
@@ -105,6 +106,12 @@ Route::get('/pm-maker', function () {
         'stripeKey' => config('services.stripe.key'),
     ]);
 })->name('pm.maker');
+
+
+// Cron-jobs
+// Route::post('/jobs/cancel-overdue-renewals', [CronJobController::class, 'cancelOverdueRenewals'])
+//     ->name('jobs.cancel-overdue-renewals');
+Route::get('/jobs/cancel-overdue-renewals', [CronJobController::class, 'cancelOverdueRenewals']);
 
 Route::middleware(['auth'])->get('/admin-test', function () {
     return 'Welcome Admin';
