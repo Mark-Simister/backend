@@ -520,7 +520,7 @@
                     value="{{ old('post_schedule_at', isset($video->post_schedule_at) ? \Carbon\Carbon::parse($video->post_schedule_at)->format('Y-m-d\TH:i') : '') }}">
             </div>
 
-            <h3 class="section-heading">SEO Information</h3>
+            {{-- <h3 class="section-heading">SEO Information</h3>
 
             <div class="mb-3">
                 <label for="seo_title">SEO Title</label>
@@ -533,11 +533,6 @@
                 <textarea name="seo_description" id="seo_description" class="form-control">{{ old('seo_description', $video->seo_description ?? '') }}</textarea>
             </div>
 
-            {{-- <div class="mb-3">
-        <label for="hashtags">Hashtags (comma separated)</label>
-        <input type="text" name="hashtags" id="hashtags" class="form-control"
-            value="{{ old('hashtags', isset($video->hashtags) ? implode(',', (array) $video->hashtags) : '') }}">
-    </div> --}}
             <div class="mb-3">
                 <label for="hashtags">Hashtags (comma separated)</label>
                 <input type="text" name="hashtags" id="hashtags" class="form-control"
@@ -615,7 +610,7 @@
                 <input type="number" name="editorial_score" id="editorial_score" class="form-control"
                     placeholder="Enter editorial score"
                     value="{{ old('editorial_score', isset($video) ? $video->editorial_score : '') }}">
-            </div>
+            </div> --}}
 
             {{-- <div class="mb-3">
         <label for="final_beastiescore">Final BeastieScore</label>

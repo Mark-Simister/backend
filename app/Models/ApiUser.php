@@ -7,10 +7,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ApiUser extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, SoftDeletes;
 
     /**
      * Explicitly set table name to 'users'
@@ -24,6 +25,7 @@ class ApiUser extends Authenticatable implements JWTSubject
         'phone',
         'role',
         'is_verified',
+        'is_blocked', 
     ];
 
     protected $hidden = [
@@ -37,6 +39,8 @@ class ApiUser extends Authenticatable implements JWTSubject
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_verified' => 'boolean',
+            'is_blocked' => 'boolean', 
+            'deleted_at' => 'datetime', 
         ];
     }
 
@@ -66,6 +70,11 @@ class ApiUser extends Authenticatable implements JWTSubject
     {
         // FK column in reviews = 'user_id'
         return $this->hasMany(\App\Models\Review::class, 'user_id', 'id');
+    }
+    
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->is_blocked ? 'Blocked' : 'Active';
     }
 
 }

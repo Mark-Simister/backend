@@ -14,6 +14,8 @@ use App\Models\HighlightTag;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class VideoController extends Controller
 {
@@ -290,6 +292,159 @@ class VideoController extends Controller
             'videoHighlightTags'
         ));
     }
+
+    public function editSeo(Video $video)
+    {
+        [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
+            $this->prepareEditData($video);
+
+        return view('admin.videos.edit-seo', compact(
+            'video', 'channels', 'characters', 'categories', 'highlight_tags',
+            'selectedPlatforms', 'videoHighlightTags'
+        ));
+    }
+
+    public function updateSeo(Request $request, Video $video)
+    {
+        $validated = $request->validate([
+            'seo_title'           => ['nullable', 'string', 'max:255'],
+            'seo_description'     => ['nullable', 'string', 'max:1000'],
+            'hashtags'            => ['nullable', 'string'], // gets json-encoded by mutator
+            'cta_text'            => ['nullable', 'string', 'max:255'],
+            'og_image_url'        => ['nullable', 'string', 'max:255'],
+            'open_graph_image'    => ['nullable', 'string', 'max:255'],
+            'twitter_title'       => ['nullable', 'string', 'max:255'],
+            'twitter_description' => ['nullable', 'string', 'max:280'],
+        ]);
+
+        // Only update SEO fields
+        $video->fill($request->only([
+            'seo_title','seo_description','hashtags','cta_text','og_image_url',
+            'open_graph_image','twitter_title','twitter_description',
+        ]));
+
+        $video->save();
+
+        return redirect()
+            ->route('admin.videos.edit.seo', $video)
+            ->with('success', 'SEO fields updated.');
+    }
+    private function prepareEditData(Video $video): array
+    {
+        $channels = Channel::all();
+        $characters = Character::all();
+        $categories = Category::all();
+        $highlight_tags = HighlightTag::all();
+
+        // --- normalize video_platforms to array of strings ---
+        $selectedPlatforms = [];
+        if (!empty($video->video_platforms)) {
+            if (is_array($video->video_platforms)) {
+                $selectedPlatforms = $video->video_platforms;
+            } elseif (is_string($video->video_platforms)) {
+                $decoded = json_decode($video->video_platforms, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    if (is_array($decoded)) {
+                        $selectedPlatforms = $decoded;
+                    } elseif (is_string($decoded) && $decoded !== '') {
+                        $selectedPlatforms = array_map('trim', explode(',', $decoded));
+                    }
+                } else {
+                    $selectedPlatforms = array_map('trim', explode(',', $video->video_platforms));
+                }
+            }
+        }
+
+        // --- normalize highlight_tags to array of IDs ---
+        $videoHighlightTags = [];
+        if (!empty($video->highlight_tags)) {
+            if (is_array($video->highlight_tags)) {
+                $videoHighlightTags = $video->highlight_tags;
+            } elseif (is_string($video->highlight_tags)) {
+                $decoded = json_decode($video->highlight_tags, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    if (is_array($decoded)) {
+                        $videoHighlightTags = $decoded;
+                    } elseif ($decoded !== null && $decoded !== '') {
+                        $videoHighlightTags = [$decoded];
+                    }
+                } else {
+                    $videoHighlightTags = array_filter(
+                        array_map('trim', explode(',', $video->highlight_tags)),
+                        fn($v) => $v !== ''
+                    );
+                }
+            }
+        }
+
+        return [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags];
+    }
+
+    public function editProduct(Video $video)
+    {
+        [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
+            $this->prepareEditData($video);
+
+        return view('admin.videos.edit-product', compact(
+            'video', 'channels', 'characters', 'categories', 'highlight_tags',
+            'selectedPlatforms', 'videoHighlightTags'
+        ));
+    }
+
+    public function updateProduct(Request $request, Video $video)
+{
+    $validated = $request->validate([
+        'product_name'         => ['nullable', 'string', 'max:255'],
+        'product_asin_sku'     => ['nullable', 'string', 'max:255'],
+        'public_rating'        => ['nullable', 'numeric', 'min:0', 'max:5'],
+        'review_details'       => ['nullable', 'string'],
+        'character_score'      => ['nullable', 'numeric', 'min:0', 'max:10'],
+        'editorial_score'      => ['nullable', 'numeric', 'min:0', 'max:10'],
+        'final_beastie_score'  => ['nullable', 'numeric', 'min:0', 'max:10'],
+
+        // now validating as an IMAGE (file), not a string
+        'product_thumbnail'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'], // 5MB
+    ]);
+
+    // Update non-file product fields first
+    $video->fill($request->only([
+        'product_name',
+        'product_asin_sku',
+        'public_rating',
+        'review_details',
+        'character_score',
+        'editorial_score',
+        'final_beastie_score',
+    ]));
+
+    // Handle thumbnail upload (save to public/thumbnails and store path e.g. "thumbnails/...")
+    if ($request->hasFile('product_thumbnail')) {
+        $destinationPath = public_path('thumbnails');
+        if (!File::exists($destinationPath)) {
+            File::makeDirectory($destinationPath, 0777, true);
+        }
+
+        $file = $request->file('product_thumbnail');
+        $thumbnailFilename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $file->move($destinationPath, $thumbnailFilename);
+
+        // Optionally delete old local file if it was in /public/thumbnails
+        if (!empty($video->product_thumbnail)) {
+            $old = public_path($video->product_thumbnail);
+            if (Str::startsWith($video->product_thumbnail, 'thumbnails/') && File::exists($old)) {
+                File::delete($old);
+            }
+        }
+
+        $video->product_thumbnail = 'thumbnails/' . $thumbnailFilename;
+    }
+
+    $video->save();
+
+    return redirect()
+        ->route('admin.videos.edit.product', $video)
+        ->with('success', 'Product fields updated.');
+}
 
 
     public function update(Request $request, Video $video)
@@ -575,39 +730,43 @@ class VideoController extends Controller
 // GET /api/videos/paid?channel_id=&character_id=&category_id=
     // Includes free (YouTube) + paid (Vimeo) for users with active subscription
     public function paidVideos(Request $request)
-    {
-        $user = $request->user(); // from auth:api
-        if (!$user || !$this->hasValidSubscription($user->id)) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'An active subscription is required to view paid videos.',
-            ], 403);
-        }
+{
+    $user = $request->user(); // from auth:api
 
-        $request->validate([
-            'channel_id'   => 'sometimes|integer',
-            'character_id' => 'sometimes|integer',
-            'category_id'  => 'sometimes|integer',
-        ]);
+    $request->validate([
+        'channel_id'   => 'sometimes|integer',
+        'character_id' => 'sometimes|integer',
+        'category_id'  => 'sometimes|integer',
+    ]);
 
-        $q = Video::with(['reviews:id,video_id,rating'])
-            ->whereIn('type', ['youtube', 'vimeo'])   // include free + paid
-            ->where('status', 'published');
+    $q = Video::with(['reviews:id,video_id,rating'])
+        ->where('status', 'published');
 
-        foreach (['channel_id', 'character_id', 'category_id'] as $f) {
-            if ($request->filled($f)) {
-                $q->where($f, $request->get($f));
-            }
-        }
-
-        $videos = $q->latest()->get();
-
-        return response()->json([
-            'status'  => true,
-            'message' => 'Paid videos (including free) fetched successfully',
-            'data'    => VideoResource::collection($videos),
-        ], 200);
+    if ($this->hasValidSubscription($user->id)) {
+        // active subscription → include free + paid
+        $q->whereIn('type', ['youtube', 'vimeo']);
+    } else {
+        // expired subscription → only free
+        $q->where('type', 'youtube');
     }
+
+    foreach (['channel_id', 'character_id', 'category_id'] as $f) {
+        if ($request->filled($f)) {
+            $q->where($f, $request->get($f));
+        }
+    }
+
+    $videos = $q->latest()->get();
+
+    return response()->json([
+        'status'  => true,
+        'message' => $this->hasValidSubscription($user->id)
+            ? 'Paid videos (including free) fetched successfully'
+            : 'Your subscription has ended. Showing free videos only.',
+        'data'    => VideoResource::collection($videos),
+    ], 200);
+}
+
 
 
     

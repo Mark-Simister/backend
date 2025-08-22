@@ -30,7 +30,7 @@ Route::middleware(['auth:api'])->group(function () {
     
     // Categories list API
     Route::prefix('categories')->group(function () {
-        Route::get('/', [CategoryController::class, 'index_api']);
+        // Route::get('/', [CategoryController::class, 'index_api']);
         Route::post('/', [CategoryController::class, 'store_api']);
         Route::get('/{category}', [CategoryController::class, 'show_api']);
         Route::put('/{category}', [CategoryController::class, 'update_api']);
@@ -38,27 +38,27 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     // Channels list API
-    Route::get('channels', [ChannelController::class, 'index_api']);
+    // Route::get('channels', [ChannelController::class, 'index_api']);
     Route::post('channels', [ChannelController::class, 'store_api']);
     Route::get('channels/{channel}', [ChannelController::class, 'show_api']);
     Route::put('channels/{channel}', [ChannelController::class, 'update_api']);
     Route::delete('channels/{channel}', [ChannelController::class, 'destroy_api']);
 
     // Character Tags API
-    Route::get('character-tags', [CharacterTagController::class, 'index_api']);
+    // Route::get('character-tags', [CharacterTagController::class, 'index_api']);
     Route::post('character-tags', [CharacterTagController::class, 'store_api']);
     Route::get('character-tags/{characterTag}', [CharacterTagController::class, 'show_api']);
     Route::put('character-tags/{characterTag}', [CharacterTagController::class, 'update_api']);
     Route::delete('character-tags/{characterTag}', [CharacterTagController::class, 'destroy_api']);
 
     // Character Roles API
-    Route::get('character-roles', [CharacterRoleController::class, 'index_api']);
+    // Route::get('character-roles', [CharacterRoleController::class, 'index_api']);
     Route::post('character-roles', [CharacterRoleController::class, 'store_api']);
     Route::get('character-roles/{characterRole}', [CharacterRoleController::class, 'show_api']);
     Route::put('character-roles/{characterRole}', [CharacterRoleController::class, 'update_api']);
     Route::delete('character-roles/{characterRole}', [CharacterRoleController::class, 'destroy_api']);
 
-    Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
+    // Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
     Route::post('/purchase', [BillingController::class, 'purchase']);
     Route::post('/subscriptions/{id}/cancel', [BillingController::class, 'cancel']);
     //Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook'); 
@@ -68,7 +68,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('purchase/confirm', [BillingController::class, 'confirm']);
 
     Route::get('videos', [VideoController::class, 'index_api']);
-    Route::get('videos/free', [VideoController::class, 'freeVideos']);
+    // Route::get('videos/free', [VideoController::class, 'freeVideos']);
     Route::get('videos/paid', [VideoController::class, 'paidVideos']);
     Route::post('reviews', [ReviewController::class, 'store_api']);
     Route::get('my-reviews', [ReviewController::class, 'myReviews']);
@@ -81,7 +81,20 @@ Route::middleware(['auth:api'])->group(function () {
 
 
 });
+
+// API's For Guest User
+Route::get('categories', [CategoryController::class, 'index_api']);
+Route::get('channels', [ChannelController::class, 'index_api']);
+Route::get('character-tags', [CharacterTagController::class, 'index_api']);
+Route::get('character-roles', [CharacterRoleController::class, 'index_api']);
+Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
+
+
+Route::get('videos/free', [VideoController::class, 'freeVideos']);
     
+
+
+
     // Catch-all for undefined API routes
     Route::any('{any}', function () {
         return response()->json([

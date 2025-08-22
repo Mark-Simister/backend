@@ -63,6 +63,23 @@
             </a>
         </li>
         @endcan
+        @can('rating_review.view')
+        <li class="nav-item {{ request()->is('admin/reviews*') ? 'active' : '' }}">
+            <a class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}"
+                href="{{ route('admin.reviews.index') }}">
+                <i class="ti-star menu-icon"></i>
+                <span class="menu-title">Ratings &amp; Reviews</span>
+            </a>
+        </li>
+        @endcan
+        @can('users.view')
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.users.index') }}">
+                <i class="icon-head menu-icon"></i>
+                <span class="menu-title">Users</span>
+            </a>
+        </li>
+        @endcan
         @can('subscription_list.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.subscription_listing.index') }}">
@@ -93,15 +110,6 @@
             </a>
         </li>
         @endrole
-        @can('rating_review.view')
-        <li class="nav-item {{ request()->is('admin/reviews*') ? 'active' : '' }}">
-            <a class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}"
-            href="{{ route('admin.reviews.index') }}">
-                <i class="ti-star menu-icon"></i>
-                <span class="menu-title">Ratings &amp; Reviews</span>
-            </a>
-        </li>
-        @endcan
         <li class="nav-item">
             <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
                 aria-controls="form-elements">
@@ -152,12 +160,6 @@
                     </li>
                 </ul>
             </div>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.users.index') }}">
-                <i class="icon-head menu-icon"></i>
-                <span class="menu-title">User Pages</span>
-            </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" data-bs-toggle="collapse" href="#error" aria-expanded="false"

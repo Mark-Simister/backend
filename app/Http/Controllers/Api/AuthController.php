@@ -103,99 +103,129 @@ class AuthController extends Controller
 private int $otpTtlMinutes = 10;
 
     public function register(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'phone'    => 'nullable|string',
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'name'     => 'required|string|max:255',
+        // unique among non-deleted users
+        'email'    => [
+            'required',
+            'string',
+            'email',
+            \Illuminate\Validation\Rule::unique('users', 'email')->whereNull('deleted_at'),
+        ],
+        'password' => 'required|string|min:6',
+        'phone'    => 'nullable|string',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Validation failed.',
-                'errors'  => $validator->errors()
-            ], 422);
-        }
-
-        // Ensure role exists for api guard
-        if (!Role::where('name', 'user')->where('guard_name', 'api')->exists()) {
-            Role::create(['name' => 'user', 'guard_name' => 'api']);
-        }
-
-        $user = ApiUser::create([
-            'name'        => $request->name,
-            'email'       => $request->email,
-            'password'    => Hash::make($request->password),
-            'phone'       => $request->phone,
-            'role'        => 'user',
-            'is_verified' => false,
-        ]);
-
-        // Assign role
-        $user->assignRole('user');
-
-        // Generate & email OTP
-        $this->issueAndSendOtp($user);
-
+    if ($validator->fails()) {
         return response()->json([
-            'status'  => true,
-            'message' => 'User registered. A verification code has been emailed to you.',
-            'data'    => [
-                'user' => $user->only(['id','name','email','is_verified']),
-            ]
-        ], 201);
+            'status'  => false,
+            'message' => 'Validation failed.',
+            'errors'  => $validator->errors()
+        ], 422);
     }
+
+    // If there is a soft-deleted user with this email, remove it so the DB unique index doesn't block us
+    $trashed = ApiUser::onlyTrashed()->where('email', $request->email)->first();
+    if ($trashed) {
+        $trashed->forceDelete();
+    }
+
+    // Ensure role exists for api guard
+    if (!Role::where('name', 'user')->where('guard_name', 'api')->exists()) {
+        Role::create(['name' => 'user', 'guard_name' => 'api']);
+    }
+
+    $user = ApiUser::create([
+        'name'        => $request->name,
+        'email'       => $request->email,
+        'password'    => Hash::make($request->password),
+        'phone'       => $request->phone,
+        'role'        => 'user',
+        'is_verified' => false,
+    ]);
+
+    // Assign role
+    $user->assignRole('user');
+
+    // Generate & email OTP
+    $this->issueAndSendOtp($user);
+
+    return response()->json([
+        'status'  => true,
+        'message' => 'User registered. A verification code has been emailed to you.',
+        'data'    => [
+            'user' => $user->only(['id','name','email','is_verified']),
+        ]
+    ], 201);
+}
 
     /**
      * Authenticate a user and issue a JWT.
      * Blocks login until email is verified.
      */
     public function login(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
+{
+    $credentials = $request->only('email', 'password');
 
-        if (!$token = auth('api')->attempt($credentials)) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Invalid credentials.'
-            ], 401);
+    if (!$token = auth('api')->attempt($credentials)) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Invalid credentials.'
+        ], 401);
+    }
+
+    /** @var ApiUser $user */
+    $user = auth('api')->user();
+
+    if (!$user->hasRole('user')) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Access denied. Insufficient permissions.'
+        ], 403);
+    }
+
+    // Do not allow login if user is soft-deleted
+    if (method_exists($user, 'trashed') && $user->trashed()) {
+        auth('api')->logout();
+        return response()->json([
+            'status'  => false,
+            'message' => 'Your account has been deactivated. Please contact support.'
+        ], 410); // Gone
+    }
+
+    // Do not allow login if blocked
+    if (!empty($user->is_blocked) && $user->is_blocked) {
+        auth('api')->logout();
+        return response()->json([
+            'status'  => false,
+            'message' => 'Your account is blocked. Please contact support.'
+        ], 403); // Forbidden
+    }
+
+    if (!$user->is_verified) {
+        // Optional: auto reissue OTP if expired
+        if (!$user->otp_expires_at || Carbon::parse($user->otp_expires_at)->isPast()) {
+            $this->issueAndSendOtp($user);
         }
-
-        /** @var ApiUser $user */
-        $user = auth('api')->user();
-
-        if (!$user->hasRole('user')) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Access denied. Insufficient permissions.'
-            ], 403);
-        }
-
-        if (!$user->is_verified) {
-            // Optional: auto reissue OTP if expired
-            if (!$user->otp_expires_at || Carbon::parse($user->otp_expires_at)->isPast()) {
-                $this->issueAndSendOtp($user);
-            }
-            // invalidate the token because we won’t let them in
-            auth('api')->logout();
-
-            return response()->json([
-                'status'  => false,
-                'message' => 'Email not verified. We have sent (or re-sent) a verification code to your email.',
-            ], 403);
-        }
+        // invalidate the token because we won’t let them in
+        auth('api')->logout();
 
         return response()->json([
-            'status'  => true,
-            'message' => 'Login successful.',
-            'data'    => [
-                'token' => $token,
-                'user'  => $user
-            ]
-        ], 200);
+            'status'  => false,
+            'message' => 'Email not verified. We have sent (or re-sent) a verification code to your email.',
+        ], 403);
     }
+
+    return response()->json([
+        'status'  => true,
+        'message' => 'Login successful.',
+        'data'    => [
+            'token' => $token,
+            'user'  => $user
+        ]
+    ], 200);
+}
 
     /**
      * Resend OTP to email.

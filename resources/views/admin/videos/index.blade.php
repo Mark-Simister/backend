@@ -44,7 +44,8 @@
                         <th>Character</th>
                         <th>Channel</th>
                         <th>Access</th>
-                        <th style="width: 180px;">Actions</th>
+                        <th>Edit</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -56,6 +57,16 @@
                             <td>{{ $video->character->name ?? '-' }}</td>
                             <td>{{ $video->channel->name ?? '-' }}</td>
                             <td>{{ ucfirst($video->access_level) }}</td>
+                            <td>
+                                @can('video.edit')
+                                <a href="{{ route('admin.videos.edit.seo', $video) }}" class="btn btn-outline-primary me-1">
+                                SEO Fields
+                                </a>
+                                <a href="{{ route('admin.videos.edit.product', $video) }}" class="btn btn-outline-success me-1">
+                                Product Fields
+                                </a>
+                                @endcan
+                            </td>
                             <td>
                                 @can('video.edit')
                                 <a href="{{ route('admin.videos.edit', $video) }}" class="btn btn-warning me-1">

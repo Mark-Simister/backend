@@ -86,9 +86,31 @@ Route::middleware(['auth'])
         Route::resource('videos', VideoController::class)
             ->middleware('permission:video.view|video.create|video.edit|video.delete');
 
+        
+        Route::get('videos/{video}/edit-seo', [VideoController::class, 'editSeo'])
+            ->name('videos.edit.seo')
+            ->middleware('permission:video.edit');
+
+        Route::put('videos/{video}/update-seo', [VideoController::class, 'updateSeo'])
+            ->name('videos.update.seo')
+            ->middleware('permission:video.edit');
+
+        Route::get('videos/{video}/edit-product', [VideoController::class, 'editProduct'])
+            ->name('videos.edit.product')
+            ->middleware('permission:video.edit');
+
+        Route::put('videos/{video}/update-product', [VideoController::class, 'updateProduct'])
+            ->name('videos.update.product')
+            ->middleware('permission:video.edit');
+
+
         // Users (maybe only super_admin + managers)
         Route::resource('users', UserController::class)
             ->middleware('permission:user.view|user.create|user.edit|user.delete');
+        
+        Route::post('/users/{user}/toggle-block', [UserController::class, 'toggleBlock'])
+        ->name('users.toggle-block');
+
 
         // Highlight tags
         Route::resource('highlight_tags', HighlightTagController::class)

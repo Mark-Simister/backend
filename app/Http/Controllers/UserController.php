@@ -231,6 +231,21 @@ class UserController extends Controller
         return redirect()->route('admin.sub_admins.index')->with('success', 'Roles assigned successfully.');
     }
 
+    public function toggleBlock(Request $request, User $user)
+{
+    // Example authorization check (optional):
+    // $this->authorize('update', $user);
+
+    $user->is_blocked = ! $user->is_blocked;
+    $user->save();
+
+    return response()->json([
+        'success'    => true,
+        'is_blocked' => $user->is_blocked,
+        'message'    => $user->is_blocked ? 'User blocked' : 'User unblocked',
+    ]);
+}
+
 
     // Api's
 
