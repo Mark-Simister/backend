@@ -37,42 +37,49 @@ class CategoryController extends Controller
     }
 
     public function create()
-    {
-        return view('admin.categories.create');
-    }
+{
+    $channels = \App\Models\Channel::all();
+    return view('admin.categories.create', compact('channels'));
+}
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|unique:categories,name',
-        ]);
+{
+    $request->validate([
+        'name' => 'required|unique:categories,name',
+        'channel_id' => 'required|exists:channels,id',
+    ]);
 
-        Category::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-        ]);
+    Category::create([
+        'name' => $request->name,
+        'slug' => Str::slug($request->name),
+        'channel_id' => $request->channel_id,
+    ]);
 
-        return redirect()->route('admin.categories.index')->with('success', 'Category created successfully!');
-    }
+    return redirect()->route('admin.categories.index')->with('success', 'Category created successfully!');
+}
+
 
     public function edit(Category $category)
-    {
-        return view('admin.categories.edit', compact('category'));
-    }
+{
+    $channels = \App\Models\Channel::all();
+    return view('admin.categories.edit', compact('category', 'channels'));
+}
 
     public function update(Request $request, Category $category)
-    {
-        $request->validate([
-            'name' => 'required|unique:categories,name,' . $category->id,
-        ]);
+{
+    $request->validate([
+        'name' => 'required|unique:categories,name,' . $category->id,
+        'channel_id' => 'required|exists:channels,id',
+    ]);
 
-        $category->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-        ]);
+    $category->update([
+        'name' => $request->name,
+        'slug' => Str::slug($request->name),
+        'channel_id' => $request->channel_id,
+    ]);
 
-        return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully!');
-    }
+    return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully!');
+}
 
     public function destroy(Category $category)
     {
@@ -86,44 +93,55 @@ class CategoryController extends Controller
      * Get all categories.
      */
     public function index_api()
-    {
-        $categories = Category::latest()->get();
+{
+    $categories = Category::with('channel')->latest()->get();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Categories fetched successfully',
-            'data' => $categories
-        ], 200);
-    }
+    return response()->json([
+        'status' => true,
+        'message' => 'Categories fetched successfully',
+        'data' => $categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'channel' => $category->channel, // full channel object
+                'created_at' => $category->created_at->toDateTimeString(),
+            ];
+        }),
+    ]);
+}
 
     /**
      * Store a new category.
      */
     public function store_api(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:categories,name',
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:255|unique:categories,name',
+        'channel_id' => 'required|exists:channels,id',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $category = Category::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-        ]);
-
+    if ($validator->fails()) {
         return response()->json([
-            'status' => true,
-            'message' => 'Category created successfully',
-            'data' => $category
-        ], 201);
+            'status' => false,
+            'message' => 'Validation errors',
+            'errors' => $validator->errors()
+        ], 422);
     }
+
+    $category = Category::create([
+        'name' => $request->name,
+        'slug' => Str::slug($request->name),
+        'channel_id' => $request->channel_id,
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Category created successfully',
+        'data' => $category
+    ], 201);
+}
+
 
     /**
      * Show category details.
@@ -150,39 +168,41 @@ class CategoryController extends Controller
      * Update a category.
      */
     public function update_api(Request $request, $id)
-    {
-        $category = Category::find($id);
+{
+    $category = Category::find($id);
 
-        if (!$category) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Category not found',
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:categories,name,' . $id,
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $category->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-        ]);
-
+    if (!$category) {
         return response()->json([
-            'status' => true,
-            'message' => 'Category updated successfully',
-            'data' => $category
-        ], 200);
+            'status' => false,
+            'message' => 'Category not found',
+        ], 404);
     }
+
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:255|unique:categories,name,' . $id,
+        'channel_id' => 'required|exists:channels,id',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Validation errors',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    $category->update([
+        'name' => $request->name,
+        'slug' => Str::slug($request->name),
+        'channel_id' => $request->channel_id,
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Category updated successfully',
+        'data' => $category
+    ], 200);
+}
 
     /**
      * Delete a category.

@@ -8,10 +8,14 @@ class Channel extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'category_id'];
+    protected $fillable = ['name'];
 
-    public function category()
+    // public function category()
+    // {
+    //     return $this->belongsTo(Category::class);
+    // }
+    public function categories()
     {
-        return $this->belongsTo(Category::class);
+        return $this->hasMany(Category::class);
     }
 }

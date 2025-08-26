@@ -14,7 +14,7 @@ protected $fillable = [
         'persona',
         'details',
         'image',
-        'channel_id',
+        'category_id',
         'location',
         'age',
         'species',
@@ -71,4 +71,8 @@ protected $fillable = [
     {
         return $this->belongsToMany(CharacterRole::class);
     }
+    public function category()
+{
+    return $this->belongsTo(Category::class);
+}
 }

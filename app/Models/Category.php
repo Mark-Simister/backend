@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 class Category extends Model
 {
-    protected $fillable = ['name', 'slug'];
+    protected $fillable = ['name', 'slug', 'channel_id'];
 
     // Auto-generate slug on saving if needed
     protected static function booted()
@@ -20,4 +20,13 @@ class Category extends Model
             $category->slug = Str::slug($category->name);
         });
     }
+
+    public function channel()
+{
+    return $this->belongsTo(Channel::class, 'channel_id');
+}
+public function characters()
+{
+    return $this->hasMany(Character::class);
+}
 }

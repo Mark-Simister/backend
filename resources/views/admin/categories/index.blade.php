@@ -5,8 +5,10 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Categories</h2>
-     @can('category.create')
-    <a href="{{ route('admin.categories.create') }}" class="btn btn-primary">+ Add Category</a>
+    @can('category.create')
+    <a href="{{ route('admin.categories.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Add Category
+    </a>
     @endcan
 </div>
 
@@ -20,41 +22,54 @@
 @if($categories->count())
     <div class="card shadow-sm border-0">
         <div class="card-body">
-            <table id="categories-table" class="table table-hover table-bordered align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width: 60px;">#</th>
-                        <th>Name</th>
-                        <th>Slug</th>
-                        <th style="width: 180px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($categories as $index => $category)
+            <div class="table-responsive">
+                <table id="categories-table" class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $category->name }}</td>
-                            <td>{{ $category->slug }}</td>
-                            <td>
-                                @can('category.edit')
-                                <a href="{{ route('admin.categories.edit', $category) }}" class="btn btn-warning me-1">
-                                    <i class="bi bi-pencil-square"></i> Edit
-                                </a>
-                                @endcan
-                                @can('category.delete')
-                                <form action="{{ route('admin.categories.destroy', $category) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this category?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-danger">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </button>
-                                </form>
-                                @endcan
-                            </td>
+                            <th style="width: 60px;">#</th>
+                            <th>Name</th>
+                            <th>Slug</th>
+                            <th>Channel</th> 
+                            <th style="width: 140px;" class="text-center">Actions</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($categories as $category)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $category->name }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ $category->slug }}</span>
+                                </td>
+
+                                <td>
+                                    {{ $category->channel ? $category->channel->name : '—' }}
+                                </td>
+                                <td class="text-center">
+                                    @can('category.edit')
+                                    <a href="{{ route('admin.categories.edit', $category) }}" 
+                                       class="btn btn-sm btn-warning" title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    @endcan
+                                    @can('category.delete')
+                                    <form action="{{ route('admin.categories.destroy', $category) }}" 
+                                          method="POST" 
+                                          class="d-inline" 
+                                          onsubmit="return confirm('Are you sure you want to delete this category?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn btn-sm btn-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    @endcan
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 @else
@@ -64,21 +79,19 @@
 @endif
 @endsection
 
-
 @push('scripts')
-   
-    <script>
-        $(document).ready(function() {
-            $('#categories-table').DataTable({
-                responsive: true,
-                pageLength: 10,
-                ordering: true,
-                autoWidth: false,
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search categories..."
-                }
-            });
+<script>
+    $(document).ready(function() {
+        $('#categories-table').DataTable({
+            responsive: true,
+            pageLength: 10,
+            ordering: true,
+            autoWidth: false,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search categories..."
+            }
         });
-    </script>
+    });
+</script>
 @endpush

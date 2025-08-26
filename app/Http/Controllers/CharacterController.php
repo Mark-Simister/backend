@@ -29,24 +29,28 @@ class CharacterController extends Controller
         ];
     }
     public function index() {
-    $characters = Character::with('channel')->latest()->get();
+    $characters = Character::with('category')->latest()->get(); 
     return view('admin.characters.index', compact('characters'));
 }
 
 public function create() {
-    $channels = Channel::all();
+    
+    $categories = \App\Models\Category::all(); 
     $character_role = CharacterRole::all();
     $character_tag = CharacterTag::all();
-    return view('admin.characters.create', compact('channels','character_role','character_tag'));
+    return view('admin.characters.create', compact('categories','character_role','character_tag'));
 }
+
 
 public function store(Request $request)
     {
+        // dd($request);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'persona' => 'nullable|string',
             'details' => 'nullable|string',
-            'channel_id' => 'required|exists:channels,id',
+            //'channel_id' => 'required|exists:channels,id',
+            'category_id' => 'required|exists:categories,id',
 
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
 
@@ -150,7 +154,7 @@ public function store(Request $request)
 
 public function edit(Character $character)
 {
-    $channels = Channel::all(); 
+    $categories = \App\Models\Category::all();  
     $character_role = CharacterRole::all();
     $character_tag = CharacterTag::all();
 
@@ -160,7 +164,7 @@ public function edit(Character $character)
 
     return view('admin.characters.edit', compact(
         'character',
-        'channels',
+        'categories',
         'character_role',
         'character_tag',
         'currentTagNames',
@@ -175,7 +179,7 @@ public function update(Request $request, Character $character)
         'name' => 'required|string|max:255',
         'persona' => 'nullable|string',
         'details' => 'nullable|string',
-        'channel_id' => 'required|exists:channels,id',
+        'category_id' => 'required|exists:categories,id',
 
         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
 

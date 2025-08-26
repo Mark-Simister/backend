@@ -107,6 +107,8 @@ Route::middleware(['auth'])
         // Users (maybe only super_admin + managers)
         Route::resource('users', UserController::class)
             ->middleware('permission:user.view|user.create|user.edit|user.delete');
+        Route::put('/admin/users/{id}/unverify', [UserController::class, 'unverify'])->name('admin.users.unverify')->middleware('permission:user.edit');
+
         
         Route::post('/users/{user}/toggle-block', [UserController::class, 'toggleBlock'])
         ->name('users.toggle-block');

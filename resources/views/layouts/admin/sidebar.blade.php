@@ -7,19 +7,19 @@
                 <span class="menu-title">Dashboard</span>
             </a>
         </li>
-        @can('category.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.categories.index') }}">
-                <i class="icon-layout menu-icon"></i>
-                <span class="menu-title">Categories</span>
-            </a>
-        </li>
-        @endcan
         @can('channel.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.channels.index') }}">
                 <i class="ti-video-camera menu-icon"></i>
                 <span class="menu-title">Channels</span>
+            </a>
+        </li>
+        @endcan
+        @can('category.view')
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.categories.index') }}">
+                <i class="icon-layout menu-icon"></i>
+                <span class="menu-title">Categories</span>
             </a>
         </li>
         @endcan
