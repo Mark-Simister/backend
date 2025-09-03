@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\File;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -43,20 +44,35 @@ class CategoryController extends Controller
 }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'name' => 'required|unique:categories,name',
-        'channel_id' => 'required|exists:channels,id',
-    ]);
+    {
+        $request->validate([
+            'name' => 'required|unique:categories,name',
+            'channel_id' => 'required|exists:channels,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
 
-    Category::create([
-        'name' => $request->name,
-        'slug' => Str::slug($request->name),
-        'channel_id' => $request->channel_id,
-    ]);
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $folderPath = public_path('category');
+            if (!file_exists($folderPath)) {
+                mkdir($folderPath, 0777, true);
+            }
+            $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
+            $request->image->move($folderPath, $imageName);
+            $imagePath = 'category/' . $imageName;
+        }
 
-    return redirect()->route('admin.categories.index')->with('success', 'Category created successfully!');
-}
+        Category::create([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'channel_id' => $request->channel_id,
+            'image' => $imagePath,
+        ]);
+
+        return redirect()->route('admin.categories.index')->with('success', 'Category created successfully!');
+    }
+
+
 
 
     public function edit(Category $category)
@@ -66,23 +82,44 @@ class CategoryController extends Controller
 }
 
     public function update(Request $request, Category $category)
-{
-    $request->validate([
-        'name' => 'required|unique:categories,name,' . $category->id,
-        'channel_id' => 'required|exists:channels,id',
-    ]);
+    {
+        $request->validate([
+            'name' => 'required|unique:categories,name,' . $category->id,
+            'channel_id' => 'required|exists:channels,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
 
-    $category->update([
-        'name' => $request->name,
-        'slug' => Str::slug($request->name),
-        'channel_id' => $request->channel_id,
-    ]);
+        $imagePath = $category->image;
+        if ($request->hasFile('image')) {
+            $folderPath = public_path('category');
+            if (!file_exists($folderPath)) {
+                mkdir($folderPath, 0777, true);
+            }
+            $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
+            $request->image->move($folderPath, $imageName);
+            $imagePath = 'category/' . $imageName;
 
-    return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully!');
-}
+            if ($category->image && file_exists(public_path($category->image))) {
+                unlink(public_path($category->image));
+            }
+        }
+
+        $category->update([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'channel_id' => $request->channel_id,
+            'image' => $imagePath,
+        ]);
+
+        return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully!');
+    }
 
     public function destroy(Category $category)
     {
+        if ($category->image && file_exists(public_path($category->image))) {
+            unlink(public_path($category->image));
+        }
+
         $category->delete();
         return redirect()->route('admin.categories.index')->with('success', 'Category deleted.');
     }
@@ -93,55 +130,70 @@ class CategoryController extends Controller
      * Get all categories.
      */
     public function index_api()
-{
-    $categories = Category::with('channel')->latest()->get();
+    {
+        $categories = Category::with('channel')->latest()->get();
 
-    return response()->json([
-        'status' => true,
-        'message' => 'Categories fetched successfully',
-        'data' => $categories->map(function ($category) {
-            return [
-                'id' => $category->id,
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'channel' => $category->channel, // full channel object
-                'created_at' => $category->created_at->toDateTimeString(),
-            ];
-        }),
-    ]);
-}
+        return response()->json([
+            'status' => true,
+            'message' => 'Categories fetched successfully',
+            'data' => $categories->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                    'channel' => $category->channel,
+                    'category_image' => $category->category_image 
+                        ? asset($category->category_image) 
+                        : null,
+                    'created_at' => $category->created_at->toDateTimeString(),
+                ];
+            }),
+        ]);
+    }
 
     /**
      * Store a new category.
      */
     public function store_api(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'name' => 'required|string|max:255|unique:categories,name',
-        'channel_id' => 'required|exists:channels,id',
-    ]);
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:categories,name',
+            'channel_id' => 'required|exists:channels,id',
+            'category_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
 
-    if ($validator->fails()) {
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $imagePath = null;
+        if ($request->hasFile('category_image')) {
+            $folderPath = public_path('category');
+            if (!file_exists($folderPath)) {
+                mkdir($folderPath, 0777, true);
+            }
+            $imageName = time() . '_' . uniqid() . '.' . $request->category_image->extension();
+            $request->category_image->move($folderPath, $imageName);
+            $imagePath = 'category/' . $imageName;
+        }
+
+        $category = Category::create([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'channel_id' => $request->channel_id,
+            'category_image' => $imagePath,
+        ]);
+
         return response()->json([
-            'status' => false,
-            'message' => 'Validation errors',
-            'errors' => $validator->errors()
-        ], 422);
+            'status' => true,
+            'message' => 'Category created successfully',
+            'data' => $category
+        ], 201);
     }
-
-    $category = Category::create([
-        'name' => $request->name,
-        'slug' => Str::slug($request->name),
-        'channel_id' => $request->channel_id,
-    ]);
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Category created successfully',
-        'data' => $category
-    ], 201);
-}
-
 
     /**
      * Show category details.
@@ -160,7 +212,16 @@ class CategoryController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Category details fetched successfully',
-            'data' => $category
+            'data' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'channel_id' => $category->channel_id,
+                'category_image' => $category->category_image 
+                    ? asset($category->category_image) 
+                    : null,
+                'created_at' => $category->created_at->toDateTimeString(),
+            ]
         ], 200);
     }
 
@@ -168,41 +229,58 @@ class CategoryController extends Controller
      * Update a category.
      */
     public function update_api(Request $request, $id)
-{
-    $category = Category::find($id);
+    {
+        $category = Category::find($id);
 
-    if (!$category) {
+        if (!$category) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Category not found',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:categories,name,' . $id,
+            'channel_id' => 'required|exists:channels,id',
+            'category_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $imagePath = $category->category_image;
+        if ($request->hasFile('category_image')) {
+            $folderPath = public_path('category');
+            if (!file_exists($folderPath)) {
+                mkdir($folderPath, 0777, true);
+            }
+            $imageName = time() . '_' . uniqid() . '.' . $request->category_image->extension();
+            $request->category_image->move($folderPath, $imageName);
+            $imagePath = 'category/' . $imageName;
+
+            if ($category->category_image && file_exists(public_path($category->category_image))) {
+                unlink(public_path($category->category_image));
+            }
+        }
+
+        $category->update([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'channel_id' => $request->channel_id,
+            'category_image' => $imagePath,
+        ]);
+
         return response()->json([
-            'status' => false,
-            'message' => 'Category not found',
-        ], 404);
+            'status' => true,
+            'message' => 'Category updated successfully',
+            'data' => $category
+        ], 200);
     }
-
-    $validator = Validator::make($request->all(), [
-        'name' => 'required|string|max:255|unique:categories,name,' . $id,
-        'channel_id' => 'required|exists:channels,id',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Validation errors',
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    $category->update([
-        'name' => $request->name,
-        'slug' => Str::slug($request->name),
-        'channel_id' => $request->channel_id,
-    ]);
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Category updated successfully',
-        'data' => $category
-    ], 200);
-}
 
     /**
      * Delete a category.
@@ -219,6 +297,10 @@ class CategoryController extends Controller
         }
 
         try {
+            if ($category->category_image && file_exists(public_path($category->category_image))) {
+                unlink(public_path($category->category_image));
+            }
+
             $category->delete();
 
             return response()->json([

@@ -1,13 +1,13 @@
 @extends('layouts.admin.master')
 
-@section('title', 'Categories')
+@section('title', 'Regions')
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Categories</h2>
-    @can('category.create')
-    <a href="{{ route('admin.categories.create') }}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Add Category
+    <h2 class="mb-0">Regions</h2>
+    @can('region.create')
+    <a href="{{ route('admin.regions.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Add Region
     </a>
     @endcan
 </div>
@@ -19,54 +19,49 @@
     </div>
 @endif
 
-@if($categories->count())
+@if($regions->count())
     <div class="card shadow-sm border-0">
         <div class="card-body">
             <div class="table-responsive">
-                <table id="categories-table" class="table table-striped table-hover align-middle">
+                <table id="regions-table" class="table table-striped table-hover align-middle">
                     <thead class="table-light">
                         <tr>
                             <th style="width: 60px;">#</th>
-                            {{-- <th>Image</th> --}}
                             <th>Name</th>
-                            <th>Slug</th>
-                            <th>Channel</th> 
-                            <th style="width: 140px;" class="text-center">Actions</th>
+                            <th>Code</th>
+                            <th>Currency</th>
+                            <th>Status</th>
+                            <th style="width: 160px;" class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($categories as $category)
+                        @foreach($regions as $region)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
-                                {{-- <td>
-                                    @if($category->image)
-                                        <img src="{{ asset('/' . $category->image) }}" 
-                                            alt="{{ $category->name }}" 
-                                            class="img-thumbnail" 
-                                            style="width: 50px; height: 50px; object-fit: cover;">
-                                    @else
-                                        <span class="text-muted">No Image</span>
-                                    @endif
-                                </td> --}}
-                                <td>{{ $category->name }}</td>
+                                <td>{{ $region->region_name }}</td>
                                 <td>
-                                    <span class="badge bg-secondary">{{ $category->slug }}</span>
+                                    <span class="badge bg-secondary">{{ $region->region_code }}</span>
                                 </td>
+                                <td>{{ $region->currency }}</td>
                                 <td>
-                                    {{ $category->channel ? $category->channel->name : '—' }}
+                                    @if($region->is_active)
+                                        <span class="badge bg-success">Active</span>
+                                    @else
+                                        <span class="badge bg-danger">Inactive</span>
+                                    @endif
                                 </td>
                                 <td class="text-center">
-                                    @can('category.edit')
-                                    <a href="{{ route('admin.categories.edit', $category) }}" 
+                                    @can('region.edit')
+                                    <a href="{{ route('admin.regions.edit', $region) }}" 
                                        class="btn btn-sm btn-warning" title="Edit">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
                                     @endcan
-                                    @can('category.delete')
-                                    <form action="{{ route('admin.categories.destroy', $category) }}" 
+                                    @can('region.delete')
+                                    <form action="{{ route('admin.regions.destroy', $region) }}" 
                                           method="POST" 
                                           class="d-inline" 
-                                          onsubmit="return confirm('Are you sure you want to delete this category?')">
+                                          onsubmit="return confirm('Are you sure you want to delete this region?')">
                                         @csrf
                                         @method('DELETE')
                                         <button class="btn btn-sm btn-danger" title="Delete">
@@ -84,7 +79,7 @@
     </div>
 @else
     <div class="alert alert-info text-center mt-4">
-        <strong>No categories found.</strong> Start by adding a new one.
+        <strong>No regions found.</strong> Start by adding a new one.
     </div>
 @endif
 @endsection
@@ -92,14 +87,14 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        $('#categories-table').DataTable({
+        $('#regions-table').DataTable({
             responsive: true,
             pageLength: 10,
             ordering: true,
             autoWidth: false,
             language: {
                 search: "_INPUT_",
-                searchPlaceholder: "Search categories..."
+                searchPlaceholder: "Search regions..."
             }
         });
     });

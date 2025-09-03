@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ChannelController;
+use App\Http\Controllers\RegionController;
 use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\UserController;
@@ -69,6 +70,9 @@ Route::middleware(['auth'])
         // Channels
         Route::resource('channels', ChannelController::class)
             ->middleware('permission:channel.view|channel.create|channel.edit|channel.delete');
+            
+        Route::resource('regions', RegionController::class)
+            ->middleware('permission:region.view|region.create|region.edit|region.delete');
 
         // Character tags
         Route::resource('character_tags', CharacterTagController::class)
@@ -107,8 +111,6 @@ Route::middleware(['auth'])
         // Users (maybe only super_admin + managers)
         Route::resource('users', UserController::class)
             ->middleware('permission:user.view|user.create|user.edit|user.delete');
-        Route::put('/admin/users/{id}/unverify', [UserController::class, 'unverify'])->name('admin.users.unverify')->middleware('permission:user.edit');
-
         
         Route::post('/users/{user}/toggle-block', [UserController::class, 'toggleBlock'])
         ->name('users.toggle-block');

@@ -164,4 +164,8 @@ public function reviews()
 {
     return $this->hasMany(\App\Models\Review::class, 'video_id', 'id');
 }
+public function regions()
+{
+    return $this->belongsToMany(\App\Models\Region::class, 'video_region');
+}
 }

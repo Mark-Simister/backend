@@ -6,8 +6,9 @@
     <div class="card-body">
         <h4>Edit Category</h4>
         @can('category.edit')
-        <form action="{{ route('admin.categories.update', $category) }}" method="POST">
+        <form action="{{ route('admin.categories.update', $category) }}" method="POST" enctype="multipart/form-data">
             @csrf @method('PUT')
+
             <div class="form-group">
                 <label>Name</label>
                 <input name="name" class="form-control" value="{{ old('name', $category->name) }}" required>
@@ -27,6 +28,22 @@
                 </select>
                 @error('channel_id') <span class="text-danger">{{ $message }}</span> @enderror
             </div>
+
+            {{-- <div class="form-group mt-3">
+                <label>Category Image</label>
+                <input type="file" name="image" class="form-control">
+                @error('image') <span class="text-danger">{{ $message }}</span> @enderror
+
+                @if($category->image)
+                    <div class="mt-2">
+                        <p>Current Image:</p>
+                        <img src="{{ asset('/' . $category->image) }}" 
+                            alt="Category Image" 
+                            width="120" 
+                            class="img-thumbnail">
+                    </div>
+                @endif
+            </div> --}}
 
             <button class="btn btn-primary mt-3">Update</button>
         </form>

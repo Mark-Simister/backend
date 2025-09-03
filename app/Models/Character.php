@@ -75,4 +75,8 @@ protected $fillable = [
 {
     return $this->belongsTo(Category::class);
 }
+public function regions()
+{
+    return $this->belongsToMany(\App\Models\Region::class, 'character_region');
+}
 }

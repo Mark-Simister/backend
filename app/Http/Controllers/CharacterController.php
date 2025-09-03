@@ -34,11 +34,19 @@ class CharacterController extends Controller
 }
 
 public function create() {
-    
     $categories = \App\Models\Category::all(); 
     $character_role = CharacterRole::all();
     $character_tag = CharacterTag::all();
-    return view('admin.characters.create', compact('categories','character_role','character_tag'));
+    
+    // Only active regions
+    $regions = \App\Models\Region::where('is_active', 1)->get(); 
+
+    return view('admin.characters.create', compact(
+        'categories',
+        'character_role',
+        'character_tag',
+        'regions'
+    ));
 }
 
 
@@ -111,6 +119,7 @@ public function store(Request $request)
             'character_role' => 'nullable|array', 
             'character_role.*' => 'string', 
         ]);
+        $validated['regions'] = $request->input('regions', []);
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -147,7 +156,13 @@ public function store(Request $request)
         $validated['character_role'] = $request->has('character_role') ? implode(',', $validated['character_role']) : null;
 
 
-        Character::create($validated);
+        // Create character first
+        $character = Character::create($validated);
+
+        // Attach selected regions
+        if (!empty($validated['regions'])) {
+            $character->regions()->attach($validated['regions']);
+        }
 
         return redirect()->route('admin.characters.index')->with('success', 'Character created successfully.');
     }
@@ -155,18 +170,28 @@ public function store(Request $request)
 public function edit(Character $character)
 {
     $categories = \App\Models\Category::all();  
-    $character_role = CharacterRole::all();
-    $character_tag = CharacterTag::all();
+    $character_role = \App\Models\CharacterRole::all();
+    $character_tag = \App\Models\CharacterTag::all();
 
-    // Explode comma-separated strings into arrays for multi-select
-    $currentTagNames = $character->character_tag ? explode(',', $character->character_tag) : [];
-    $currentRoleNames = $character->character_role ? explode(',', $character->character_role) : [];
+    $regions = \App\Models\Region::all(); 
+    $selectedRegions = $character->regions->pluck('id')->toArray();
+
+    // Convert comma-separated values into arrays
+    $currentTagNames = $character->character_tag 
+        ? explode(',', $character->character_tag) 
+        : [];
+
+    $currentRoleNames = $character->character_role 
+        ? explode(',', $character->character_role) 
+        : [];
 
     return view('admin.characters.edit', compact(
         'character',
         'categories',
         'character_role',
         'character_tag',
+        'regions',
+        'selectedRegions',
         'currentTagNames',
         'currentRoleNames'
     ));
@@ -239,7 +264,7 @@ public function update(Request $request, Character $character)
         'character_role' => 'nullable|array',
         'character_role.*' => 'string',
     ]);
-
+    $validated['regions'] = $request->input('regions', []);
     // Handle image update
     if ($request->hasFile('image')) {
         if ($character->image && File::exists(public_path($character->image))) {
@@ -280,6 +305,7 @@ public function update(Request $request, Character $character)
     $validated['character_role'] = $request->has('character_role') ? implode(',', $validated['character_role']) : null;
 
     $character->update($validated);
+    $character->regions()->sync($validated['regions']);
 
     return redirect()->route('admin.characters.index')->with('success', 'Character updated successfully.');
 }

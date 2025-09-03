@@ -44,6 +44,17 @@
                         @enderror
                     </div>
 
+                    <div class="form-group">
+                        <label>Select Regions:</label><br>
+                        @foreach($regions as $region)
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" 
+                                    class="form-check-input">
+                                <label class="form-check-label">{{ $region->region_name }}</label>
+                            </div>
+                        @endforeach
+                    </div>
+
                     <div class="form-group mt-3">
                         <label>Mini Bio <span class="text-danger">*</span></label>
                         <textarea name="details" class="form-control" rows="3" required>{{ old('details') }}</textarea>

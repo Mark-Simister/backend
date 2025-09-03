@@ -154,7 +154,24 @@
                 <div id="character_error" class="invalid-feedback" style="display:none;">Please select a character.
                 </div>
             </div>
-
+            <div class="form-group">
+                <label for="regions">Select Regions:</label><br>
+                @foreach($regions as $region)
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" 
+                            name="regions[]" 
+                            value="{{ $region->id }}"
+                            class="form-check-input"
+                            {{ in_array($region->id, $selectedRegions ?? []) ? 'checked' : '' }}>
+                        <label class="form-check-label">
+                            {{ $region->region_name }}
+                            @if(!$region->is_active)
+                                <small class="text-danger">(Inactive)</small>
+                            @endif
+                        </label>
+                    </div>
+                @endforeach
+            </div>
             <div class="mb-3">
                 <label for="channel_id">Channel</label>
                 <select name="channel_id" id="channel_id" class="form-select" required>

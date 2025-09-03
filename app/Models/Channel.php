@@ -8,7 +8,16 @@ class Channel extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    
+    protected $fillable = ['name', 'image'];
+
+    protected $hidden = ['image'];
+protected $appends = ['image_url'];
+
+public function getImageUrlAttribute()
+{
+    return $this->image ? asset($this->image) : null;
+}
 
     // public function category()
     // {
@@ -17,5 +26,9 @@ class Channel extends Model
     public function categories()
     {
         return $this->hasMany(Category::class);
+    }
+    public function regions()
+    {
+        return $this->belongsToMany(Region::class, 'channel_region');
     }
 }

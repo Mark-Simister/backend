@@ -44,7 +44,8 @@ class VideoController extends Controller
         $characters = Character::all();
         $categories = Category::all();
         $highlight_tags = HighlightTag::all();
-        return view('admin.videos.create', compact('channels', 'characters', 'categories', 'highlight_tags'));
+        $regions = \App\Models\Region::where('is_active', 1)->get();
+        return view('admin.videos.create', compact('channels', 'characters', 'categories', 'highlight_tags','regions'));
     }
 
     public function store(Request $request)
@@ -62,6 +63,8 @@ class VideoController extends Controller
             'channel_id' => 'nullable|exists:channels,id',
             'category_id' => 'nullable|exists:categories,id',
             'access_level' => 'required|in:public,premium,early_access',
+            'regions' => 'nullable|array',
+            'regions.*' => 'exists:regions,id',
 
             // Step 3 optional fields
             'affiliate_link' => 'nullable|url',
@@ -225,7 +228,12 @@ class VideoController extends Controller
             $validated['video_platforms'] = json_encode(array_values(array_filter(array_map('trim', $validated['video_platforms']))));
         }
 
-        Video::create($validated);
+        $video = Video::create($validated);
+
+        // Attach regions if any
+        if ($request->has('regions')) {
+            $video->regions()->attach($request->regions);
+        }
 
         return redirect()->route('admin.videos.index')->with('success', 'Video created successfully.');
     }
@@ -236,6 +244,8 @@ class VideoController extends Controller
         $characters = Character::all();
         $categories = Category::all();
         $highlight_tags = HighlightTag::all();
+        $regions = \App\Models\Region::all();
+        $selectedRegions = $video->regions->pluck('id')->toArray();
 
         // --- normalize video_platforms to array of strings ---
         $selectedPlatforms = [];
@@ -289,7 +299,9 @@ class VideoController extends Controller
             'categories',
             'highlight_tags',
             'selectedPlatforms',
-            'videoHighlightTags'
+            'videoHighlightTags',
+            'regions',
+            'selectedRegions'
         ));
     }
 
@@ -462,6 +474,8 @@ class VideoController extends Controller
             'channel_id' => 'nullable|exists:channels,id',
             'category_id' => 'nullable|exists:categories,id',
             'access_level' => 'required|in:public,premium,early_access',
+            'regions' => 'nullable|array',
+            'regions.*' => 'exists:regions,id',
 
             // Step 3
             'affiliate_link' => 'nullable|url',
@@ -616,6 +630,13 @@ class VideoController extends Controller
 
         // Update the video with validated data
         $video->update($validated);
+        // Sync regions (replace old ones with the new selection)
+        if ($request->has('regions')) {
+            $video->regions()->sync($request->regions);
+        } else {
+            // If none selected, clear all
+            $video->regions()->sync([]);
+        }
 
         return redirect()->route('admin.videos.index')->with('success', 'Video updated successfully.');
     }

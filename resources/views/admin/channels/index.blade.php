@@ -7,6 +7,12 @@
         padding: 6px 10px;
         border: 1px solid #ddd;
     }
+    .channel-img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
 </style>
 @endpush
 
@@ -36,8 +42,9 @@
             <thead class="table-light">
                 <tr>
                     <th style="width: 60px;">#</th>
+                    <th>Image</th>
                     <th>Name</th>
-                    {{-- <th>Category</th> --}}
+                    <th>Regions</th>
                     <th>Created</th>
                     <th style="width: 160px;" class="text-center">Actions</th>
                 </tr>
@@ -46,8 +53,22 @@
                 @foreach($channels as $channel)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
+                    <td>
+                        @if($channel->image && file_exists(public_path($channel->image)))
+                            <img src="{{ asset($channel->image) }}" 
+                                alt="{{ $channel->name }}" 
+                                class="channel-img" 
+                                width="80">
+                        @else
+                            <span class="text-muted">No Image</span>
+                        @endif
+                    </td>
                     <td>{{ $channel->name }}</td>
-                   {{--  <td>{{ $channel->category->name ?? 'N/A' }}</td> --}}
+                   <td>
+                        @foreach($channel->regions as $region)
+                            <span class="badge bg-info">{{ $region->region_name }}</span>
+                        @endforeach
+                    </td>
                     <td>{{ $channel->created_at->format('d M, Y') }}</td>
                     <td class="text-center">
                         @can('channel.edit')
@@ -89,7 +110,7 @@
             responsive: true,
             pageLength: 10,
             ordering: true,
-           // order: [[ 3, 'desc' ]], // Order by Created date DESC
+           // order: [[ 4, 'desc' ]], // Order by Created date DESC
             autoWidth: false,
             language: {
                 search: "_INPUT_",

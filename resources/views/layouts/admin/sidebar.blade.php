@@ -7,6 +7,14 @@
                 <span class="menu-title">Dashboard</span>
             </a>
         </li>
+        @can('region.view')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.regions.index') }}">
+                    <i class="ti-map-alt menu-icon"></i>
+                    <span class="menu-title">Regions</span>
+                </a>
+            </li>
+        @endcan
         @can('channel.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.channels.index') }}">

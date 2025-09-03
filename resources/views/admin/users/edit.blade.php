@@ -63,22 +63,12 @@
                     @enderror
                 </div>
 
+
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary">Update</button>
                     <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">Back</a>
                 </div>
             </form>
-            {{-- Show Unverify button only if user is already verified --}}
-                @if($user->is_verified)
-                    <form action="{{ route('admin.users.unverify', $user->id) }}" method="POST" class="d-inline">
-                        @csrf
-                        @method('PUT')
-                        <button type="submit" class="btn btn-warning"
-                            onclick="return confirm('Are you sure you want to unverify this user?');">
-                            Unverify
-                        </button>
-                    </form>
-                @endif
         </div>
     </div>
 @endsection

@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 class Category extends Model
 {
-    protected $fillable = ['name', 'slug', 'channel_id'];
+    protected $fillable = ['name', 'slug', 'channel_id', 'image'];
 
     // Auto-generate slug on saving if needed
     protected static function booted()

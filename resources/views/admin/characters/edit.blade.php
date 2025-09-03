@@ -38,6 +38,22 @@
                         @enderror
                     </div>
 
+                    <div class="form-group">
+                        <label>Select Regions:</label><br>
+                        @foreach($regions as $region)
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" 
+                                    class="form-check-input"
+                                    {{ in_array($region->id, $selectedRegions ?? []) ? 'checked' : '' }}>
+                                <label class="form-check-label">
+                                    {{ $region->region_name }}
+                                    @if($region->is_active != 1)
+                                        <span class="badge bg-danger ms-1">Inactive</span>
+                                    @endif
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
                     <div class="form-group mt-3">
                         <label>Persona</label>
                         <textarea name="persona" class="form-control" rows="3" required>{{ old('persona', $character->persona) }}</textarea>
