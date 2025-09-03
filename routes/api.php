@@ -203,6 +203,66 @@ Route::get('/my-country', function (Request $request) {
 
 
 
+Route::get('/my-country-get', function (Request $request) {
+    // region → URL mapping (US also works as GLOBAL default)
+    $map = [
+        'AU' => 'https://au.fstg.beastierated.com/',
+        'CA' => 'https://ca.fstg.beastierated.com/',
+        'UK' => 'https://uk.fstg.beastierated.com/',
+        'US' => 'https://us.fstg.beastierated.com/', // GLOBAL / default
+    ];
+
+    // Detect client IP (preferring proxy/CDN headers)
+    $ip = $request->header('CF-Connecting-IP')
+        ?? ($request->header('X-Forwarded-For') ? trim(explode(',', $request->header('X-Forwarded-For'))[0]) : null)
+        ?? $request->header('X-Real-IP')
+        ?? $request->ip();
+
+    $country = 'US'; // default fallback
+    $source  = 'fallback';
+
+    // Try ipwho.is
+    try {
+        $r = Http::timeout(5)->retry(2, 200)->get("https://ipwho.is/{$ip}");
+        $j = $r->json();
+        if (!empty($j['success']) && !empty($j['country_code'])) {
+            $country = strtoupper($j['country_code']);
+            $source  = 'ipwho.is';
+        }
+    } catch (\Throwable $e) {}
+
+    // Try ipapi.co if still not resolved
+    if ($country === 'US' && $source === 'fallback') {
+        try {
+            $r2 = Http::timeout(5)->retry(2, 200)->get("https://ipapi.co/{$ip}/json/");
+            $j2 = $r2->json();
+            if (!empty($j2['country'])) {
+                $country = strtoupper($j2['country']);
+                $source  = 'ipapi.co';
+            }
+        } catch (\Throwable $e) {}
+    }
+
+    // Normalize GB -> UK for your DB/URLs
+    if ($country === 'GB') {
+        $country = 'UK';
+    }
+
+    // Pick URL or default to US (= GLOBAL)
+    $url = $map[$country] ?? $map['US'];
+
+    return response()->json([
+        'ip'           => $ip,
+        'country_code' => $country,
+        'url'          => $url,
+        'source'       => $source,
+        'region'       => $url === $map['US'] ? 'GLOBAL' : $country,
+    ]);
+});
+
+
+
+
 
 // Catch-all for undefined API routes
 Route::any('{any}', function () {
