@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\RegionController;
 use App\Http\Controllers\ChannelController;
+use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\CharacterTagController;
 use App\Http\Controllers\CharacterRoleController;
 use App\Http\Controllers\SubscriptionListingController;
@@ -53,6 +54,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('channels/{channel}', [ChannelController::class, 'show_api']);
     Route::put('channels/{channel}', [ChannelController::class, 'update_api']);
     Route::delete('channels/{channel}', [ChannelController::class, 'destroy_api']);
+    Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
+    Route::match(['GET','POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
+
 
     // Character Tags API
     // Route::get('character-tags', [CharacterTagController::class, 'index_api']);
@@ -67,6 +71,13 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('character-roles/{characterRole}', [CharacterRoleController::class, 'show_api']);
     Route::put('character-roles/{characterRole}', [CharacterRoleController::class, 'update_api']);
     Route::delete('character-roles/{characterRole}', [CharacterRoleController::class, 'destroy_api']);
+
+    // Route::get   ('/characters',          [CharacterController::class, 'index_api']);
+    Route::post  ('characters',          [CharacterController::class, 'store_api']);
+    Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
+    Route::post  ('characters/{id}',     [CharacterController::class, 'update_api']); // if you prefer PUT/PATCH:
+    // Route::match(['put','patch'], '/characters/{id}', [CharacterController::class, 'update_api']);
+    Route::delete('characters/{id}',     [CharacterController::class, 'destroy_api']);
 
     // Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
     Route::post('/purchase', [BillingController::class, 'purchase']);
@@ -96,6 +107,7 @@ Route::middleware(['auth:api'])->group(function () {
 Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('regions', [RegionController::class, 'index_api']);
 Route::get('channels', [ChannelController::class, 'index_api']);
+Route::get   ('characters',          [CharacterController::class, 'index_api']);
 Route::get('character-tags', [CharacterTagController::class, 'index_api']);
 Route::get('character-roles', [CharacterRoleController::class, 'index_api']);
 Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
@@ -103,65 +115,6 @@ Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
 
 Route::get('videos/free', [VideoController::class, 'freeVideos']);
     
-// Route::get('/region-url', [RegionController::class, 'json']);     // returns JSON with URL
-// Route::get('/go',          [RegionController::class, 'redirect']); // 302 redirect to URL
-
-// Route::get('/my-country', function (Request $request) {
-//     $ip = $request->query('ip', $request->ip());
-//     $resp = Http::get("https://ipapi.co/{$ip}/json/");
-//     return response()->json([
-//         'ip'           => $ip,
-//         'country_code' => $resp->json('country') ?? 'UNKNOWN',
-//     ]);
-// });
-
-
-// Route::get('/my-country', function (Request $request) {
-//     // 1) Determine which IP to look up
-//     $ip = $request->query('ip', $request->ip());
-
-//     // Base HTTP client with timeout + retries
-//     $http = Http::timeout(5)->retry(2, 200);
-
-//     // 2) Try ipwho.is
-//     try {
-//         $r1 = $http->get("https://ipwho.is/{$ip}");
-//         $j1 = $r1->json();
-//         if (!empty($j1['success']) && !empty($j1['country_code'])) {
-//             return response()->json([
-//                 'ip'           => $j1['ip'] ?? $ip,
-//                 'country_code' => strtoupper($j1['country_code']),
-//                 'source'       => 'ipwho.is',
-//             ]);
-//         }
-//     } catch (\Throwable $e) {
-//         // ignore, move to fallback
-//     }
-
-//     // 3) Fallback to ipapi.co
-//     try {
-//         $r2 = $http->get("https://ipapi.co/{$ip}/json/");
-//         $j2 = $r2->json();
-//         if (!empty($j2['country'])) {
-//             return response()->json([
-//                 'ip'           => $j2['ip'] ?? $ip,
-//                 'country_code' => strtoupper($j2['country']),
-//                 'source'       => 'ipapi.co',
-//             ]);
-//         }
-//     } catch (\Throwable $e) {
-//         // ignore, final fallback
-//     }
-
-//     // 4) If all failed
-//     return response()->json([
-//         'ip'           => $ip,
-//         'country_code' => 'UNKNOWN',
-//         'source'       => 'fallback',
-//     ]);
-// });
-
-
 Route::get('/my-country', function (Request $request) {
     // Try real client IP from common proxy/CDN headers, else fallback to Laravel's IP.
     $ip = $request->header('CF-Connecting-IP')
@@ -202,72 +155,13 @@ Route::get('/my-country', function (Request $request) {
 });
 
 
-
-// Route::get('/my-country-get', function (Request $request) {
-//     // region → URL mapping (US also works as GLOBAL default)
-//     $map = [
-//         'AU' => 'https://au.fstg.beastierated.com/',
-//         'CA' => 'https://ca.fstg.beastierated.com/',
-//         'UK' => 'https://uk.fstg.beastierated.com/',
-//         'US' => 'https://us.fstg.beastierated.com/', // GLOBAL / default
-//     ];
-
-//     // Detect client IP (preferring proxy/CDN headers)
-//     $ip = $request->header('CF-Connecting-IP')
-//         ?? ($request->header('X-Forwarded-For') ? trim(explode(',', $request->header('X-Forwarded-For'))[0]) : null)
-//         ?? $request->header('X-Real-IP')
-//         ?? $request->ip();
-
-//     $country = 'US'; // default fallback
-//     $source  = 'fallback';
-
-//     // Try ipwho.is
-//     try {
-//         $r = Http::timeout(5)->retry(2, 200)->get("https://ipwho.is/{$ip}");
-//         $j = $r->json();
-//         if (!empty($j['success']) && !empty($j['country_code'])) {
-//             $country = strtoupper($j['country_code']);
-//             $source  = 'ipwho.is';
-//         }
-//     } catch (\Throwable $e) {}
-
-//     // Try ipapi.co if still not resolved
-//     if ($country === 'US' && $source === 'fallback') {
-//         try {
-//             $r2 = Http::timeout(5)->retry(2, 200)->get("https://ipapi.co/{$ip}/json/");
-//             $j2 = $r2->json();
-//             if (!empty($j2['country'])) {
-//                 $country = strtoupper($j2['country']);
-//                 $source  = 'ipapi.co';
-//             }
-//         } catch (\Throwable $e) {}
-//     }
-
-//     // Normalize GB -> UK for your DB/URLs
-//     if ($country === 'GB') {
-//         $country = 'UK';
-//     }
-
-//     // Pick URL or default to US (= GLOBAL)
-//     $url = $map[$country] ?? $map['US'];
-
-//     return response()->json([
-//         'ip'           => $ip,
-//         'country_code' => $country,
-//         'url'          => $url,
-//         'source'       => $source,
-//         'region'       => $url === $map['US'] ? 'GLOBAL' : $country,
-//     ]);
-// });
-
-
 Route::get('/my-country-get', function (Request $request) {
     // Explicit region → URL map
     $map = [
         'AU' => 'https://au.fstg.beastierated.com/',
         'CA' => 'https://ca.fstg.beastierated.com/',
         'UK' => 'https://uk.fstg.beastierated.com/',
-        'US' => 'https://us.fstg.beastierated.com/', // US only
+        'US' => 'https://us.fstg.beastierated.com/', 
     ];
 
     // Global/root URL for ALL non-mapped countries

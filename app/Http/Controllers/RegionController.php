@@ -9,14 +9,6 @@ use Illuminate\Support\Facades\Http;
 
 class RegionController extends Controller
 {
-     // Map regions; US is also the GLOBAL fallback
-    private array $map = [
-        'AU' => 'https://au.fstg.beastierated.com/',
-        'CA' => 'https://ca.fstg.beastierated.com/',
-        'UK' => 'https://uk.fstg.beastierated.com/',
-        'US' => 'https://us.fstg.beastierated.com/', // GLOBAL / default
-    ];
-
     public static function middleware(): array
     {
         return [
@@ -200,58 +192,4 @@ class RegionController extends Controller
     }
 
 
-
-    
-
-    // API to Redirect to regions
-    // public function json(Request $request)
-    // {
-    //     [$country, $ip] = $this->countryFromIp($request);
-    //     $url = $this->pickUrl($country);
-
-    //     return response()->json([
-    //         'url'          => $url,
-    //         'country_code' => $country,
-    //         'region'       => $url === $this->map['US'] ? 'GLOBAL' : $country,
-    //         'client_ip'    => $ip,
-    //     ]);
-    // }
-
-    // public function redirect(Request $request)
-    // {
-    //     [$country] = $this->countryFromIp($request);
-    //     return redirect()->away($this->pickUrl($country), 302);
-    // }
-
-    // private function pickUrl(string $country): string
-    // {
-    //     return $this->map[$country] ?? $this->map['US'];
-    // }
-
-    private function countryFromIp(Request $request): array
-    {
-        // Try common proxy/CDN headers first, then Laravel's $request->ip()
-        $ip = $request->headers->get('CF-Connecting-IP')
-           ?? $request->headers->get('X-Forwarded-For')
-           ?? $request->ip();
-
-        // Call a global IP info API (ipapi.co). No API key needed for basic use.
-        // Docs: https://ipapi.co/api/#complete-location
-        try {
-            $resp = Http::timeout(3)
-                ->get("https://ipapi.co/{$ip}/json/");
-            $code = strtoupper(
-                $resp->json('country')              // e.g., "US"
-                ?? $resp->json('country_code')      // alt field name on some services
-                ?? 'US'
-            );
-        } catch (\Throwable $e) {
-            $code = 'US';
-        }
-
-        // Normalize GB -> UK to match your table/URLs
-        if ($code === 'GB') $code = 'UK';
-
-        return [$code, $ip];
-    }
 }
