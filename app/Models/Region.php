@@ -22,13 +22,17 @@ class Region extends Model
         return $this->belongsToMany(Channel::class, 'channel_region');
     }
     public function characters()
-{
-    return $this->belongsToMany(\App\Models\Character::class, 'character_region');
-}
+    {
+        return $this->belongsToMany(\App\Models\Character::class, 'character_region');
+    }
 
-// OPTIONAL: alias region_name -> name (if you want to keep using 'name' in views/controllers)
     public function getNameAttribute()
     {
         return $this->region_name;
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany(\App\Models\Category::class, 'category_region');
     }
 }

@@ -8,21 +8,17 @@ class Channel extends Model
 {
     use HasFactory;
 
-    
+
     protected $fillable = ['name', 'image'];
 
     protected $hidden = ['image'];
-protected $appends = ['image_url'];
+    protected $appends = ['image_url'];
 
-public function getImageUrlAttribute()
-{
-    return $this->image ? asset($this->image) : null;
-}
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? asset($this->image) : null;
+    }
 
-    // public function category()
-    // {
-    //     return $this->belongsTo(Category::class);
-    // }
     public function categories()
     {
         return $this->hasMany(Category::class);

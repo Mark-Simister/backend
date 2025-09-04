@@ -26,6 +26,24 @@
                 </select>
                 @error('channel_id') <span class="text-danger">{{ $message }}</span> @enderror
             </div>
+            <div class="form-group">
+                <label>Select Regions</label><br>
+                @foreach($regions as $region)
+                        <div class="form-check form-check-inline">
+                            <input 
+                                type="checkbox" 
+                            name="regions[]" 
+                            value="{{ $region->id }}" 
+                            id="region_{{ $region->id }}"
+                            class="form-check-input"
+                        >
+                        <label class="form-check-label" for="region_{{ $region->id }}">
+                            {{ $region->region_name }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+
 
             {{-- <div class="form-group mt-3">
                 <label>Category Image</label>

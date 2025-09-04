@@ -25,7 +25,7 @@ class ApiUser extends Authenticatable implements JWTSubject
         'phone',
         'role',
         'is_verified',
-        'is_blocked', 
+        'is_blocked',
     ];
 
     protected $hidden = [
@@ -39,8 +39,8 @@ class ApiUser extends Authenticatable implements JWTSubject
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_verified' => 'boolean',
-            'is_blocked' => 'boolean', 
-            'deleted_at' => 'datetime', 
+            'is_blocked' => 'boolean',
+            'deleted_at' => 'datetime',
         ];
     }
 
@@ -71,7 +71,7 @@ class ApiUser extends Authenticatable implements JWTSubject
         // FK column in reviews = 'user_id'
         return $this->hasMany(\App\Models\Review::class, 'user_id', 'id');
     }
-    
+
     public function getStatusLabelAttribute(): string
     {
         return $this->is_blocked ? 'Blocked' : 'Active';

@@ -7,7 +7,7 @@ use App\Models\Channel;
 use App\Models\CharacterRole;
 use App\Models\CharacterTag;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File; 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -23,36 +23,38 @@ class CharacterController extends Controller
             new Middleware('auth'),
 
             // web CRUD
-            new Middleware('permission:character.view',   only: ['index']),
-            new Middleware('permission:character.create', only: ['create','store']),
-            new Middleware('permission:character.edit',   only: ['edit','update']),
+            new Middleware('permission:character.view', only: ['index']),
+            new Middleware('permission:character.create', only: ['create', 'store']),
+            new Middleware('permission:character.edit', only: ['edit', 'update']),
             new Middleware('permission:character.delete', only: ['destroy']),
 
         ];
     }
-    public function index() {
-    $characters = Character::with('category')->latest()->get(); 
-    return view('admin.characters.index', compact('characters'));
-}
+    public function index()
+    {
+        $characters = Character::with('category')->latest()->get();
+        return view('admin.characters.index', compact('characters'));
+    }
 
-public function create() {
-    $categories = \App\Models\Category::all(); 
-    $character_role = CharacterRole::all();
-    $character_tag = CharacterTag::all();
-    
-    // Only active regions
-    $regions = \App\Models\Region::where('is_active', 1)->get(); 
+    public function create()
+    {
+        $categories = \App\Models\Category::all();
+        $character_role = CharacterRole::all();
+        $character_tag = CharacterTag::all();
 
-    return view('admin.characters.create', compact(
-        'categories',
-        'character_role',
-        'character_tag',
-        'regions'
-    ));
-}
+        // Only active regions
+        $regions = \App\Models\Region::where('is_active', 1)->get();
+
+        return view('admin.characters.create', compact(
+            'categories',
+            'character_role',
+            'character_tag',
+            'regions'
+        ));
+    }
 
 
-public function store(Request $request)
+    public function store(Request $request)
     {
         // dd($request);
         $validated = $request->validate([
@@ -98,7 +100,7 @@ public function store(Request $request)
 
             'brand_reputation_score' => 'nullable|integer|min:0|max:100',
             'brand_reputation_notes' => 'nullable|string',
-            
+
             // New fields
             'sex' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'page_heading' => 'nullable|string|max:255',
@@ -115,37 +117,35 @@ public function store(Request $request)
             'character_launch_date' => 'nullable|date',
             'character_popularity_score' => 'nullable|integer|min:0',
             'editor_notes_content_guidelines' => 'nullable|string',
-          
-            'character_tag' => 'nullable|array', 
-            'character_tag.*' => 'string', 
-            'character_role' => 'nullable|array', 
-            'character_role.*' => 'string', 
+
+            'character_tag' => 'nullable|array',
+            'character_tag.*' => 'string',
+            'character_role' => 'nullable|array',
+            'character_role.*' => 'string',
         ]);
         $validated['regions'] = $request->input('regions', []);
 
-        // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension(); 
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
 
             $destinationPath = public_path('/characters');
 
-            // Create the directory if it doesn't exist
             if (!File::isDirectory($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true, true); 
+                File::makeDirectory($destinationPath, 0755, true, true);
             }
 
-            $image->move($destinationPath, $imageName); 
-            $validated['image'] = 'characters/' . $imageName; 
+            $image->move($destinationPath, $imageName);
+            $validated['image'] = 'characters/' . $imageName;
         }
 
-  
+
         if (empty($validated['character_page_url_slug'])) {
             $baseSlug = Str::slug($validated['name']);
         } else {
             $baseSlug = Str::slug($validated['character_page_url_slug']); // Use the provided slug for the base
         }
-        
+
         $uniqueSlug = $baseSlug;
         $i = 1;
         while (Character::where('character_page_url_slug', $uniqueSlug)->exists()) {
@@ -154,14 +154,12 @@ public function store(Request $request)
         $validated['character_page_url_slug'] = $uniqueSlug;
 
         $validated['character_tag'] = $request->has('character_tag') ? implode(',', $validated['character_tag']) : null;
-        
+
         $validated['character_role'] = $request->has('character_role') ? implode(',', $validated['character_role']) : null;
 
 
-        // Create character first
         $character = Character::create($validated);
 
-        // Attach selected regions
         if (!empty($validated['regions'])) {
             $character->regions()->attach($validated['regions']);
         }
@@ -169,160 +167,163 @@ public function store(Request $request)
         return redirect()->route('admin.characters.index')->with('success', 'Character created successfully.');
     }
 
-public function edit(Character $character)
-{
-    $categories = \App\Models\Category::all();  
-    $character_role = \App\Models\CharacterRole::all();
-    $character_tag = \App\Models\CharacterTag::all();
+    public function edit(Character $character)
+    {
+        $categories = \App\Models\Category::all();
+        $character_role = CharacterRole::all();
+        $character_tag = CharacterTag::all();
 
-    $regions = \App\Models\Region::all(); 
-    $selectedRegions = $character->regions->pluck('id')->toArray();
+        $regions = \App\Models\Region::all();
+        $selectedRegions = $character->regions->pluck('id')->toArray();
 
-    // Convert comma-separated values into arrays
-    $currentTagNames = $character->character_tag 
-        ? explode(',', $character->character_tag) 
-        : [];
+        // Convert comma-separated values into arrays
+        $currentTagNames = $character->character_tag
+            ? explode(',', $character->character_tag)
+            : [];
 
-    $currentRoleNames = $character->character_role 
-        ? explode(',', $character->character_role) 
-        : [];
+        $currentRoleNames = $character->character_role
+            ? explode(',', $character->character_role)
+            : [];
 
-    return view('admin.characters.edit', compact(
-        'character',
-        'categories',
-        'character_role',
-        'character_tag',
-        'regions',
-        'selectedRegions',
-        'currentTagNames',
-        'currentRoleNames'
-    ));
-}
+        return view('admin.characters.edit', compact(
+            'character',
+            'categories',
+            'character_role',
+            'character_tag',
+            'regions',
+            'selectedRegions',
+            'currentTagNames',
+            'currentRoleNames'
+        ));
+    }
 
 
-public function update(Request $request, Character $character)
-{
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'persona' => 'nullable|string',
-        'details' => 'nullable|string',
-        'category_id' => 'required|exists:categories,id',
+    public function update(Request $request, Character $character)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'persona' => 'nullable|string',
+            'details' => 'nullable|string',
+            'category_id' => 'required|exists:categories,id',
 
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
 
-        'location' => 'nullable|string|max:255',
-        'age' => 'nullable|integer|min:0',
-        'species' => 'nullable|string|max:255',
-        'style_vibe' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'age' => 'nullable|integer|min:0',
+            'species' => 'nullable|string|max:255',
+            'style_vibe' => 'nullable|string|max:255',
 
-        'durability_score' => 'nullable|integer|min:0|max:100',
-        'durability_notes' => 'nullable|string',
+            'durability_score' => 'nullable|integer|min:0|max:100',
+            'durability_notes' => 'nullable|string',
 
-        'comfort_score' => 'nullable|integer|min:0|max:100',
-        'comfort_notes' => 'nullable|string',
+            'comfort_score' => 'nullable|integer|min:0|max:100',
+            'comfort_notes' => 'nullable|string',
 
-        'style_score' => 'nullable|integer|min:0|max:100',
-        'style_notes' => 'nullable|string',
+            'style_score' => 'nullable|integer|min:0|max:100',
+            'style_notes' => 'nullable|string',
 
-        'affordability_score' => 'nullable|integer|min:0|max:100',
-        'affordability_notes' => 'nullable|string',
+            'affordability_score' => 'nullable|integer|min:0|max:100',
+            'affordability_notes' => 'nullable|string',
 
-        'tech_feature_score' => 'nullable|integer|min:0|max:100',
-        'tech_feature_notes' => 'nullable|string',
+            'tech_feature_score' => 'nullable|integer|min:0|max:100',
+            'tech_feature_notes' => 'nullable|string',
 
-        'eco_friendliness_score' => 'nullable|integer|min:0|max:100',
-        'eco_friendliness_notes' => 'nullable|string',
+            'eco_friendliness_score' => 'nullable|integer|min:0|max:100',
+            'eco_friendliness_notes' => 'nullable|string',
 
-        'engagement_score' => 'nullable|integer|min:0|max:100',
-        'engagement_notes' => 'nullable|string',
+            'engagement_score' => 'nullable|integer|min:0|max:100',
+            'engagement_notes' => 'nullable|string',
 
-        'ease_of_use_score' => 'nullable|integer|min:0|max:100',
-        'ease_of_use_notes' => 'nullable|string',
+            'ease_of_use_score' => 'nullable|integer|min:0|max:100',
+            'ease_of_use_notes' => 'nullable|string',
 
-        'performance_score' => 'nullable|integer|min:0|max:100',
-        'performance_notes' => 'nullable|string',
+            'performance_score' => 'nullable|integer|min:0|max:100',
+            'performance_notes' => 'nullable|string',
 
-        'brand_reputation_score' => 'nullable|integer|min:0|max:100',
-        'brand_reputation_notes' => 'nullable|string',
+            'brand_reputation_score' => 'nullable|integer|min:0|max:100',
+            'brand_reputation_notes' => 'nullable|string',
 
-        'sex' => ['nullable', Rule::in(['male', 'female', 'other'])],
-        'page_heading' => 'nullable|string|max:255',
-        'page_sub_heading' => 'nullable|string|max:255',
-        'preferences' => 'nullable|string',
-        'loved_pet1' => 'nullable|string|max:255',
-        'loved_pet2' => 'nullable|string|max:255',
-        'loved_pet3' => 'nullable|string|max:255',
-        'hated_pet1' => 'nullable|string|max:255',
-        'hated_pet2' => 'nullable|string|max:255',
-        'hated_pet3' => 'nullable|string|max:255',
-        'character_page_url_slug' => ['nullable', 'string', 'max:255', Rule::unique('characters', 'character_page_url_slug')->ignore($character->id)],
-        'public_private_toggle' => 'required|boolean',
-        'character_launch_date' => 'nullable|date',
-        'character_popularity_score' => 'nullable|integer|min:0',
-        'editor_notes_content_guidelines' => 'nullable|string',
+            'sex' => ['nullable', Rule::in(['male', 'female', 'other'])],
+            'page_heading' => 'nullable|string|max:255',
+            'page_sub_heading' => 'nullable|string|max:255',
+            'preferences' => 'nullable|string',
+            'loved_pet1' => 'nullable|string|max:255',
+            'loved_pet2' => 'nullable|string|max:255',
+            'loved_pet3' => 'nullable|string|max:255',
+            'hated_pet1' => 'nullable|string|max:255',
+            'hated_pet2' => 'nullable|string|max:255',
+            'hated_pet3' => 'nullable|string|max:255',
+            'character_page_url_slug' => ['nullable', 'string', 'max:255', Rule::unique('characters', 'character_page_url_slug')->ignore($character->id)],
+            'public_private_toggle' => 'required|boolean',
+            'character_launch_date' => 'nullable|date',
+            'character_popularity_score' => 'nullable|integer|min:0',
+            'editor_notes_content_guidelines' => 'nullable|string',
 
-        'character_tag' => 'nullable|array',
-        'character_tag.*' => 'string',
-        'character_role' => 'nullable|array',
-        'character_role.*' => 'string',
-    ]);
-    $validated['regions'] = $request->input('regions', []);
-    // Handle image update
-    if ($request->hasFile('image')) {
-        if ($character->image && File::exists(public_path($character->image))) {
-            File::delete(public_path($character->image));
+            'character_tag' => 'nullable|array',
+            'character_tag.*' => 'string',
+            'character_role' => 'nullable|array',
+            'character_role.*' => 'string',
+        ]);
+        $validated['regions'] = $request->input('regions', []);
+        // Handle image update
+        if ($request->hasFile('image')) {
+            if ($character->image && File::exists(public_path($character->image))) {
+                File::delete(public_path($character->image));
+            }
+
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $destinationPath = public_path('/characters');
+
+            if (!File::isDirectory($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true, true);
+            }
+
+            $image->move($destinationPath, $imageName);
+            $validated['image'] = 'characters/' . $imageName;
+        } else {
+            $validated['image'] = $character->image;
         }
 
-        $image = $request->file('image');
-        $imageName = time() . '.' . $image->getClientOriginalExtension();
-        $destinationPath = public_path('/characters');
-
-        if (!File::isDirectory($destinationPath)) {
-            File::makeDirectory($destinationPath, 0755, true, true);
+        // Generate character_page_url_slug
+        if (empty($validated['character_page_url_slug'])) {
+            $baseSlug = Str::slug($validated['name']);
+        } else {
+            $baseSlug = Str::slug($validated['character_page_url_slug']);
         }
 
-        $image->move($destinationPath, $imageName);
-        $validated['image'] = 'characters/' . $imageName;
-    } else {
-        $validated['image'] = $character->image;
+        $uniqueSlug = $baseSlug;
+        $i = 1;
+        while (
+            Character::where('character_page_url_slug', $uniqueSlug)
+                ->where('id', '!=', $character->id)
+                ->exists()
+        ) {
+            $uniqueSlug = $baseSlug . '-' . $i++;
+        }
+        $validated['character_page_url_slug'] = $uniqueSlug;
+
+        $validated['character_tag'] = $request->has('character_tag') ? implode(',', $validated['character_tag']) : null;
+        $validated['character_role'] = $request->has('character_role') ? implode(',', $validated['character_role']) : null;
+
+        $character->update($validated);
+        $character->regions()->sync($validated['regions']);
+
+        return redirect()->route('admin.characters.index')->with('success', 'Character updated successfully.');
     }
 
-    // Generate character_page_url_slug
-    if (empty($validated['character_page_url_slug'])) {
-        $baseSlug = Str::slug($validated['name']);
-    } else {
-        $baseSlug = Str::slug($validated['character_page_url_slug']);
+
+    public function destroy(Character $character)
+    {
+        $character->delete();
+        return back()->with('success', 'Character deleted.');
     }
 
-    $uniqueSlug = $baseSlug;
-    $i = 1;
-    while (Character::where('character_page_url_slug', $uniqueSlug)
-        ->where('id', '!=', $character->id)
-        ->exists()) {
-        $uniqueSlug = $baseSlug . '-' . $i++;
-    }
-    $validated['character_page_url_slug'] = $uniqueSlug;
-
-    $validated['character_tag'] = $request->has('character_tag') ? implode(',', $validated['character_tag']) : null;
-    $validated['character_role'] = $request->has('character_role') ? implode(',', $validated['character_role']) : null;
-
-    $character->update($validated);
-    $character->regions()->sync($validated['regions']);
-
-    return redirect()->route('admin.characters.index')->with('success', 'Character updated successfully.');
-}
 
 
-public function destroy(Character $character) {
-    $character->delete();
-    return back()->with('success', 'Character deleted.');
-}
+    // API's
 
-
-
-// API's
-
- /* =========================
+    /* =========================
      * LIST
      * ========================= */
     public function index_api(Request $request)
@@ -330,10 +331,17 @@ public function destroy(Character $character) {
         try {
             // Optional pagination (defaults to full list like your Channel API)
             $query = Character::select([
-                    'id','name','image','category_id','character_page_url_slug',
-                    'public_private_toggle','created_at','updated_at',
-                    'character_tag','character_role'
-                ])
+                'id',
+                'name',
+                'image',
+                'category_id',
+                'character_page_url_slug',
+                'public_private_toggle',
+                'created_at',
+                'updated_at',
+                'character_tag',
+                'character_role'
+            ])
                 ->with([
                     'category:id,name',
                     'regions:id,region_code'
@@ -343,25 +351,20 @@ public function destroy(Character $character) {
             // If you want pagination: /api/characters?page=1&per_page=20
             if ($request->boolean('paginate')) {
                 $perPage = (int) $request->input('per_page', 20);
-                $page    = (int) $request->input('page', 1);
+                $page = (int) $request->input('page', 1);
                 $characters = $query->paginate($perPage, ['*'], 'page', $page);
             } else {
                 $characters = $query->get();
             }
 
-            // Enrich + hide
             $transform = function ($c) {
-                // image URL
                 $c->image_url = $c->image ? asset($c->image) : null;
 
-                // present tags/roles as arrays (stored comma-separated)
-                $c->character_tag  = $c->character_tag  ? explode(',', $c->character_tag)  : [];
+                $c->character_tag = $c->character_tag ? explode(',', $c->character_tag) : [];
                 $c->character_role = $c->character_role ? explode(',', $c->character_role) : [];
 
-                // hide DB-only fields
                 $c->makeHidden(['image']);
 
-                // hide pivot on regions if loaded
                 if ($c->relationLoaded('regions')) {
                     $c->regions->each->makeHidden(['pivot']);
                 }
@@ -375,15 +378,93 @@ public function destroy(Character $character) {
             }
 
             return response()->json([
-                'status'  => true,
+                'status' => true,
                 'message' => 'Characters fetched successfully',
-                'data'    => $characters,
+                'data' => $characters,
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Failed to fetch characters',
-                'error'   => $e->getMessage()
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function index_by_region_api(Request $request, $region = null)
+    {
+        try {
+            $input = strtoupper($region ?? $request->input('region', ''));
+            $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL']; // include GLOBAL only if you actually use it
+            $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
+
+            // 2) Base query
+            $query = \App\Models\Character::select([
+                'id',
+                'name',
+                'image',
+                'category_id',
+                'character_page_url_slug',
+                'public_private_toggle',
+                'created_at',
+                'updated_at',
+                'character_tag',
+                'character_role'
+            ])
+                ->whereHas('regions', function ($q) use ($regionCode) {
+                    $q->where('region_code', $regionCode);
+                })
+                ->with([
+                    'category:id,name',
+                    'regions:id,region_code'
+                ])
+                ->latest();
+
+            // 3) Pagination (optional, same pattern as your index_api)
+            if ($request->boolean('paginate')) {
+                $perPage = (int) $request->input('per_page', 20);
+                $page = (int) $request->input('page', 1);
+                $characters = $query->paginate($perPage, ['*'], 'page', $page);
+            } else {
+                $characters = $query->get();
+            }
+
+            // 4) Transform (same enrich/hide logic as your index_api)
+            $transform = function ($c) {
+                // image absolute URL
+                $c->image_url = $c->image ? asset($c->image) : null;
+
+                // tags/roles arrays from CSV
+                $c->character_tag = $c->character_tag ? explode(',', $c->character_tag) : [];
+                $c->character_role = $c->character_role ? explode(',', $c->character_role) : [];
+
+                // hide raw image path
+                $c->makeHidden(['image']);
+
+                // hide pivot on regions
+                if ($c->relationLoaded('regions')) {
+                    $c->regions->each->makeHidden(['pivot']);
+                }
+
+                return $c;
+            };
+
+            if ($characters instanceof \Illuminate\Pagination\AbstractPaginator) {
+                $characters->getCollection()->transform($transform);
+            } else {
+                $characters->each($transform);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Characters fetched successfully',
+                'data' => $characters,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch characters',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -394,72 +475,72 @@ public function destroy(Character $character) {
     public function store_api(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'        => ['required','string','max:255'],
-            'category_id' => ['required','exists:categories,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'category_id' => ['required', 'exists:categories,id'],
 
-            'persona'     => ['nullable','string'],
-            'details'     => ['nullable','string'],
+            'persona' => ['nullable', 'string'],
+            'details' => ['nullable', 'string'],
 
-            'image'       => ['required','image','mimes:jpeg,png,jpg,gif,svg','max:2048'],
+            'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
 
-            'location'    => ['nullable','string','max:255'],
-            'age'         => ['nullable','integer','min:0'],
-            'species'     => ['nullable','string','max:255'],
-            'style_vibe'  => ['nullable','string','max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'age' => ['nullable', 'integer', 'min:0'],
+            'species' => ['nullable', 'string', 'max:255'],
+            'style_vibe' => ['nullable', 'string', 'max:255'],
 
-            'durability_score'        => ['nullable','integer','min:0','max:100'],
-            'durability_notes'        => ['nullable','string'],
-            'comfort_score'           => ['nullable','integer','min:0','max:100'],
-            'comfort_notes'           => ['nullable','string'],
-            'style_score'             => ['nullable','integer','min:0','max:100'],
-            'style_notes'             => ['nullable','string'],
-            'affordability_score'     => ['nullable','integer','min:0','max:100'],
-            'affordability_notes'     => ['nullable','string'],
-            'tech_feature_score'      => ['nullable','integer','min:0','max:100'],
-            'tech_feature_notes'      => ['nullable','string'],
-            'eco_friendliness_score'  => ['nullable','integer','min:0','max:100'],
-            'eco_friendliness_notes'  => ['nullable','string'],
-            'engagement_score'        => ['nullable','integer','min:0','max:100'],
-            'engagement_notes'        => ['nullable','string'],
-            'ease_of_use_score'       => ['nullable','integer','min:0','max:100'],
-            'ease_of_use_notes'       => ['nullable','string'],
-            'performance_score'       => ['nullable','integer','min:0','max:100'],
-            'performance_notes'       => ['nullable','string'],
-            'brand_reputation_score'  => ['nullable','integer','min:0','max:100'],
-            'brand_reputation_notes'  => ['nullable','string'],
+            'durability_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'durability_notes' => ['nullable', 'string'],
+            'comfort_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'comfort_notes' => ['nullable', 'string'],
+            'style_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'style_notes' => ['nullable', 'string'],
+            'affordability_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'affordability_notes' => ['nullable', 'string'],
+            'tech_feature_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'tech_feature_notes' => ['nullable', 'string'],
+            'eco_friendliness_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'eco_friendliness_notes' => ['nullable', 'string'],
+            'engagement_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'engagement_notes' => ['nullable', 'string'],
+            'ease_of_use_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'ease_of_use_notes' => ['nullable', 'string'],
+            'performance_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'performance_notes' => ['nullable', 'string'],
+            'brand_reputation_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'brand_reputation_notes' => ['nullable', 'string'],
 
-            'sex'                     => ['nullable', Rule::in(['male','female','other'])],
-            'page_heading'            => ['nullable','string','max:255'],
-            'page_sub_heading'        => ['nullable','string','max:255'],
-            'preferences'             => ['nullable','string'],
-            'loved_pet1'              => ['nullable','string','max:255'],
-            'loved_pet2'              => ['nullable','string','max:255'],
-            'loved_pet3'              => ['nullable','string','max:255'],
-            'hated_pet1'              => ['nullable','string','max:255'],
-            'hated_pet2'              => ['nullable','string','max:255'],
-            'hated_pet3'              => ['nullable','string','max:255'],
-            'character_page_url_slug' => ['nullable','string','max:255', Rule::unique('characters','character_page_url_slug')],
-            'public_private_toggle'   => ['required','boolean'],
-            'character_launch_date'   => ['nullable','date'],
-            'character_popularity_score' => ['nullable','integer','min:0'],
-            'editor_notes_content_guidelines' => ['nullable','string'],
+            'sex' => ['nullable', Rule::in(['male', 'female', 'other'])],
+            'page_heading' => ['nullable', 'string', 'max:255'],
+            'page_sub_heading' => ['nullable', 'string', 'max:255'],
+            'preferences' => ['nullable', 'string'],
+            'loved_pet1' => ['nullable', 'string', 'max:255'],
+            'loved_pet2' => ['nullable', 'string', 'max:255'],
+            'loved_pet3' => ['nullable', 'string', 'max:255'],
+            'hated_pet1' => ['nullable', 'string', 'max:255'],
+            'hated_pet2' => ['nullable', 'string', 'max:255'],
+            'hated_pet3' => ['nullable', 'string', 'max:255'],
+            'character_page_url_slug' => ['nullable', 'string', 'max:255', Rule::unique('characters', 'character_page_url_slug')],
+            'public_private_toggle' => ['required', 'boolean'],
+            'character_launch_date' => ['nullable', 'date'],
+            'character_popularity_score' => ['nullable', 'integer', 'min:0'],
+            'editor_notes_content_guidelines' => ['nullable', 'string'],
 
             // arrays in API; stored as comma strings
-            'character_tag'  => ['nullable','array'],
-            'character_tag.*'=> ['string'],
-            'character_role' => ['nullable','array'],
-            'character_role.*'=> ['string'],
+            'character_tag' => ['nullable', 'array'],
+            'character_tag.*' => ['string'],
+            'character_role' => ['nullable', 'array'],
+            'character_role.*' => ['string'],
 
             // regions via pivot
-            'regions'        => ['nullable','array'],
-            'regions.*'      => ['integer','exists:regions,id'],
+            'regions' => ['nullable', 'array'],
+            'regions.*' => ['integer', 'exists:regions,id'],
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Validation errors',
-                'errors'  => $validator->errors()
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -469,13 +550,13 @@ public function destroy(Character $character) {
             // Handle image upload
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
-                $dir   = public_path('characters');
+                $dir = public_path('characters');
                 if (!File::isDirectory($dir)) {
                     File::makeDirectory($dir, 0755, true);
                 }
-                $filename = time().'.'.$image->getClientOriginalExtension();
+                $filename = time() . '.' . $image->getClientOriginalExtension();
                 $image->move($dir, $filename);
-                $data['image'] = 'characters/'.$filename; // store relative path like your form code
+                $data['image'] = 'characters/' . $filename; // store relative path like your form code
             }
 
             // Slug (unique)
@@ -486,12 +567,12 @@ public function destroy(Character $character) {
             $slug = $baseSlug;
             $i = 1;
             while (Character::where('character_page_url_slug', $slug)->exists()) {
-                $slug = $baseSlug.'-'.$i++;
+                $slug = $baseSlug . '-' . $i++;
             }
             $data['character_page_url_slug'] = $slug;
 
             // tags/roles
-            $data['character_tag']  = isset($data['character_tag'])  ? implode(',', $data['character_tag'])  : null;
+            $data['character_tag'] = isset($data['character_tag']) ? implode(',', $data['character_tag']) : null;
             $data['character_role'] = isset($data['character_role']) ? implode(',', $data['character_role']) : null;
 
             // pull & remove regions list
@@ -505,26 +586,26 @@ public function destroy(Character $character) {
             }
 
             // enrich for response
-            $character->load(['category:id,name','regions:id,region_code']);
-            $character->image_url     = $character->image ? asset($character->image) : null;
+            $character->load(['category:id,name', 'regions:id,region_code']);
+            $character->image_url = $character->image ? asset($character->image) : null;
             $character->character_tag = $character->character_tag ? explode(',', $character->character_tag) : [];
-            $character->character_role= $character->character_role? explode(',', $character->character_role): [];
+            $character->character_role = $character->character_role ? explode(',', $character->character_role) : [];
             $character->makeHidden(['image']);
             if ($character->relationLoaded('regions')) {
                 $character->regions->each->makeHidden(['pivot']);
             }
 
             return response()->json([
-                'status'  => true,
+                'status' => true,
                 'message' => 'Character created successfully',
-                'data'    => $character
+                'data' => $character
             ], 201);
 
         } catch (\Exception $e) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Failed to create character',
-                'error'   => $e->getMessage()
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -535,19 +616,19 @@ public function destroy(Character $character) {
     public function show_api($id)
     {
         $character = Character::with([
-                'category:id,name',
-                'regions:id,region_code'
-            ])->find($id);
+            'category:id,name',
+            'regions:id,region_code'
+        ])->find($id);
 
         if (!$character) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Character not found',
             ], 404);
         }
 
-        $character->image_url      = $character->image ? asset($character->image) : null;
-        $character->character_tag  = $character->character_tag ? explode(',', $character->character_tag) : [];
+        $character->image_url = $character->image ? asset($character->image) : null;
+        $character->character_tag = $character->character_tag ? explode(',', $character->character_tag) : [];
         $character->character_role = $character->character_role ? explode(',', $character->character_role) : [];
         $character->makeHidden(['image']);
         if ($character->relationLoaded('regions')) {
@@ -555,9 +636,9 @@ public function destroy(Character $character) {
         }
 
         return response()->json([
-            'status'  => true,
+            'status' => true,
             'message' => 'Character details fetched successfully',
-            'data'    => $character
+            'data' => $character
         ]);
     }
 
@@ -570,76 +651,76 @@ public function destroy(Character $character) {
 
         if (!$character) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Character not found',
             ], 404);
         }
 
         $validator = Validator::make($request->all(), [
-            'name'        => ['required','string','max:255'],
-            'category_id' => ['required','exists:categories,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'category_id' => ['required', 'exists:categories,id'],
 
-            'persona'     => ['nullable','string'],
-            'details'     => ['nullable','string'],
+            'persona' => ['nullable', 'string'],
+            'details' => ['nullable', 'string'],
 
-            'image'       => ['nullable','image','mimes:jpeg,png,jpg,gif,svg','max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
 
-            'location'    => ['nullable','string','max:255'],
-            'age'         => ['nullable','integer','min:0'],
-            'species'     => ['nullable','string','max:255'],
-            'style_vibe'  => ['nullable','string','max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'age' => ['nullable', 'integer', 'min:0'],
+            'species' => ['nullable', 'string', 'max:255'],
+            'style_vibe' => ['nullable', 'string', 'max:255'],
 
-            'durability_score'        => ['nullable','integer','min:0','max:100'],
-            'durability_notes'        => ['nullable','string'],
-            'comfort_score'           => ['nullable','integer','min:0','max:100'],
-            'comfort_notes'           => ['nullable','string'],
-            'style_score'             => ['nullable','integer','min:0','max:100'],
-            'style_notes'             => ['nullable','string'],
-            'affordability_score'     => ['nullable','integer','min:0','max:100'],
-            'affordability_notes'     => ['nullable','string'],
-            'tech_feature_score'      => ['nullable','integer','min:0','max:100'],
-            'tech_feature_notes'      => ['nullable','string'],
-            'eco_friendliness_score'  => ['nullable','integer','min:0','max:100'],
-            'eco_friendliness_notes'  => ['nullable','string'],
-            'engagement_score'        => ['nullable','integer','min:0','max:100'],
-            'engagement_notes'        => ['nullable','string'],
-            'ease_of_use_score'       => ['nullable','integer','min:0','max:100'],
-            'ease_of_use_notes'       => ['nullable','string'],
-            'performance_score'       => ['nullable','integer','min:0','max:100'],
-            'performance_notes'       => ['nullable','string'],
-            'brand_reputation_score'  => ['nullable','integer','min:0','max:100'],
-            'brand_reputation_notes'  => ['nullable','string'],
+            'durability_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'durability_notes' => ['nullable', 'string'],
+            'comfort_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'comfort_notes' => ['nullable', 'string'],
+            'style_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'style_notes' => ['nullable', 'string'],
+            'affordability_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'affordability_notes' => ['nullable', 'string'],
+            'tech_feature_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'tech_feature_notes' => ['nullable', 'string'],
+            'eco_friendliness_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'eco_friendliness_notes' => ['nullable', 'string'],
+            'engagement_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'engagement_notes' => ['nullable', 'string'],
+            'ease_of_use_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'ease_of_use_notes' => ['nullable', 'string'],
+            'performance_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'performance_notes' => ['nullable', 'string'],
+            'brand_reputation_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'brand_reputation_notes' => ['nullable', 'string'],
 
-            'sex'                     => ['nullable', Rule::in(['male','female','other'])],
-            'page_heading'            => ['nullable','string','max:255'],
-            'page_sub_heading'        => ['nullable','string','max:255'],
-            'preferences'             => ['nullable','string'],
-            'loved_pet1'              => ['nullable','string','max:255'],
-            'loved_pet2'              => ['nullable','string','max:255'],
-            'loved_pet3'              => ['nullable','string','max:255'],
-            'hated_pet1'              => ['nullable','string','max:255'],
-            'hated_pet2'              => ['nullable','string','max:255'],
-            'hated_pet3'              => ['nullable','string','max:255'],
-            'character_page_url_slug' => ['nullable','string','max:255', Rule::unique('characters','character_page_url_slug')->ignore($character->id)],
-            'public_private_toggle'   => ['required','boolean'],
-            'character_launch_date'   => ['nullable','date'],
-            'character_popularity_score' => ['nullable','integer','min:0'],
-            'editor_notes_content_guidelines' => ['nullable','string'],
+            'sex' => ['nullable', Rule::in(['male', 'female', 'other'])],
+            'page_heading' => ['nullable', 'string', 'max:255'],
+            'page_sub_heading' => ['nullable', 'string', 'max:255'],
+            'preferences' => ['nullable', 'string'],
+            'loved_pet1' => ['nullable', 'string', 'max:255'],
+            'loved_pet2' => ['nullable', 'string', 'max:255'],
+            'loved_pet3' => ['nullable', 'string', 'max:255'],
+            'hated_pet1' => ['nullable', 'string', 'max:255'],
+            'hated_pet2' => ['nullable', 'string', 'max:255'],
+            'hated_pet3' => ['nullable', 'string', 'max:255'],
+            'character_page_url_slug' => ['nullable', 'string', 'max:255', Rule::unique('characters', 'character_page_url_slug')->ignore($character->id)],
+            'public_private_toggle' => ['required', 'boolean'],
+            'character_launch_date' => ['nullable', 'date'],
+            'character_popularity_score' => ['nullable', 'integer', 'min:0'],
+            'editor_notes_content_guidelines' => ['nullable', 'string'],
 
-            'character_tag'  => ['nullable','array'],
-            'character_tag.*'=> ['string'],
-            'character_role' => ['nullable','array'],
-            'character_role.*'=> ['string'],
+            'character_tag' => ['nullable', 'array'],
+            'character_tag.*' => ['string'],
+            'character_role' => ['nullable', 'array'],
+            'character_role.*' => ['string'],
 
-            'regions'        => ['nullable','array'],
-            'regions.*'      => ['integer','exists:regions,id'],
+            'regions' => ['nullable', 'array'],
+            'regions.*' => ['integer', 'exists:regions,id'],
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Validation errors',
-                'errors'  => $validator->errors()
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -656,9 +737,9 @@ public function destroy(Character $character) {
                 if (!File::isDirectory($dir)) {
                     File::makeDirectory($dir, 0755, true);
                 }
-                $filename = time().'.'.$img->getClientOriginalExtension();
+                $filename = time() . '.' . $img->getClientOriginalExtension();
                 $img->move($dir, $filename);
-                $data['image'] = 'characters/'.$filename;
+                $data['image'] = 'characters/' . $filename;
             } else {
                 // keep old image if not provided
                 $data['image'] = $character->image;
@@ -671,15 +752,17 @@ public function destroy(Character $character) {
 
             $slug = $baseSlug;
             $i = 1;
-            while (Character::where('character_page_url_slug', $slug)
-                    ->where('id','!=',$character->id)
-                    ->exists()) {
-                $slug = $baseSlug.'-'.$i++;
+            while (
+                Character::where('character_page_url_slug', $slug)
+                    ->where('id', '!=', $character->id)
+                    ->exists()
+            ) {
+                $slug = $baseSlug . '-' . $i++;
             }
             $data['character_page_url_slug'] = $slug;
 
             // tags/roles to comma strings
-            $data['character_tag']  = isset($data['character_tag'])  ? implode(',', $data['character_tag'])  : null;
+            $data['character_tag'] = isset($data['character_tag']) ? implode(',', $data['character_tag']) : null;
             $data['character_role'] = isset($data['character_role']) ? implode(',', $data['character_role']) : null;
 
             // regions sync
@@ -693,9 +776,9 @@ public function destroy(Character $character) {
             }
 
             // enrich for response
-            $character->load(['category:id,name','regions:id,region_code']);
-            $character->image_url      = $character->image ? asset($character->image) : null;
-            $character->character_tag  = $character->character_tag ? explode(',', $character->character_tag) : [];
+            $character->load(['category:id,name', 'regions:id,region_code']);
+            $character->image_url = $character->image ? asset($character->image) : null;
+            $character->character_tag = $character->character_tag ? explode(',', $character->character_tag) : [];
             $character->character_role = $character->character_role ? explode(',', $character->character_role) : [];
             $character->makeHidden(['image']);
             if ($character->relationLoaded('regions')) {
@@ -703,15 +786,15 @@ public function destroy(Character $character) {
             }
 
             return response()->json([
-                'status'  => true,
+                'status' => true,
                 'message' => 'Character updated successfully',
-                'data'    => $character
+                'data' => $character
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Failed to update character',
-                'error'   => $e->getMessage()
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -725,7 +808,7 @@ public function destroy(Character $character) {
 
         if (!$character) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Character not found',
             ], 404);
         }
@@ -744,14 +827,14 @@ public function destroy(Character $character) {
             $character->delete();
 
             return response()->json([
-                'status'  => true,
+                'status' => true,
                 'message' => 'Character deleted successfully'
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Failed to delete character',
-                'error'   => $e->getMessage()
+                'error' => $e->getMessage()
             ], 500);
         }
     }

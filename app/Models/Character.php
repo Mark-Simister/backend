@@ -9,7 +9,7 @@ class Character extends Model
 {
     use HasFactory;
 
-protected $fillable = [
+    protected $fillable = [
         'name',
         'persona',
         'details',
@@ -39,7 +39,7 @@ protected $fillable = [
         'performance_notes',
         'brand_reputation_score',
         'brand_reputation_notes',
-        // New fields
+
         'sex',
         'page_heading',
         'page_sub_heading',
@@ -72,11 +72,15 @@ protected $fillable = [
         return $this->belongsToMany(CharacterRole::class);
     }
     public function category()
-{
-    return $this->belongsTo(Category::class);
-}
-public function regions()
-{
-    return $this->belongsToMany(\App\Models\Region::class, 'character_region');
-}
+    {
+        return $this->belongsTo(Category::class);
+    }
+    public function videos()
+    {
+        return $this->hasMany(\App\Models\Video::class, 'character_id');
+    }
+    public function regions()
+    {
+        return $this->belongsToMany(\App\Models\Region::class, 'character_region');
+    }
 }

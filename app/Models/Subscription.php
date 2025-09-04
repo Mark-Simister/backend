@@ -56,10 +56,9 @@ class Subscription extends Model
         'canceled_at' => 'datetime',
         'last_payment_at' => 'datetime',
     ];
-    
+
     public function listing()
     {
-        // plan_id on subscriptions → id on subscription_listing
         return $this->belongsTo(\App\Models\SubscriptionListing::class, 'plan_id', 'id');
     }
     public function user()
@@ -68,11 +67,9 @@ class Subscription extends Model
     }
     public function user_api()
     {
-        // point back to ApiUser via 'user_id'
         return $this->belongsTo(\App\Models\ApiUser::class, 'user_id', 'id');
     }
 
-    // convenience helpers
     public function isActive(): bool
     {
         return $this->subscription_status === 'active' && now()->lte($this->subscription_end_date);

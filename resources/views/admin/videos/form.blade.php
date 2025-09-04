@@ -69,6 +69,7 @@
         font-weight: 600;
     }
 </style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 
 <div class="">
@@ -156,16 +157,13 @@
             </div>
             <div class="form-group">
                 <label for="regions">Select Regions:</label><br>
-                @foreach($regions as $region)
+                @foreach ($regions as $region)
                     <div class="form-check form-check-inline">
-                        <input type="checkbox" 
-                            name="regions[]" 
-                            value="{{ $region->id }}"
-                            class="form-check-input"
+                        <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"
                             {{ in_array($region->id, $selectedRegions ?? []) ? 'checked' : '' }}>
                         <label class="form-check-label">
                             {{ $region->region_name }}
-                            @if(!$region->is_active)
+                            @if (!$region->is_active)
                                 <small class="text-danger">(Inactive)</small>
                             @endif
                         </label>
@@ -239,20 +237,6 @@
                 $thumbSource = old('thumbnail_option', !empty($video->thumbnail_image) ? 'image' : 'url');
             @endphp
 
-            {{-- <div class="mb-3">
-    <label class="form-label">Thumbnail</label>
-    <div class="form-check">
-        <input class="form-check-input" type="radio" name="thumbnail_option" id="thumb_url_option"
-            value="url" {{ $thumbSource == 'url' ? 'checked' : '' }}>
-        <label class="form-check-label" for="thumb_url_option">Use Thumbnail URL</label>
-    </div>
-    <div class="form-check">
-        <input class="form-check-input" type="radio" name="thumbnail_option" id="thumb_image_option"
-            value="image" {{ $thumbSource == 'image' ? 'checked' : '' }}>
-        <label class="form-check-label" for="thumb_image_option">Upload Thumbnail Image</label>
-    </div>
-</div> --}}
-
             <!-- Thumbnail Image Input (Visible if 'image' option is selected) -->
             {{-- <div class="mb-3" id="thumb_image_input" style="{{ $thumbSource == 'image' ? '' : 'display:none;' }}"> --}}
             <div class="mb-3" id="thumb_image_input">
@@ -274,19 +258,6 @@
                 @enderror
             </div>
 
-            <!-- Thumbnail URL Input (Visible if 'url' option is selected) -->
-            {{-- <div class="mb-3" id="thumb_url_input" style="{{ $thumbSource == 'url' ? '' : 'display:none;' }}">
-    <label for="thumbnail_url" class="form-label">Thumbnail URL</label>
-    <input type="url" name="thumbnail_url" id="thumbnail_url"
-        class="form-control @error('thumbnail_url') is-invalid @enderror"
-        placeholder="https://example.com/image.jpg"
-        value="{{ old('thumbnail_url', $video->thumbnail_url ?? '') }}">
-    @error('thumbnail_url') 
-        <div class="invalid-feedback">{{ $message }}</div> 
-    @enderror
-</div> --}}
-
-
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-secondary prev-step">Back</button>
                 <button type="button" class="btn btn-primary next-step">Next</button>
@@ -295,23 +266,6 @@
 
         <!-- Step 4 -->
         <div class="form-step">
-            {{-- <div class="mb-3">
-                <label for="meta_title">Meta Title</label>
-                <input type="text" name="meta_title" id="meta_title" class="form-control" maxlength="70"
-                    value="{{ old('meta_title', $video->meta_title ?? '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="meta_description">Meta Description</label>
-                <textarea name="meta_description" id="meta_description" class="form-control" maxlength="160">{{ old('meta_description', $video->meta_description ?? '') }}</textarea>
-            </div> --}}
-
-            {{-- <div class="mb-3">
-                <label for="keywords">Keywords</label>
-                <input type="text" name="keywords" id="keywords" class="form-control"
-                    value="{{ old('keywords', $video->keywords ?? '') }}">
-            </div> --}}
-
 
             @php
                 function cleanTags($value)
@@ -342,10 +296,18 @@
                 }
             @endphp
 
-            <div class="mb-3">
+            {{-- <div class="mb-3">
                 <label for="tags">Tags (comma separated)</label>
                 <input type="text" name="tags" id="tags" class="form-control"
                     value="{{ old('tags', isset($video->tags) ? cleanTags($video->tags) : '') }}">
+            </div> --}}
+            <div class="mb-3">
+                <label for="tags_select">Tags</label>
+                <select id="tags_select" class="form-select" multiple></select>
+                <input type="hidden" name="tag_ids" id="tag_ids"
+                    value="{{ old('tag_ids', $video->tag_ids ?? '') }}">
+                <button type="button" id="createTagBtn" class="btn btn-sm btn-outline-primary mt-2">Create new
+                    tag</button>
             </div>
 
             <div class="mb-3">
@@ -395,13 +357,7 @@
                 </select>
             </div>
 
-            {{-- <div class="mb-3">
-        <label for="highlight_tags">Highlight Tags (comma separated)</label>
-        <input type="text" name="highlight_tags" id="highlight_tags" class="form-control"
-            value="{{ old('highlight_tags', isset($video->highlight_tags) ? implode(',', (array) $video->highlight_tags) : '') }}">
-    </div> --}}
             @php
-                // Prefer old() (after validation error) else controller-provided $videoHighlightTags
                 $hlSelected = old('highlight_tags', $videoHighlightTags ?? []);
 
                 if (is_string($hlSelected)) {
@@ -426,22 +382,6 @@
                     @endforeach
                 </select>
             </div>
-
-
-
-
-
-
-            {{-- <div class="mb-3">
-        <label for="auto_tags">Auto Tags (comma separated)</label>
-        <input type="text" name="auto_tags" id="auto_tags" class="form-control"
-            value="{{ old('auto_tags', isset($video->auto_tags) ? implode(',', (array) $video->auto_tags) : '') }}">
-    </div> --}}
-            {{-- <div class="mb-3">
-        <label for="auto_tags">Auto Tags (comma separated)</label>
-        <input type="text" name="auto_tags" id="auto_tags" class="form-control"
-    value="{{ old('auto_tags', isset($video->auto_tags) ? cleanTags($video->auto_tags) : '') }}">
-    </div> --}}
 
             <div class="mb-3">
                 <label for="video_type">Video Type</label>
@@ -537,106 +477,6 @@
                     value="{{ old('post_schedule_at', isset($video->post_schedule_at) ? \Carbon\Carbon::parse($video->post_schedule_at)->format('Y-m-d\TH:i') : '') }}">
             </div>
 
-            {{-- <h3 class="section-heading">SEO Information</h3>
-
-            <div class="mb-3">
-                <label for="seo_title">SEO Title</label>
-                <input type="text" name="seo_title" id="seo_title" class="form-control"
-                    value="{{ old('seo_title', $video->seo_title ?? '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="seo_description">SEO Description</label>
-                <textarea name="seo_description" id="seo_description" class="form-control">{{ old('seo_description', $video->seo_description ?? '') }}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="hashtags">Hashtags (comma separated)</label>
-                <input type="text" name="hashtags" id="hashtags" class="form-control"
-                    value="{{ old('hashtags', isset($video->hashtags) ? (is_array($video->hashtags) ? implode(', ', $video->hashtags) : $video->hashtags) : '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="cta_text">CTA Text</label>
-                <input type="text" name="cta_text" id="cta_text" class="form-control"
-                    value="{{ old('cta_text', $video->cta_text ?? '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="og_image_url">OG Image URL</label>
-                <input type="url" name="og_image_url" id="og_image_url" class="form-control"
-                    value="{{ old('og_image_url', $video->og_image_url ?? '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="twitter_title">Twitter Title</label>
-                <input type="text" name="twitter_title" id="twitter_title" class="form-control"
-                    value="{{ old('twitter_title', $video->twitter_title ?? '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="twitter_description">Twitter Description</label>
-                <textarea name="twitter_description" id="twitter_description" class="form-control">{{ old('twitter_description', $video->twitter_description ?? '') }}</textarea>
-            </div>
-
-            <h3 class="section-heading">Product Information</h3>
-            <div class="mb-3">
-                <label for="product_name">Product Name</label>
-                <input type="text" name="product_name" id="product_name" class="form-control"
-                    placeholder="Enter product name"
-                    value="{{ old('product_name', isset($video) ? $video->product_name : '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="product_asin_sku">Product ASIN / SKU</label>
-                <input type="text" name="product_asin_sku" id="product_asin_sku" class="form-control"
-                    placeholder="Enter ASIN/SKU"
-                    value="{{ old('product_asin_sku', isset($video) ? $video->product_asin_sku : '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="public_rating">Public Rating</label>
-                <input type="number" name="public_rating" id="public_rating" class="form-control"
-                    placeholder="Enter public rating (1-5)" min="1" max="5" step="0.1"
-                    value="{{ old('public_rating', isset($video) ? $video->public_rating : '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="product_thumbnail">Product Thumbnail</label>
-                <input type="file" name="product_thumbnail" id="product_thumbnail" class="form-control"
-                    accept="image/*">
-
-                @if (isset($video) && $video->product_thumbnail)
-                    <div class="mt-2">
-                        <label>Current Thumbnail:</label>
-                        <img src="{{ asset($video->product_thumbnail) }}" alt="Current Thumbnail"
-                            style="max-width: 150px; height: auto;">
-                    </div>
-                @endif
-            </div>
-
-            <div class="mb-3">
-                <label for="character_score">Character Score</label>
-                <input type="number" name="character_score" id="character_score" class="form-control"
-                    placeholder="Enter character score"
-                    value="{{ old('character_score', isset($video) ? $video->character_score : '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label for="editorial_score">Editorial Score</label>
-                <input type="number" name="editorial_score" id="editorial_score" class="form-control"
-                    placeholder="Enter editorial score"
-                    value="{{ old('editorial_score', isset($video) ? $video->editorial_score : '') }}">
-            </div> --}}
-
-            {{-- <div class="mb-3">
-        <label for="final_beastiescore">Final BeastieScore</label>
-        <input type="text" name="final_beastiescore" id="final_beastiescore" class="form-control" placeholder="Auto-calculated based on score formula" readonly value="{{ old('final_beastiescore', isset($video) ? $video->final_beastiescore : '') }}">
-    </div> --}}
-
-
-
-
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-secondary prev-step">Back</button>
                 <button type="submit" class="btn btn-success">Submit</button>
@@ -645,7 +485,88 @@
     </form>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
+<script>
+    (function() {
+        const $select = $('#tags_select');
+        const $hidden = $('#tag_ids');
 
+        // Preload existing selection from hidden CSV (for edit)
+        const preloadIdsCsv = ($hidden.val() || '').trim();
+        const preloadIds = preloadIdsCsv ? preloadIdsCsv.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        $select.select2({
+            placeholder: 'Search & select tags…',
+            allowClear: true,
+            multiple: true,
+            ajax: {
+                delay: 200,
+                url: '{{ route('admin.tags.index') }}',
+                dataType: 'json',
+                data: params => ({
+                    q: params.term || '',
+                    page: params.page || 1
+                }),
+                processResults: (data) => data
+            },
+            // So we can type arbitrary text then click "Create new tag" button
+            tags: false, // creation is handled by button
+            width: '100%'
+        });
+
+        // If editing: fetch tag objects for IDs and set them selected
+        if (preloadIds.length) {
+            $.get('{{ route('admin.tags.byIds') }}', {
+                ids: preloadIds
+            }, function(resp) {
+                (resp.results || []).forEach(function(t) {
+                    const opt = new Option(t.text, t.id, true, true);
+                    $select.append(opt);
+                });
+                $select.trigger('change');
+            });
+        }
+
+        // keep hidden CSV synced
+        function syncHidden() {
+            const ids = ($select.val() || []);
+            $hidden.val(ids.join(','));
+        }
+        $select.on('change', syncHidden);
+        syncHidden();
+
+        // Create new tag flow
+        $('#createTagBtn').on('click', function() {
+            const typed = $select.data('select2')?.dropdown?._search?.$search.val().trim() || '';
+            const name = typed || prompt('New tag name');
+            if (!name) return;
+
+            $.ajax({
+                method: 'POST',
+                url: '{{ route('admin.tags.store') }}',
+                data: {
+                    name: name,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(tag) {
+                    // add & select
+                    let opt = $select.find('option[value="' + tag.id + '"]');
+                    if (!opt.length) {
+                        opt = new Option(tag.text, tag.id, true, true);
+                        $select.append(opt);
+                    } else {
+                        opt.prop('selected', true);
+                    }
+                    $select.trigger('change');
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Failed to create tag');
+                }
+            });
+        });
+    })();
+</script>
 <script>
     $(document).ready(function() {
         // Initialize Select2 for the Highlight Tags dropdown
@@ -679,7 +600,7 @@
 
         // Store old image and URL for validation
         const oldThumbnailImage =
-        '{{ $video->thumbnail_image ?? '' }}'; // Get the old thumbnail image if exists
+            '{{ $video->thumbnail_image ?? '' }}'; // Get the old thumbnail image if exists
         const oldThumbnailUrl = '{{ $video->thumbnail_url ?? '' }}'; // Get the old thumbnail URL if exists
 
         const ratingTypeSelect = document.getElementById('rating_type');
@@ -707,20 +628,6 @@
 
         // Initialize visibility based on the current selection
         toggleRatingReviewFields();
-
-        // function toggleThumbnailInputs() {
-        //     if (thumbUrlOption.checked) {
-        //         thumbUrlInput.style.display = "";
-        //         thumbImageInput.style.display = "none";
-        //     } else if (thumbImageOption.checked) {
-        //         thumbUrlInput.style.display = "none";
-        //         thumbImageInput.style.display = "";
-        //     }
-        // }
-
-        // thumbUrlOption.addEventListener("change", toggleThumbnailInputs);
-        // thumbImageOption.addEventListener("change", toggleThumbnailInputs);
-        // toggleThumbnailInputs(); // init on page load
 
         let currentStep = 0;
 
@@ -784,28 +691,6 @@
                 }
             });
 
-            // Thumbnail validation step
-            // if (stepIndex === 2) {
-            //     const thumbOption = document.querySelector('input[name="thumbnail_option"]:checked');
-            //     const urlInput = document.getElementById("thumbnail_url");
-            //     const imageInput = document.getElementById("thumbnail_image");
-
-            //     if (!thumbOption) return valid;
-
-            //     const hasUrl = urlInput && urlInput.value.trim();
-            //     const hasImage = imageInput && imageInput.files.length > 0;
-
-            //     // If no new image is selected, just use the old image or URL
-            //     if (thumbOption.value === "url" && !hasUrl && !oldThumbnailUrl) {
-            //         alert("Please enter a valid Thumbnail URL.");
-            //         urlInput.classList.add("is-invalid");
-            //         valid = false;
-            //     } else if (thumbOption.value === "image" && !hasImage && !oldThumbnailImage) {
-            //         alert("Please upload a Thumbnail Image.");
-            //         imageInput.classList.add("is-invalid");
-            //         valid = false;
-            //     }
-            // }
             return valid;
         }
 

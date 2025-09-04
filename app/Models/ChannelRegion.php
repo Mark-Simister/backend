@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ChannelRegion extends Model
 {
-    protected $table = 'channel_region';   
-    public $timestamps = false;            
+    protected $table = 'channel_region';
+    public $timestamps = false;
     protected $fillable = [
         'channel_id',
         'region_id',

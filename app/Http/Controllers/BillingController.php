@@ -168,7 +168,7 @@ class BillingController extends Controller
     $stripeSub = StripeSubscription::create([
         'customer' => $stripeCustomerId,
         'items' => [[ 'price' => $price->id ]],
-        'default_payment_method' => $pmId,          // ensure Stripe uses this PM
+        'default_payment_method' => $pmId,      
         'payment_behavior' => 'default_incomplete',
         'expand' => ['latest_invoice.payment_intent'],
         'cancel_at' => $cancelAt,

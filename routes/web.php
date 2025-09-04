@@ -18,6 +18,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\CronJobController;
+use App\Http\Controllers\TagController;
 use App\Http\Middleware\VerifyCsrfToken;
 
 Route::get('/', function () {
@@ -89,6 +90,10 @@ Route::middleware(['auth'])
         // Videos
         Route::resource('videos', VideoController::class)
             ->middleware('permission:video.view|video.create|video.edit|video.delete');
+        Route::get('/tags', [TagController::class, 'index'])->name('tags.index');    
+        Route::post('/tags', [TagController::class, 'store'])->name('tags.store'); 
+         Route::get('/tags/by-ids', [TagController::class, 'byIds'])
+        ->name('tags.byIds');   
 
         
         Route::get('videos/{video}/edit-seo', [VideoController::class, 'editSeo'])

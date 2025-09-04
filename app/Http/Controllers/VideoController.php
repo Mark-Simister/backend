@@ -16,6 +16,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use App\Models\Tag;
 
 class VideoController extends Controller
 {
@@ -45,7 +46,7 @@ class VideoController extends Controller
         $categories = Category::all();
         $highlight_tags = HighlightTag::all();
         $regions = \App\Models\Region::where('is_active', 1)->get();
-        return view('admin.videos.create', compact('channels', 'characters', 'categories', 'highlight_tags','regions'));
+        return view('admin.videos.create', compact('channels', 'characters', 'categories', 'highlight_tags', 'regions'));
     }
 
     public function store(Request $request)
@@ -79,8 +80,9 @@ class VideoController extends Controller
             // 'keywords'         => 'nullable|string',
 
             // ---- New Fields ----
-            'tags' => 'nullable|string',
-            'tags.*' => 'string',
+            // 'tags' => 'nullable|string',
+            // 'tags.*' => 'string',
+            'tag_ids' => ['nullable', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
             'rating_type' => 'required|in:rating,review',
             'sponsorship_type' => 'required|in:sponsored,unsponsored',
             'public_rating' => 'nullable|numeric|min:1|max:5',
@@ -139,6 +141,29 @@ class VideoController extends Controller
             // Only store review_details for 'review' type
             $validated['review_details'] = $request->input('review_details');
             $validated['public_rating'] = null; // Make sure public_rating is null if review is selected
+        }
+        $tagIdsCsv = (string) $request->input('tag_ids', '');
+        $tagIds = collect(explode(',', $tagIdsCsv))
+            ->map(fn($s) => trim($s))
+            ->filter()
+            ->map(fn($s) => (int) $s)
+            ->unique()
+            ->values();
+
+        if ($tagIds->isNotEmpty()) {
+            $existing = Tag::whereIn('id', $tagIds)->pluck('id');
+            $missing = $tagIds->diff($existing);
+
+            if ($missing->isNotEmpty()) {
+                return back()
+                    ->withErrors(['tag_ids' => 'Unknown tag IDs: ' . $missing->implode(', ')])
+                    ->withInput();
+            }
+
+            // store clean CSV like "1,2,5"
+            $validated['tag_ids'] = $existing->implode(',');
+        } else {
+            $validated['tag_ids'] = null;
         }
 
         //  Convert comma-separated strings into arrays
@@ -216,11 +241,18 @@ class VideoController extends Controller
         //     }
         // }
         // Convert arrays into comma-separated strings instead of JSON
-        foreach (['tags', 'highlight_tags', 'auto_tags', 'hashtags'] as $field) {
+        // foreach (['tags', 'highlight_tags', 'auto_tags', 'hashtags'] as $field) {
+        //     if (isset($validated[$field]) && is_array($validated[$field])) {
+        //         $validated[$field] = implode(',', $validated[$field]);
+        //     }
+        // }
+        // Convert arrays into comma-separated strings (keep tag_ids as-is)
+        foreach (['highlight_tags', 'auto_tags', 'hashtags'] as $field) {
             if (isset($validated[$field]) && is_array($validated[$field])) {
                 $validated[$field] = implode(',', $validated[$field]);
             }
         }
+
 
         // Keep video_platforms as JSON to satisfy DB CHECK constraint
         if (isset($validated['video_platforms']) && is_array($validated['video_platforms'])) {
@@ -292,6 +324,14 @@ class VideoController extends Controller
             }
         }
 
+        $selectedTags = [];
+        if (!empty($video->tag_ids)) {
+            $selectedTags = array_filter(
+                array_map('trim', explode(',', $video->tag_ids)),
+                fn($v) => $v !== ''
+            );
+        }
+
         return view('admin.videos.edit', compact(
             'video',
             'channels',
@@ -301,7 +341,8 @@ class VideoController extends Controller
             'selectedPlatforms',
             'videoHighlightTags',
             'regions',
-            'selectedRegions'
+            'selectedRegions',
+            'selectedTags'
         ));
     }
 
@@ -311,28 +352,39 @@ class VideoController extends Controller
             $this->prepareEditData($video);
 
         return view('admin.videos.edit-seo', compact(
-            'video', 'channels', 'characters', 'categories', 'highlight_tags',
-            'selectedPlatforms', 'videoHighlightTags'
+            'video',
+            'channels',
+            'characters',
+            'categories',
+            'highlight_tags',
+            'selectedPlatforms',
+            'videoHighlightTags'
         ));
     }
 
     public function updateSeo(Request $request, Video $video)
     {
         $validated = $request->validate([
-            'seo_title'           => ['nullable', 'string', 'max:255'],
-            'seo_description'     => ['nullable', 'string', 'max:1000'],
-            'hashtags'            => ['nullable', 'string'], // gets json-encoded by mutator
-            'cta_text'            => ['nullable', 'string', 'max:255'],
-            'og_image_url'        => ['nullable', 'string', 'max:255'],
-            'open_graph_image'    => ['nullable', 'string', 'max:255'],
-            'twitter_title'       => ['nullable', 'string', 'max:255'],
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:1000'],
+            'hashtags' => ['nullable', 'string'], // gets json-encoded by mutator
+            'cta_text' => ['nullable', 'string', 'max:255'],
+            'og_image_url' => ['nullable', 'string', 'max:255'],
+            'open_graph_image' => ['nullable', 'string', 'max:255'],
+            'twitter_title' => ['nullable', 'string', 'max:255'],
             'twitter_description' => ['nullable', 'string', 'max:280'],
         ]);
 
         // Only update SEO fields
         $video->fill($request->only([
-            'seo_title','seo_description','hashtags','cta_text','og_image_url',
-            'open_graph_image','twitter_title','twitter_description',
+            'seo_title',
+            'seo_description',
+            'hashtags',
+            'cta_text',
+            'og_image_url',
+            'open_graph_image',
+            'twitter_title',
+            'twitter_description',
         ]));
 
         $video->save();
@@ -398,65 +450,70 @@ class VideoController extends Controller
             $this->prepareEditData($video);
 
         return view('admin.videos.edit-product', compact(
-            'video', 'channels', 'characters', 'categories', 'highlight_tags',
-            'selectedPlatforms', 'videoHighlightTags'
+            'video',
+            'channels',
+            'characters',
+            'categories',
+            'highlight_tags',
+            'selectedPlatforms',
+            'videoHighlightTags'
         ));
     }
 
     public function updateProduct(Request $request, Video $video)
-{
-    $validated = $request->validate([
-        'product_name'         => ['nullable', 'string', 'max:255'],
-        'product_asin_sku'     => ['nullable', 'string', 'max:255'],
-        'public_rating'        => ['nullable', 'numeric', 'min:0', 'max:5'],
-        'review_details'       => ['nullable', 'string'],
-        'character_score'      => ['nullable', 'numeric', 'min:0', 'max:10'],
-        'editorial_score'      => ['nullable', 'numeric', 'min:0', 'max:10'],
-        'final_beastie_score'  => ['nullable', 'numeric', 'min:0', 'max:10'],
+    {
+        $validated = $request->validate([
+            'product_name' => ['nullable', 'string', 'max:255'],
+            'product_asin_sku' => ['nullable', 'string', 'max:255'],
+            'public_rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
+            'review_details' => ['nullable', 'string'],
+            'character_score' => ['nullable', 'numeric', 'min:0', 'max:10'],
+            'editorial_score' => ['nullable', 'numeric', 'min:0', 'max:10'],
+            'final_beastie_score' => ['nullable', 'numeric', 'min:0', 'max:10'],
 
-        // now validating as an IMAGE (file), not a string
-        'product_thumbnail'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'], // 5MB
-    ]);
+            // now validating as an IMAGE (file), not a string
+            'product_thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'], // 5MB
+        ]);
 
-    // Update non-file product fields first
-    $video->fill($request->only([
-        'product_name',
-        'product_asin_sku',
-        'public_rating',
-        'review_details',
-        'character_score',
-        'editorial_score',
-        'final_beastie_score',
-    ]));
+        // Update non-file product fields first
+        $video->fill($request->only([
+            'product_name',
+            'product_asin_sku',
+            'public_rating',
+            'review_details',
+            'character_score',
+            'editorial_score',
+            'final_beastie_score',
+        ]));
 
-    // Handle thumbnail upload (save to public/thumbnails and store path e.g. "thumbnails/...")
-    if ($request->hasFile('product_thumbnail')) {
-        $destinationPath = public_path('thumbnails');
-        if (!File::exists($destinationPath)) {
-            File::makeDirectory($destinationPath, 0777, true);
-        }
-
-        $file = $request->file('product_thumbnail');
-        $thumbnailFilename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $file->move($destinationPath, $thumbnailFilename);
-
-        // Optionally delete old local file if it was in /public/thumbnails
-        if (!empty($video->product_thumbnail)) {
-            $old = public_path($video->product_thumbnail);
-            if (Str::startsWith($video->product_thumbnail, 'thumbnails/') && File::exists($old)) {
-                File::delete($old);
+        // Handle thumbnail upload (save to public/thumbnails and store path e.g. "thumbnails/...")
+        if ($request->hasFile('product_thumbnail')) {
+            $destinationPath = public_path('thumbnails');
+            if (!File::exists($destinationPath)) {
+                File::makeDirectory($destinationPath, 0777, true);
             }
+
+            $file = $request->file('product_thumbnail');
+            $thumbnailFilename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move($destinationPath, $thumbnailFilename);
+
+            // Optionally delete old local file if it was in /public/thumbnails
+            if (!empty($video->product_thumbnail)) {
+                $old = public_path($video->product_thumbnail);
+                if (Str::startsWith($video->product_thumbnail, 'thumbnails/') && File::exists($old)) {
+                    File::delete($old);
+                }
+            }
+
+            $video->product_thumbnail = 'thumbnails/' . $thumbnailFilename;
         }
 
-        $video->product_thumbnail = 'thumbnails/' . $thumbnailFilename;
+        $video->save();
+
+        return redirect()
+            ->route('admin.videos.edit.product', $video)
+            ->with('success', 'Product fields updated.');
     }
-
-    $video->save();
-
-    return redirect()
-        ->route('admin.videos.edit.product', $video)
-        ->with('success', 'Product fields updated.');
-}
 
 
     public function update(Request $request, Video $video)
@@ -485,8 +542,9 @@ class VideoController extends Controller
             'thumbnail_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Required without URL
 
             // Other Fields
-            'tags' => 'nullable|string',
-            'tags.*' => 'string',
+            // 'tags' => 'nullable|string',
+            // 'tags.*' => 'string',
+            'tag_ids' => ['nullable', 'string', 'regex:/^\s*$|^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
             'rating_type' => 'required|in:rating,review',
             'public_rating' => 'nullable|numeric|min:1|max:5',
             'review_details' => 'nullable|string',
@@ -531,6 +589,32 @@ class VideoController extends Controller
         }
 
         $validated = $validator->validated();
+
+        // ---- normalize & verify tag_ids (CSV of IDs) ----
+        $tagIdsCsv = (string) $request->input('tag_ids', '');
+        $tagIds = collect(explode(',', $tagIdsCsv))
+            ->map(fn($s) => trim($s))
+            ->filter()
+            ->map(fn($s) => (int) $s)
+            ->unique()
+            ->values();
+
+        if ($tagIds->isNotEmpty()) {
+            $existing = Tag::whereIn('id', $tagIds)->pluck('id');
+            $missing = $tagIds->diff($existing);
+
+            if ($missing->isNotEmpty()) {
+                return back()
+                    ->withErrors(['tag_ids' => 'Unknown tag IDs: ' . $missing->implode(', ')])
+                    ->withInput();
+            }
+
+            // clean CSV like "1,2,5"
+            $validated['tag_ids'] = $existing->implode(',');
+        } else {
+            $validated['tag_ids'] = null;
+        }
+
 
         if ($validated['rating_type'] === 'rating') {
             // Only store public_rating for 'rating' type
@@ -617,7 +701,14 @@ class VideoController extends Controller
         }
 
         // Convert arrays into comma-separated strings instead of JSON
-        foreach (['tags', 'highlight_tags', 'auto_tags', 'hashtags'] as $field) {
+        // foreach (['tags', 'highlight_tags', 'auto_tags', 'hashtags'] as $field) {
+        //     if (isset($validated[$field]) && is_array($validated[$field])) {
+        //         $validated[$field] = implode(',', $validated[$field]);
+        //     }
+        // }
+
+        // Convert arrays into comma-separated strings (keep tag_ids as-is)
+        foreach (['highlight_tags', 'auto_tags', 'hashtags'] as $field) {
             if (isset($validated[$field]) && is_array($validated[$field])) {
                 $validated[$field] = implode(',', $validated[$field]);
             }
@@ -655,12 +746,28 @@ class VideoController extends Controller
         $videos = Video::with(['reviews:id,video_id,rating'])
             ->latest()->get();
 
+        // ---- ADD THIS BLOCK ----
+        $allTagIds = $videos->flatMap(fn($v) => $v->tag_ids_array ?? [])->unique()->filter();
+        $tagNameMap = $allTagIds->isNotEmpty()
+            ? Tag::whereIn('id', $allTagIds)->pluck('name', 'id')
+            : collect();
+
+        $videos->each(function ($v) use ($tagNameMap) {
+            $ids = collect($v->tag_ids_array ?? []);
+            $v->tag_names = $ids->map(fn($id) => $tagNameMap[$id] ?? null)
+                ->filter()
+                ->values()
+                ->all();
+        });
+        // ---- END BLOCK ----
+
         return response()->json([
             'status' => true,
             'message' => 'Videos fetched successfully',
             'data' => VideoResource::collection($videos),
         ], 200);
     }
+
 
     public function show_api(Video $video)
     {
@@ -693,15 +800,15 @@ class VideoController extends Controller
     //         'data' => VideoResource::collection($videos),
     //     ], 200);
     // }
-    
+
     // GET /api/videos/free?channel_id=&character_id=&category_id=
     public function freeVideos(Request $request)
     {
         // minimal validation on optional filters
         $request->validate([
-            'channel_id'   => 'sometimes|integer',
+            'channel_id' => 'sometimes|integer',
             'character_id' => 'sometimes|integer',
-            'category_id'  => 'sometimes|integer',
+            'category_id' => 'sometimes|integer',
         ]);
 
         $q = Video::with(['reviews:id,video_id,rating'])
@@ -718,100 +825,100 @@ class VideoController extends Controller
         $videos = $q->latest()->get();
 
         return response()->json([
-            'status'  => true,
+            'status' => true,
             'message' => 'Free videos fetched successfully',
-            'data'    => VideoResource::collection($videos),
+            'data' => VideoResource::collection($videos),
         ], 200);
     }
 
-//     public function paidVideos(Request $request)
+    //     public function paidVideos(Request $request)
 // {
 //     $user = $request->user(); // comes from auth:api
 
-//     if (!$user || !$this->hasValidSubscription($user->id)) {
+    //     if (!$user || !$this->hasValidSubscription($user->id)) {
 //         return response()->json([
 //             'status'  => false,
 //             'message' => 'An active subscription is required to view paid videos.',
 //         ], 403);
 //     }
 
-//     $videos = Video::with(['reviews:id,video_id,rating'])
+    //     $videos = Video::with(['reviews:id,video_id,rating'])
 //         ->whereIn('type', ['youtube', 'vimeo']) // include both free + paid
 //         ->where('status', 'published')
 //         ->latest()
 //         ->get();
 
-//     return response()->json([
+    //     return response()->json([
 //         'status'  => true,
 //         'message' => 'Paid videos (including free) fetched successfully',
 //         'data'    => VideoResource::collection($videos),
 //     ], 200);
 // }
 
-// GET /api/videos/paid?channel_id=&character_id=&category_id=
+    // GET /api/videos/paid?channel_id=&character_id=&category_id=
     // Includes free (YouTube) + paid (Vimeo) for users with active subscription
     public function paidVideos(Request $request)
-{
-    $user = $request->user(); // from auth:api
+    {
+        $user = $request->user(); // from auth:api
 
-    $request->validate([
-        'channel_id'   => 'sometimes|integer',
-        'character_id' => 'sometimes|integer',
-        'category_id'  => 'sometimes|integer',
-    ]);
+        $request->validate([
+            'channel_id' => 'sometimes|integer',
+            'character_id' => 'sometimes|integer',
+            'category_id' => 'sometimes|integer',
+        ]);
 
-    $q = Video::with(['reviews:id,video_id,rating'])
-        ->where('status', 'published');
+        $q = Video::with(['reviews:id,video_id,rating'])
+            ->where('status', 'published');
 
-    if ($this->hasValidSubscription($user->id)) {
-        // active subscription → include free + paid
-        $q->whereIn('type', ['youtube', 'vimeo']);
-    } else {
-        // expired subscription → only free
-        $q->where('type', 'youtube');
-    }
-
-    foreach (['channel_id', 'character_id', 'category_id'] as $f) {
-        if ($request->filled($f)) {
-            $q->where($f, $request->get($f));
+        if ($this->hasValidSubscription($user->id)) {
+            // active subscription → include free + paid
+            $q->whereIn('type', ['youtube', 'vimeo']);
+        } else {
+            // expired subscription → only free
+            $q->where('type', 'youtube');
         }
+
+        foreach (['channel_id', 'character_id', 'category_id'] as $f) {
+            if ($request->filled($f)) {
+                $q->where($f, $request->get($f));
+            }
+        }
+
+        $videos = $q->latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => $this->hasValidSubscription($user->id)
+                ? 'Paid videos (including free) fetched successfully'
+                : 'Your subscription has ended. Showing free videos only.',
+            'data' => VideoResource::collection($videos),
+        ], 200);
     }
 
-    $videos = $q->latest()->get();
-
-    return response()->json([
-        'status'  => true,
-        'message' => $this->hasValidSubscription($user->id)
-            ? 'Paid videos (including free) fetched successfully'
-            : 'Your subscription has ended. Showing free videos only.',
-        'data'    => VideoResource::collection($videos),
-    ], 200);
-}
 
 
 
-    
     private function hasValidSubscription(int $userId): bool
     {
         $sub = Subscription::where('user_id', $userId)
-        ->latest('subscription_end_date')
-        ->first();
+            ->latest('subscription_end_date')
+            ->first();
 
-            
-            if (!$sub || $sub->trashed()) {
-                return false;
+
+        if (!$sub || $sub->trashed()) {
+            return false;
         }
 
         $now = now();
 
         $statusOkay = in_array($sub->subscription_status, ['active', 'trialing'], true);
         $notCanceled = $sub->subscription_status !== 'canceled' && is_null($sub->canceled_at);
-        
+
         $withinPaidPeriod = $sub->subscription_end_date && $now->lte($sub->subscription_end_date);
-        $withinTrial      = $sub->trial_end_date && $now->lte($sub->trial_end_date);
-        
+        $withinTrial = $sub->trial_end_date && $now->lte($sub->trial_end_date);
+
         $timeOkay = $withinPaidPeriod || $withinTrial;
-        
+
         $paymentOkay = ($sub->payment_status === 'succeeded') || ($sub->subscription_status === 'trialing');
         // dd($sub, $statusOkay, $notCanceled, $withinPaidPeriod,$withinTrial, $paymentOkay);
 

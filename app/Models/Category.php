@@ -22,11 +22,16 @@ class Category extends Model
     }
 
     public function channel()
-{
-    return $this->belongsTo(Channel::class, 'channel_id');
-}
-public function characters()
-{
-    return $this->hasMany(Character::class);
-}
+    {
+        return $this->belongsTo(Channel::class, 'channel_id');
+    }
+    public function characters()
+    {
+        return $this->hasMany(Character::class);
+    }
+    public function regions()
+    {
+        return $this->belongsToMany(\App\Models\Region::class, 'category_region');
+    }
+
 }

@@ -97,18 +97,19 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('me/profile', [UserController::class, 'me_api']);
 
 
-
-
-
 });
 
 // API's For Guest User
-Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('regions', [RegionController::class, 'index_api']);
 Route::get('channels', [ChannelController::class, 'index_api']);
 Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
+Route::get('/region/{region?}', [ChannelController::class, 'filter_region_api']);
+Route::get('categories', [CategoryController::class, 'index_api']);
+Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api']);
 Route::match(['GET','POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
 Route::get   ('characters',          [CharacterController::class, 'index_api']);
+Route::get('/characters/region/{region?}', [CharacterController::class, 'index_by_region_api']);
+
 Route::get('character-tags', [CharacterTagController::class, 'index_api']);
 Route::get('character-roles', [CharacterRoleController::class, 'index_api']);
 Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
