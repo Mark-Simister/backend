@@ -42,7 +42,6 @@
                         <th>Title</th>
                         <th>Type</th>
                         <th>Character</th>
-                        <th>Channel</th>
                         <th>Access</th>
                         <th>Edit</th>
                         <th>Actions</th>
@@ -55,7 +54,6 @@
                             <td>{{ $video->title }}</td>
                             <td>{{ ucfirst($video->type) }}</td>
                             <td>{{ $video->character->name ?? '-' }}</td>
-                            <td>{{ $video->channel->name ?? '-' }}</td>
                             <td>{{ ucfirst($video->access_level) }}</td>
                             <td>
                                 @can('video.edit')

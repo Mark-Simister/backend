@@ -129,4 +129,5 @@ class Video extends Model
             ->values()
             ->all();
     }
+
 }

@@ -87,9 +87,10 @@ Route::middleware(['auth:api'])->group(function () {
     // ->name('stripe.webhook.api');
     Route::post('purchase/confirm', [BillingController::class, 'confirm']);
 
-    Route::get('videos', [VideoController::class, 'index_api']);
+   Route::get('videos/{region?}', [VideoController::class, 'index_api']);
     // Route::get('videos/free', [VideoController::class, 'freeVideos']);
-    Route::get('videos/paid', [VideoController::class, 'paidVideos']);
+    // Route::get('videos/paid', [VideoController::class, 'paidVideos']);
+    Route::get('paid-videos/{region}', [VideoController::class, 'freeVideos']);
     Route::post('reviews', [ReviewController::class, 'store_api']);
     Route::get('my-reviews', [ReviewController::class, 'myReviews']);
 
@@ -115,7 +116,7 @@ Route::get('character-roles', [CharacterRoleController::class, 'index_api']);
 Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
 
 
-Route::get('videos/free', [VideoController::class, 'freeVideos']);
+Route::get('free-videos/{region}', [VideoController::class, 'freeVideos']);
     
 Route::get('/my-country', function (Request $request) {
     // Try real client IP from common proxy/CDN headers, else fallback to Laravel's IP.

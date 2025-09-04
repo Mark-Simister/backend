@@ -70,6 +70,15 @@ class VideoResource extends JsonResource
             "twitter_title" => $this->twitter_title,
             "twitter_description" => $this->twitter_description,
 
+            'regions' => $this->whenLoaded('regions', function () {
+                return $this->regions->map(function ($region) {
+                    return [
+                        'id' => $region->id,
+                        'region_name' => $region->region_name, // Include the region name
+                    ];
+                });
+            }),
+
             "created_at" => $this->created_at,
             "updated_at" => $this->updated_at,
         ];
