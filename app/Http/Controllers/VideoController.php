@@ -746,20 +746,22 @@ class VideoController extends Controller
         $videos = Video::with(['reviews:id,video_id,rating'])
             ->latest()->get();
 
-        // ---- ADD THIS BLOCK ----
-        $allTagIds = $videos->flatMap(fn($v) => $v->tag_ids_array ?? [])->unique()->filter();
-        $tagNameMap = $allTagIds->isNotEmpty()
+        $allTagIds = $videos->flatMap(fn($v) => $v->tag_ids_array ?? [])
+            ->filter()
+            ->unique();
+
+        $tagMap = $allTagIds->isNotEmpty()
             ? Tag::whereIn('id', $allTagIds)->pluck('name', 'id')
             : collect();
 
-        $videos->each(function ($v) use ($tagNameMap) {
+        $videos->each(function ($v) use ($tagMap) {
             $ids = collect($v->tag_ids_array ?? []);
-            $v->tag_names = $ids->map(fn($id) => $tagNameMap[$id] ?? null)
-                ->filter()
-                ->values()
-                ->all();
+            // pairs like [{id: 3, name: 'tag name'}, ...]
+            $v->tag_pairs = $ids->map(function ($id) use ($tagMap) {
+                $name = $tagMap->get($id);
+                return $name ? ['id' => $id, 'name' => $name] : null;
+            })->filter()->values()->all();
         });
-        // ---- END BLOCK ----
 
         return response()->json([
             'status' => true,
@@ -767,7 +769,6 @@ class VideoController extends Controller
             'data' => VideoResource::collection($videos),
         ], 200);
     }
-
 
     public function show_api(Video $video)
     {

@@ -19,6 +19,7 @@ class VideoResource extends JsonResource
 
             // Arrays
             "tags" => $this->csvToArray($this->tags),
+            'tag_ids' => $this->tag_pairs, 
             "highlight_tags" => $this->mapHighlightTags($this->highlight_tags),
             "hashtags" => $this->csvToArray($this->hashtags),
             "video_platforms" => $this->jsonToArray($this->video_platforms),

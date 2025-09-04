@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Video extends Model
 {
     use HasFactory;
+    protected $appends = ['tag_ids_array'];
     protected $fillable = [
         'title',
         'description',
@@ -90,7 +91,7 @@ class Video extends Model
     {
         return $this->belongsToMany(HighlightTag::class);
     }
-    
+
     public function setAutoTagsAttribute($value)
     {
         $this->attributes['auto_tags'] = $value
@@ -120,12 +121,12 @@ class Video extends Model
         return $this->belongsToMany(\App\Models\Region::class, 'video_region');
     }
     public function getTagIdsArrayAttribute(): array
-{
-    return collect(explode(',', (string) $this->tag_ids))
-        ->map(fn($s) => trim($s))
-        ->filter()
-        ->map(fn($s) => (int) $s)
-        ->values()
-        ->all();
-}
+    {
+        return collect(explode(',', (string) $this->tag_ids))
+            ->map(fn($s) => trim($s))
+            ->filter()
+            ->map(fn($s) => (int) $s)
+            ->values()
+            ->all();
+    }
 }

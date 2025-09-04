@@ -395,16 +395,17 @@ class CharacterController extends Controller
     {
         try {
             $input = strtoupper($region ?? $request->input('region', ''));
-            $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL']; // include GLOBAL only if you actually use it
+            $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL']; 
             $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
-            // 2) Base query
-            $query = \App\Models\Character::select([
+            
+            $query = Character::select([
                 'id',
                 'name',
                 'image',
                 'category_id',
                 'character_page_url_slug',
+                'persona',
                 'public_private_toggle',
                 'created_at',
                 'updated_at',
@@ -429,19 +430,14 @@ class CharacterController extends Controller
                 $characters = $query->get();
             }
 
-            // 4) Transform (same enrich/hide logic as your index_api)
             $transform = function ($c) {
-                // image absolute URL
                 $c->image_url = $c->image ? asset($c->image) : null;
 
-                // tags/roles arrays from CSV
                 $c->character_tag = $c->character_tag ? explode(',', $c->character_tag) : [];
                 $c->character_role = $c->character_role ? explode(',', $c->character_role) : [];
 
-                // hide raw image path
                 $c->makeHidden(['image']);
 
-                // hide pivot on regions
                 if ($c->relationLoaded('regions')) {
                     $c->regions->each->makeHidden(['pivot']);
                 }
