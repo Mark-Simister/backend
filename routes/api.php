@@ -54,8 +54,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('channels/{channel}', [ChannelController::class, 'show_api']);
     Route::put('channels/{channel}', [ChannelController::class, 'update_api']);
     Route::delete('channels/{channel}', [ChannelController::class, 'destroy_api']);
-    Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
-    Route::match(['GET','POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
+    
 
 
     // Character Tags API
@@ -107,6 +106,8 @@ Route::middleware(['auth:api'])->group(function () {
 Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('regions', [RegionController::class, 'index_api']);
 Route::get('channels', [ChannelController::class, 'index_api']);
+Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
+Route::match(['GET','POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
 Route::get   ('characters',          [CharacterController::class, 'index_api']);
 Route::get('character-tags', [CharacterTagController::class, 'index_api']);
 Route::get('character-roles', [CharacterRoleController::class, 'index_api']);
