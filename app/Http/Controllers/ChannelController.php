@@ -50,7 +50,7 @@ class ChannelController extends Controller
 // {
 //     $request->validate([
 //         'name' => 'required|unique:channels,name',
-//         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+//         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
 //         'regions' => 'array|nullable',
 //     ]);
 
@@ -83,7 +83,7 @@ class ChannelController extends Controller
     {
         $request->validate([
             'name' => 'required|unique:channels,name',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
             'regions' => 'array|nullable',
             'regions.*' => 'integer|exists:regions,id', // validate each region id
         ]);
@@ -144,7 +144,7 @@ class ChannelController extends Controller
 // {
 //     $request->validate([
 //         'name' => 'required|unique:channels,name,' . $channel->id,
-//         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+//         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
 //         'regions' => 'nullable|array',
 //         'regions.*' => 'exists:regions,id',
 //     ]);
@@ -183,7 +183,7 @@ class ChannelController extends Controller
     {
         $request->validate([
             'name' => 'required|unique:channels,name,' . $channel->id,
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
             'regions' => 'nullable|array',
             'regions.*' => 'exists:regions,id',
         ]);
@@ -644,7 +644,7 @@ class ChannelController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:channels,name',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10048',
         ]);
 
         if ($validator->fails()) {
@@ -712,7 +712,7 @@ class ChannelController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:channels,name,' . $id,
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10048',
         ]);
 
         if ($validator->fails()) {

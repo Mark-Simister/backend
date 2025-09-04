@@ -64,7 +64,7 @@ class CharacterController extends Controller
             //'channel_id' => 'required|exists:channels,id',
             'category_id' => 'required|exists:categories,id',
 
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10048',
 
             'location' => 'nullable|string|max:255',
             'age' => 'nullable|integer|min:0',
@@ -206,7 +206,7 @@ class CharacterController extends Controller
             'details' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
 
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10048',
 
             'location' => 'nullable|string|max:255',
             'age' => 'nullable|integer|min:0',
@@ -477,7 +477,7 @@ class CharacterController extends Controller
             'persona' => ['nullable', 'string'],
             'details' => ['nullable', 'string'],
 
-            'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:10048'],
 
             'location' => ['nullable', 'string', 'max:255'],
             'age' => ['nullable', 'integer', 'min:0'],
@@ -659,7 +659,7 @@ class CharacterController extends Controller
             'persona' => ['nullable', 'string'],
             'details' => ['nullable', 'string'],
 
-            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:10048'],
 
             'location' => ['nullable', 'string', 'max:255'],
             'age' => ['nullable', 'integer', 'min:0'],
