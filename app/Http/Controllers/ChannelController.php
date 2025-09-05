@@ -1028,10 +1028,24 @@ class ChannelController extends Controller
             $applyVideoHighlightFilter($q, $hlFilter, $matchAll);
             
             // Apply filter for tag_ids using a whereIn clause
+            // if (!empty($tagIdsFilter)) {
+            //     $q->where(function($q) use ($tagIdsFilter) {
+            //         foreach ($tagIdsFilter as $tagId) {
+            //             $q->orWhereRaw('FIND_IN_SET(?, videos.tag_ids)', [$tagId]);
+            //         }
+            //     });
+            // }
             if (!empty($tagIdsFilter)) {
-                $q->where(function($q) use ($tagIdsFilter) {
-                    foreach ($tagIdsFilter as $tagId) {
-                        $q->orWhereRaw('FIND_IN_SET(?, videos.tag_ids)', [$tagId]);
+                $q->where(function ($sub) use ($tagIdsFilter, $matchAll) {
+                    foreach ($tagIdsFilter as $idx => $tagId) {
+                        $expr = 'FIND_IN_SET(?, videos.tag_ids)';
+                        if ($matchAll) {
+                            $sub->whereRaw($expr, [$tagId]);        // AND
+                        } else {
+                            $idx === 0
+                                ? $sub->whereRaw($expr, [$tagId])   // first
+                                : $sub->orWhereRaw($expr, [$tagId]); // OR others
+                        }
                     }
                 });
             }
@@ -1117,7 +1131,6 @@ class ChannelController extends Controller
             'title',
             'thumbnail_url',
             'character_id',
-
             'tag_ids',
             'highlight_tags',
             'created_at',
@@ -1130,10 +1143,24 @@ class ChannelController extends Controller
         $applyVideoTagFilter($videosQuery, $tagsFilter, $matchAll);
         $applyVideoHighlightFilter($videosQuery, $hlFilter, $matchAll);
         
+        // if (!empty($tagIdsFilter)) {
+        //     $videosQuery->where(function($q) use ($tagIdsFilter) {
+        //         foreach ($tagIdsFilter as $tagId) {
+        //             $q->orWhereRaw('FIND_IN_SET(?, videos.tag_ids)', [$tagId]);
+        //         }
+        //     });
+        // }
         if (!empty($tagIdsFilter)) {
-            $videosQuery->where(function($q) use ($tagIdsFilter) {
-                foreach ($tagIdsFilter as $tagId) {
-                    $q->orWhereRaw('FIND_IN_SET(?, videos.tag_ids)', [$tagId]);
+            $videosQuery->where(function ($sub) use ($tagIdsFilter, $matchAll) {
+                foreach ($tagIdsFilter as $idx => $tagId) {
+                    $expr = 'FIND_IN_SET(?, videos.tag_ids)';
+                    if ($matchAll) {
+                        $sub->whereRaw($expr, [$tagId]);        // AND
+                    } else {
+                        $idx === 0
+                            ? $sub->whereRaw($expr, [$tagId])   // first
+                            : $sub->orWhereRaw($expr, [$tagId]); // OR others
+                    }
                 }
             });
         }
@@ -1144,9 +1171,15 @@ class ChannelController extends Controller
         foreach ($videos as $v) {
             // Split tag_ids (comma-separated string) into an array of IDs
             $vTagIds = explode(',', (string) $v->tag_ids);
+            // foreach ($vTagIds as $id) {
+            //     $tagIds[$id] = true;  // Add unique tag ID to the set
+            // }
             foreach ($vTagIds as $id) {
-                $tagIds[$id] = true;  // Add unique tag ID to the set
-            }
+    $id = (int) trim((string) $id);
+    if ($id > 0) {
+        $tagIds[$id] = true; // Add unique numeric tag ID to the set
+    }
+}
         }
 
         // Fetch tag names for the tag_ids
@@ -1154,6 +1187,12 @@ class ChannelController extends Controller
             ->get(['id', 'name'])
             ->pluck('name', 'id')
             ->toArray();
+
+        $tagsIdsList = collect(array_keys($tagIds))
+    ->filter() // remove zeros/nulls just in case
+    ->map(fn($id) => ['id' => (int) $id, 'name' => ($tagsWithNames[$id] ?? '')])
+    ->values()
+    ->all();
 
         $tagSet = [];
         $highlightTagIds = [];
@@ -1195,8 +1234,13 @@ class ChannelController extends Controller
                 ->filter()->map(fn($x) => (int) trim($x))->filter()->values()->all();
 
             // Fetch tag names for the tag_ids
+            // $tagDetails = array_map(function ($id) use ($tagsWithNames) {
+            //     // Ensure tag name exists, else return empty string
+            //     $name = $tagsWithNames[$id] ?? '';
+            //     return ['id' => $id, 'name' => $name];
+            // }, $vTagIds);
             $tagDetails = array_map(function ($id) use ($tagsWithNames) {
-                // Ensure tag name exists, else return empty string
+                $id = (int) trim((string) $id);
                 $name = $tagsWithNames[$id] ?? '';
                 return ['id' => $id, 'name' => $name];
             }, $vTagIds);
@@ -1220,8 +1264,8 @@ class ChannelController extends Controller
                 'categories' => $categories,
                 'characters' => $characters,
                 'videos' => $videosPayload,
-                // 'tags' => $availableTags,
-                'highlight_tags' => $availableHighlightTags,
+                'highlight_tags' => $availableHighlightTags,   
+                'tags_ids' => $tagsIdsList,
             ],
         ]);
     }
