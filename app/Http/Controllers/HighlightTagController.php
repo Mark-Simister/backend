@@ -105,7 +105,7 @@ class HighlightTagController extends Controller
             'automated' => 'sometimes|boolean',
         ]);
 
-        $emojiPath = $highlightTag->emoji; // keep existing path by default
+        $emojiPath = $highlightTag->emoji; 
 
         if ($request->hasFile('emoji')) {
             $folderPath = public_path('emojie');

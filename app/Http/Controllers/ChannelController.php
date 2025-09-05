@@ -1182,7 +1182,7 @@ class ChannelController extends Controller
                 ->whereIn('id', $ids)
                 ->orderBy('label')
                 ->get()
-                ->map(fn($ht) => ['id' => $ht->id, 'label' => $ht->label, 'emoji' => $ht->emoji])
+                ->map(fn($ht) => ['id' => $ht->id, 'label' => $ht->label, 'emoji' => asset($ht->emoji)])
                 ->values();
         }
 
