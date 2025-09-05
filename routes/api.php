@@ -73,7 +73,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     // Route::get   ('/characters',          [CharacterController::class, 'index_api']);
     Route::post  ('characters',          [CharacterController::class, 'store_api']);
-    Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
+    // Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
     Route::post  ('characters/{id}',     [CharacterController::class, 'update_api']); // if you prefer PUT/PATCH:
     // Route::match(['put','patch'], '/characters/{id}', [CharacterController::class, 'update_api']);
     Route::delete('characters/{id}',     [CharacterController::class, 'destroy_api']);
@@ -93,6 +93,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('paid-videos/{region}', [VideoController::class, 'paidVideos']);
     Route::get('paid-videos-trending/{region}', [VideoController::class, 'paidVideosTrending']);
     Route::get('paid-videos-top-deals/{region}', [VideoController::class, 'paidVideosTopDeals']);
+    Route::get('paid-trending-characters/{region}', [VideoController::class, 'charactersFromPaidVideos']);
+    Route::get('/videos/paid/{id}/{region?}', [VideoController::class, 'paidVideoDetails'])
+    ->whereNumber('id');
+
+
     Route::post('reviews', [ReviewController::class, 'store_api']);
     Route::get('my-reviews', [ReviewController::class, 'myReviews']);
 
@@ -111,16 +116,20 @@ Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api']);
 Route::match(['GET','POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
 Route::get   ('characters',          [CharacterController::class, 'index_api']);
+ Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
 Route::get('/characters/region/{region?}', [CharacterController::class, 'index_by_region_api']);
 
 Route::get('character-tags', [CharacterTagController::class, 'index_api']);
 Route::get('character-roles', [CharacterRoleController::class, 'index_api']);
 Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
 
-
 Route::get('free-videos/{region}', [VideoController::class, 'freeVideos']);
 Route::get('free-videos-trending/{region}', [VideoController::class, 'freeVideosTrending']);
 Route::get('free-videos-top-deals/{region}', [VideoController::class, 'freeVideosTopDeals']);
+Route::get('free-trending-characters/{region}', [VideoController::class, 'charactersFromVideos']);
+
+Route::get('/video-detail/{region}/{id}', [VideoController::class, 'VideoDetail']); 
+
     
 Route::get('/my-country', function (Request $request) {
     // Try real client IP from common proxy/CDN headers, else fallback to Laravel's IP.

@@ -1117,7 +1117,7 @@ class ChannelController extends Controller
             'title',
             'thumbnail_url',
             'character_id',
-            'tags',
+
             'tag_ids',
             'highlight_tags',
             'created_at',
@@ -1206,7 +1206,7 @@ class ChannelController extends Controller
                 'title' => $v->title,
                 'thumbnail_url' => $v->thumbnail_url ? asset($v->thumbnail_url) : null,
                 'character_id' => $v->character_id,
-                'tags' => $tagDetails, // Include both tag ids and names
+                'tags' => $tagDetails, 
                 'highlight_tag_ids' => $highlightIds,
                 'created_at' => optional($v->created_at)->toDateTimeString(),
             ];
@@ -1220,7 +1220,7 @@ class ChannelController extends Controller
                 'categories' => $categories,
                 'characters' => $characters,
                 'videos' => $videosPayload,
-                'tags' => $availableTags,
+                // 'tags' => $availableTags,
                 'highlight_tags' => $availableHighlightTags,
             ],
         ]);
