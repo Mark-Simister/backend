@@ -786,7 +786,7 @@ class VideoController extends Controller
                     'character_score' => $video->character_score,
                     'editorial_score' => $video->editorial_score,
                     'final_beastie_score' => $video->final_beastie_score,
-                    'product_thumbnail' => $video->product_thumbnail,
+                    'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
                     'video_type' => $video->video_type,
                     'video_platforms' => $video->video_platforms,
                     'youtube_id' => $video->youtube_id,
@@ -1025,14 +1025,14 @@ class VideoController extends Controller
                     'character_score' => $video->character_score,
                     'editorial_score' => $video->editorial_score,
                     'final_beastie_score' => $video->final_beastie_score,
-                    'product_thumbnail' => $video->product_thumbnail,
+                    'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
                     'video_type' => $video->video_type,
                     'video_platforms' => $video->video_platforms,
                     'youtube_id' => $video->youtube_id,
                     'wistia_id' => $video->wistia_id,
                     'raw_video_path' => $video->raw_video_path,
                     'caption_file' => $video->caption_file,
-                    'thumbnail_image' => $video->thumbnail_image,
+                    'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
                     'is_draft' => $video->is_draft,
                     'status' => $video->status,
                     'tag_ids' => $video->tag_ids,
@@ -1175,7 +1175,8 @@ class VideoController extends Controller
                     'created_at' => $video->created_at->toDateTimeString(),
                     'updated_at' => $video->updated_at->toDateTimeString(),
 
-                    'thumbnail_image' => $video->thumbnail_image,
+                    'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+
 
 
                     'regions' => $video->regions->map(fn($r) => [
@@ -1295,7 +1296,7 @@ class VideoController extends Controller
                     'created_at' => $video->created_at->toDateTimeString(),
                     'updated_at' => $video->updated_at->toDateTimeString(),
 
-                    'thumbnail_image' => $video->thumbnail_image,
+                    'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
 
 
                     'regions' => $video->regions->map(fn($r) => [
@@ -1399,6 +1400,148 @@ class VideoController extends Controller
         }
     }
 
+    public function freeVideosDetail(Request $request, $region, $id)
+{
+    $regionCode = strtoupper($region);
+    $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+    if (!in_array($regionCode, $allowedRegions)) {
+        $regionCode = 'GLOBAL';
+    }
+
+    $video = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+        ->where('type', 'youtube')
+        ->where('status', 'published')
+        ->where('id', $id)
+        ->whereHas('regions', function ($query) use ($regionCode) {
+            $query->where('region_code', $regionCode);
+        })
+        ->first();
+
+    if (!$video) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Video not found for the selected region.',
+            'data' => [],
+        ], 404);
+    }
+    $character = Character::find($video->character_id);
+
+
+    $tagMap = collect();
+    $idsForMap = collect($video->tag_ids_array ?? [])->filter()->unique();
+    if ($idsForMap->isNotEmpty()) {
+        $tagMap = Tag::whereIn('id', $idsForMap)->pluck('name', 'id');
+    }
+    $video->tag_pairs = collect($video->tag_ids_array ?? [])->map(function ($tid) use ($tagMap) {
+        $name = $tagMap->get($tid);
+        return $name ? ['id' => $tid, 'name' => $name] : null;
+    })->filter()->values()->all();
+
+    if ($video->relationLoaded('regions')) {
+        $video->regions->each->makeHidden(['pivot']);
+    }
+
+    
+    $related = Video::query()
+        ->select(['id', 'title', 'thumbnail_image', 'description','product_name', 'product_asin_sku', 'product_thumbnail', 'review_details', 'character_id', 'created_at'])
+        ->where('status', 'published')
+        ->where('type', 'youtube')
+        ->where('character_id', $video->character_id)
+        ->where('id', '!=', $video->id)
+        ->whereHas('regions', function ($q) use ($regionCode) {
+            $q->where('region_code', $regionCode);
+        })
+        ->orderByDesc('created_at')
+        ->limit(12)
+        ->get()
+        ->map(function ($v) {
+            return [
+                'id' => $v->id,
+                'name' => $v->title, 
+                // keeping your exact key "thumnail_image" (misspelling preserved intentionally)
+                'thumnail_image' => $v->thumbnail_image ? asset($v->thumbnail_image) : null,
+                'description' => $v->description,
+                'product_name' => $v->product_name,
+                'product_asin_sku' => $v->product_asin_sku,
+                'product_thumbnail' => $v->product_thumbnail ? asset($v->product_thumbnail) : null,
+                'review_details' => $v->review_details,
+            ];
+        })
+        ->values();
+
+    $data = [
+        'video' => [
+            'id' => $video->id,
+            'title' => $video->title,
+            'description' => $video->description,
+            'type' => $video->type,
+            'video_url' => $video->video_url,
+            // 'thumbnail_url' => $video->thumbnail_url,
+            'character_id' => $video->character_id,
+            'channel_id' => $video->channel_id,
+            'category_id' => $video->category_id,
+            'access_level' => $video->access_level,
+            'affiliate_link' => $video->affiliate_link,
+            'tags' => $video->tag_pairs,
+            'rating_type' => $video->rating_type,
+            'sponsorship_type' => $video->sponsorship_type,
+            'highlight_tags' => $video->highlight_tags,
+            'auto_tags' => $video->auto_tags,
+            'product_name' => $video->product_name,
+            'product_asin_sku' => $video->product_asin_sku,
+            'public_rating' => $video->public_rating,
+            'review_details' => $video->review_details,
+            'character_score' => $video->character_score,
+            'editorial_score' => $video->editorial_score,
+            'final_beastie_score' => $video->final_beastie_score,
+            'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
+            'video_type' => $video->video_type,
+            'video_platforms' => $video->video_platforms,
+            'youtube_id' => $video->youtube_id,
+            'wistia_id' => $video->wistia_id,
+            'raw_video_path' => $video->raw_video_path,
+            'caption_file' => $video->caption_file,
+            'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+            'is_draft' => $video->is_draft,
+            'status' => $video->status,
+            'tag_ids' => $video->tag_ids,
+            'is_ai_generated' => $video->is_ai_generated,
+            'is_finalized' => $video->is_finalized,
+            'qa_passed' => $video->qa_passed,
+            'post_schedule_at' => $video->post_schedule_at,
+            'review_type' => $video->review_type,
+            'sponsored' => $video->sponsored,
+            'seo_title' => $video->seo_title,
+            'seo_description' => $video->seo_description,
+            'hashtags' => $video->hashtags,
+            'cta_text' => $video->cta_text,
+            'og_image_url' => $video->og_image_url,
+            'open_graph_image' => $video->open_graph_image,
+            'twitter_title' => $video->twitter_title,
+            'twitter_description' => $video->twitter_description,
+            'original_price' => $video->original_price,
+            'views' => $video->views,
+            'likes' => $video->likes,
+            'sale_end_date' => $video->sale_end_date,
+            'is_amazon_choice' => $video->is_amazon_choice,
+            'created_at' => $video->created_at?->toDateTimeString(),
+            'updated_at' => $video->updated_at?->toDateTimeString(),
+            'regions' => $video->regions->map(fn($r) => [
+                'id' => $r->id,
+                'region_code' => $r->region_code,
+            ]),
+        ],
+        'related_products' => $related,
+        'character_data' => $character ? $character : null,
+    ];
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Free video detail fetched successfully',
+        'data' => $data,
+    ], 200);
+}
+
 
 
 
@@ -1431,7 +1574,7 @@ class VideoController extends Controller
     // Includes free (YouTube) + paid (Vimeo) for users with active subscription
 //     public function paidVideos(Request $request)
 // {
-//     $user = $request->user(); // from auth:api
+//     $user = $request->user(); 
 
     //     $request->validate([
 //         'channel_id' => 'sometimes|integer',
@@ -1487,7 +1630,7 @@ class VideoController extends Controller
 
     public function paidVideos(Request $request, $region)
     {
-        $user = $request->user(); // from auth:api
+        $user = $request->user(); 
 
         // Validate optional filters
         $request->validate([
@@ -1496,17 +1639,16 @@ class VideoController extends Controller
             'category_id' => 'sometimes|integer',
         ]);
 
-        // Resolve region code (region from URL parameter)
+       
         $regionCode = strtoupper($region);
 
 
-        $allowedRegions = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
+        $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+
         if (!in_array($regionCode, $allowedRegions)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid region code',
-            ], 400);
+            $regionCode = 'GLOBAL';
         }
+
 
 
         $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
@@ -1596,14 +1738,14 @@ class VideoController extends Controller
                 'character_score' => $video->character_score,
                 'editorial_score' => $video->editorial_score,
                 'final_beastie_score' => $video->final_beastie_score,
-                'product_thumbnail' => $video->product_thumbnail,
+                'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
                 'video_type' => $video->video_type,
                 'video_platforms' => $video->video_platforms,
                 'youtube_id' => $video->youtube_id,
                 'wistia_id' => $video->wistia_id,
                 'raw_video_path' => $video->raw_video_path,
                 'caption_file' => $video->caption_file,
-                'thumbnail_image' => $video->thumbnail_image,
+                'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
                 'is_draft' => $video->is_draft,
                 'status' => $video->status,
                 'tag_ids' => $video->tag_ids,
@@ -1659,13 +1801,12 @@ class VideoController extends Controller
         $regionCode = strtoupper($region);
 
 
-        $allowedRegions = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
+        $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+
         if (!in_array($regionCode, $allowedRegions)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid region code',
-            ], 400);
+            $regionCode = 'GLOBAL';
         }
+
 
 
         $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
@@ -1750,8 +1891,8 @@ class VideoController extends Controller
                 'auto_tags' => $video->auto_tags,
                 'created_at' => $video->created_at->toDateTimeString(),
                 'updated_at' => $video->updated_at->toDateTimeString(),
-                'product_thumbnail' => $video->product_thumbnail,
-                'thumbnail_image' => $video->thumbnail_image,
+                'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
+                'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
 
 
                 'regions' => $video->regions->map(fn($r) => [
@@ -1785,13 +1926,13 @@ class VideoController extends Controller
         $regionCode = strtoupper($region);
 
 
-        $allowedRegions = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
+        $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+
         if (!in_array($regionCode, $allowedRegions)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid region code',
-            ], 400);
+            $regionCode = 'GLOBAL';
         }
+
+
 
 
         $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
@@ -1876,8 +2017,8 @@ class VideoController extends Controller
                 'auto_tags' => $video->auto_tags,
                 'created_at' => $video->created_at->toDateTimeString(),
                 'updated_at' => $video->updated_at->toDateTimeString(),
-                'product_thumbnail' => $video->product_thumbnail,
-                'thumbnail_image' => $video->thumbnail_image,
+                'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
+                'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
 
 
                 'regions' => $video->regions->map(fn($r) => [
@@ -1984,374 +2125,162 @@ class VideoController extends Controller
     }
 
 
-    public function paidVideoDetails(Request $request, int $id, string $region = 'GLOBAL')
+    public function paidVideosDetail(Request $request, $region, $id)
     {
-        try {
-            // Normalize & validate region
-            $regionCode = strtoupper($region);
-            $allowedRegions = ['AU', 'CA', 'UK', 'US'];
-            if (!in_array($regionCode, $allowedRegions)) {
-                $regionCode = 'GLOBAL';
-            }
+        $user = $request->user(); 
 
-            // Fetch the video (paid + published) available in the region
-            $video = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
-                ->where('id', $id)
-                ->where('status', 'published')
-                ->where('access_level', 'paid') // adjust if your enum/value differs
-                ->whereHas('regions', function ($q) use ($regionCode) {
-                    $q->where('region_code', $regionCode);
-                })
-                ->first();
+       
+        $regionCode = strtoupper($region);
+        $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+        if (!in_array($regionCode, $allowedRegions)) {
+            $regionCode = 'GLOBAL';
+        }
 
-            if (!$video) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Paid video not found for the given ID/region.',
-                    'data' => null,
-                ], 404);
-            }
+        
+        $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+            ->where('status', 'published')
+            ->where('id', $id);
 
-            // Clean pivot from regions if loaded
-            if ($video->relationLoaded('regions')) {
-                $video->regions->each->makeHidden(['pivot']);
-            }
+        
+        if ($this->hasValidSubscription($user->id)) {
+            $q->whereIn('type', ['youtube', 'vimeo']);
+        } else {
+            $q->where('type', 'youtube');
+        }
 
-            // Resolve tag names
-            $ids = collect($video->tag_ids_array ?? []);
-            $tagMap = $ids->isNotEmpty()
-                ? Tag::whereIn('id', $ids)->pluck('name', 'id')
-                : collect();
+        
+        $q->whereHas('regions', function ($query) use ($regionCode) {
+            $query->where('region_code', $regionCode);
+        });
 
-            $tagPairs = $ids->map(function ($tid) use ($tagMap) {
-                $name = $tagMap->get($tid);
-                return $name ? ['id' => $tid, 'name' => $name] : null;
-            })->filter()->values()->all();
+        $video = $q->first();
 
-            // Shape response like your freeVideos()
-            $data = [
-                'id' => $video->id,
-                'title' => $video->title,
-                'description' => $video->description,
-                'type' => $video->type,
-                'video_url' => $video->video_url,
-                'thumbnail_url' => $video->thumbnail_url,
-                'character_id' => $video->character_id,
-                'channel_id' => $video->channel_id,
-                'category_id' => $video->category_id,
-                'access_level' => $video->access_level,
-                'affiliate_link' => $video->affiliate_link,
-                'tags' => $tagPairs,
-                'rating_type' => $video->rating_type,
-                'sponsorship_type' => $video->sponsorship_type,
-                'highlight_tags' => $video->highlight_tags,
-                'auto_tags' => $video->auto_tags,
-                'created_at' => optional($video->created_at)->toDateTimeString(),
-                'updated_at' => optional($video->updated_at)->toDateTimeString(),
-                'product_name' => $video->product_name,
-                'product_asin_sku' => $video->product_asin_sku,
-                'public_rating' => $video->public_rating,
-                'review_details' => $video->review_details,
-                'character_score' => $video->character_score,
-                'editorial_score' => $video->editorial_score,
-                'final_beastie_score' => $video->final_beastie_score,
-                'product_thumbnail' => $video->product_thumbnail,
-                'video_type' => $video->video_type,
-                'video_platforms' => $video->video_platforms,
-                'youtube_id' => $video->youtube_id,
-                'wistia_id' => $video->wistia_id,
-                'raw_video_path' => $video->raw_video_path,
-                'caption_file' => $video->caption_file,
-                'thumbnail_image' => $video->thumbnail_image,
-                'is_draft' => $video->is_draft,
-                'status' => $video->status,
-                'tag_ids' => $video->tag_ids,
-                'is_ai_generated' => $video->is_ai_generated,
-                'is_finalized' => $video->is_finalized,
-                'qa_passed' => $video->qa_passed,
-                'post_schedule_at' => $video->post_schedule_at,
-                'review_type' => $video->review_type,
-                'sponsored' => $video->sponsored,
-                'seo_title' => $video->seo_title,
-                'seo_description' => $video->seo_description,
-                'hashtags' => $video->hashtags,
-                'cta_text' => $video->cta_text,
-                'og_image_url' => $video->og_image_url,
-                'open_graph_image' => $video->open_graph_image,
-                'twitter_title' => $video->twitter_title,
-                'twitter_description' => $video->twitter_description,
-                'original_price' => $video->original_price,
-                'views' => $video->views,
-                'likes' => $video->likes,
-                'sale_end_date' => $video->sale_end_date,
-                'is_amazon_choice' => $video->is_amazon_choice,
-                'regions' => $video->regions->map(fn($r) => [
-                    'id' => $r->id,
-                    'region_code' => $r->region_code,
-                ])->values(),
-            ];
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Paid video details fetched successfully',
-                'data' => $data,
-            ], 200);
-
-        } catch (\Throwable $e) {
+        if (!$video) {
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to fetch paid video details',
-                'error' => $e->getMessage(),
-            ], 500);
+                'message' => 'Video not found for the selected region.',
+                'data' => [],
+            ], 404);
         }
+
+        $character = Character::find($video->character_id);
+
+       
+        $tagMap = collect();
+        $idsForMap = collect($video->tag_ids_array ?? [])->filter()->unique();
+        if ($idsForMap->isNotEmpty()) {
+            $tagMap = Tag::whereIn('id', $idsForMap)->pluck('name', 'id');
+        }
+        $video->tag_pairs = collect($video->tag_ids_array ?? [])->map(function ($tid) use ($tagMap) {
+            $name = $tagMap->get($tid);
+            return $name ? ['id' => $tid, 'name' => $name] : null;
+        })->filter()->values()->all();
+
+        
+        if ($video->relationLoaded('regions')) {
+            $video->regions->each->makeHidden(['pivot']);
+        }
+    //     $videos = Video::where('status', 'published')
+    // ->where('type', 'vimeo')
+    // ->where('character_id', $video->character_id)
+    // ->where('id', '!=', $video->id)->get();
+        // dd($videos);
+        $related = Video::query()
+    ->select(['id', 'title', 'thumbnail_image', 'description','product_name', 'product_asin_sku', 'product_thumbnail', 'review_details', 'status', 'type', 'character_id', 'created_at'])
+    ->where('status', 'published')
+    ->where('type', 'vimeo')
+    ->where('character_id', $video->character_id)
+    ->where('id', '!=', $video->id)
+    // ->whereHas('regions', function ($q) use ($regionCode) {
+    //     $q->where('region_code', $regionCode);
+    // })
+    ->orderByDesc('created_at')
+    ->limit(5)
+    ->get()
+    ->map(function ($v) {
+        return [
+            'id' => $v->id,
+            'name' => $v->title, 
+            'thumnail_image' => $v->thumbnail_image ? asset($v->thumbnail_image) : null,
+            'description' => $v->description,
+            'product_name' => $v->product_name,
+            'product_asin_sku' => $v->product_asin_sku,
+            'product_thumbnail' => $v->product_thumbnail ? asset($v->product_thumbnail) : null,
+            'review_details' => $v->review_details,
+        ];
+    })
+    ->values();
+        
+        $data = [
+            'id' => $video->id,
+            'title' => $video->title,
+            'description' => $video->description,
+            'type' => $video->type,
+            'video_url' => $video->video_url,
+            'thumbnail_url' => $video->thumbnail_url,
+            'character_id' => $video->character_id,
+            'channel_id' => $video->channel_id,
+            'category_id' => $video->category_id,
+            'access_level' => $video->access_level,
+            'affiliate_link' => $video->affiliate_link,
+            'tags' => $video->tag_pairs,
+            'rating_type' => $video->rating_type,
+            'sponsorship_type' => $video->sponsorship_type,
+            'highlight_tags' => $video->highlight_tags,
+            'auto_tags' => $video->auto_tags,
+            'created_at' => $video->created_at?->toDateTimeString(),
+            'updated_at' => $video->updated_at?->toDateTimeString(),
+            'product_name' => $video->product_name,
+            'product_asin_sku' => $video->product_asin_sku,
+            'public_rating' => $video->public_rating,
+            'review_details' => $video->review_details,
+            'character_score' => $video->character_score,
+            'editorial_score' => $video->editorial_score,
+            'final_beastie_score' => $video->final_beastie_score,
+            'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
+            'video_type' => $video->video_type,
+            'video_platforms' => $video->video_platforms,
+            'youtube_id' => $video->youtube_id,
+            'wistia_id' => $video->wistia_id,
+            'raw_video_path' => $video->raw_video_path,
+            'caption_file' => $video->caption_file,
+            'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+            'is_draft' => $video->is_draft,
+            'status' => $video->status,
+            'tag_ids' => $video->tag_ids,
+            'is_ai_generated' => $video->is_ai_generated,
+            'is_finalized' => $video->is_finalized,
+            'qa_passed' => $video->qa_passed,
+            'post_schedule_at' => $video->post_schedule_at,
+            'review_type' => $video->review_type,
+            'sponsored' => $video->sponsored,
+            'seo_title' => $video->seo_title,
+            'seo_description' => $video->seo_description,
+            'hashtags' => $video->hashtags,
+            'cta_text' => $video->cta_text,
+            'og_image_url' => $video->og_image_url,
+            'open_graph_image' => $video->open_graph_image,
+            'twitter_title' => $video->twitter_title,
+            'twitter_description' => $video->twitter_description,
+            'original_price' => $video->original_price,
+            'views' => $video->views,
+            'likes' => $video->likes,
+            'sale_end_date' => $video->sale_end_date,
+            'is_amazon_choice' => $video->is_amazon_choice,
+            'regions' => $video->regions->map(fn($r) => [
+                'id' => $r->id,
+                'region_code' => $r->region_code,
+            ]),
+            'related_products' => $related,
+            'character_data'   => $character ? $character : null,
+        ];
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Video detail fetched successfully',
+            'data' => $data,
+        ], 200);
     }
-
-
-
-    // public function VideoDetail(Request $request, $id, $region = null)
-// {
-
-    //         $user         = $request->user();                // may be null for guests
-//         $isSubscribed = $user ? $this->hasValidSubscription($user->id) : false;
-//         $types        = $isSubscribed ? ['youtube', 'vimeo'] : ['youtube'];
-
-    //         // ----- Resolve region (fallback to GLOBAL) -----
-//         $regionCode     = $region ? strtoupper($region) : 'GLOBAL';
-//         $allowedRegions = ['AU', 'CA', 'UK', 'US'];
-//         if (!in_array($regionCode, $allowedRegions)) {
-//             $regionCode = 'GLOBAL';
-//         }
-
-    //         // ----- Base (published) -----
-//         $baseQuery = Video::query()
-//         ->where('id', $id)
-//         ->where('status', 'published');
-
-    //         dd($user,$isSubscribed,$types,$regionCode,$regionCode,$baseQuery);
-//         // Quick existence diagnostics for precise errors
-//         $existsPublished     = (clone $baseQuery)->exists();
-//         $existsInRegion      = (clone $baseQuery)
-//             ->whereHas('regions', fn ($q) => $q->where('region_code', $regionCode))
-//             ->exists();
-//         $existsInAllowedType = (clone $baseQuery)
-//             ->whereIn('type', $types)
-//             ->exists();
-
-    //         // ----- Fetch the video with all relations (type + region gated) -----
-//         $video = (clone $baseQuery)
-//             ->whereIn('type', $types)
-//             ->whereHas('regions', fn ($q) => $q->where('region_code', $regionCode))
-//             ->with([
-//                 'character:id,name,image,character_page_url_slug,category_id',
-//                 'character.regions:id,region_code',
-//                 'channel',      // whitelist if needed
-//                 'category',     // whitelist if needed
-//                 'reviews',
-//                 'regions:id,region_code',
-//                 'highlightTags:id,name',
-//             ])
-//             ->first();
-
-    //         if (!$video) {
-//             if (!$existsPublished) {
-//                 return response()->json([
-//                     'status'  => false,
-//                     'message' => 'Video not found.',
-//                     'data'    => [],
-//                 ], 404);
-//             }
-//             if (!$existsInRegion) {
-//                 return response()->json([
-//                     'status'  => false,
-//                     'message' => 'Video is not available in the requested region.',
-//                     'data'    => [],
-//                 ], 404);
-//             }
-//             if (!$existsInAllowedType) {
-//                 return response()->json([
-//                     'status'  => false,
-//                     'message' => 'Subscription required to view this video.',
-//                     'data'    => [],
-//                 ], 403);
-//             }
-
-    //             // Fallback (shouldn’t usually hit)
-//             return response()->json([
-//                 'status'  => false,
-//                 'message' => 'Video not available with the current constraints.',
-//                 'data'    => [],
-//             ], 404);
-//         }
-
-    //         // ----- Tag IDs -> names -----
-//         $tagIds  = $video->tag_ids_array ?? [];
-//         $tagMap  = !empty($tagIds) ? Tag::whereIn('id', $tagIds)->pluck('name', 'id') : collect();
-//         $tagPairs = collect($tagIds)->map(function ($id) use ($tagMap) {
-//             $name = $tagMap->get($id);
-//             return $name ? ['id' => $id, 'name' => $name] : null;
-//         })->filter()->values()->all();
-
-    //         // Hide pivot on many-to-many
-//         if ($video->relationLoaded('regions')) {
-//             $video->regions->each->makeHidden(['pivot']);
-//         }
-//         if ($video->relationLoaded('highlightTags')) {
-//             $video->highlightTags->each->makeHidden(['pivot']);
-//         }
-//         if ($video->relationLoaded('character') && $video->character && $video->character->relationLoaded('regions')) {
-//             $video->character->regions->each->makeHidden(['pivot']);
-//         }
-
-    //         // ----- Build exhaustive payload -----
-//         $data = [
-//             // Identifiers / status
-//             'id'                 => $video->id,
-//             'status'             => $video->status,
-//             'resolved_region'    => $regionCode,   // helpful to the client
-
-    //             // Core metadata
-//             'title'              => $video->title,
-//             'description'        => $video->description,
-//             'type'               => $video->type,
-//             'access_level'       => $video->access_level,
-
-    //             // Platforms / hosting
-//             'video_type'         => $video->video_type,
-//             'video_platforms'    => $video->video_platforms,
-//             'video_url'          => $video->video_url,
-//             'youtube_id'         => $video->youtube_id,
-//             'wistia_id'          => $video->wistia_id,
-
-    //             // Media assets (include full asset URLs where appropriate)
-//             'thumbnail_url'          => $video->thumbnail_url,
-//             'thumbnail_image'        => $video->thumbnail_image,
-//             'thumbnail_image_url'    => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
-//             'product_thumbnail'      => $video->product_thumbnail,
-//             'product_thumbnail_url'  => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
-//             'raw_video_path'         => $video->raw_video_path,
-//             'raw_video_file'         => $video->raw_video_file ?? null,
-//             'caption_file'           => $video->caption_file,
-
-    //             // Product / commerce
-//             'product_name'       => $video->product_name,
-//             'product_asin_sku'   => $video->product_asin_sku,
-//             'affiliate_link'     => $video->affiliate_link,
-//             'original_price'     => $video->original_price ?? null,
-//             'sale_end_date'      => $video->sale_end_date ?? null,
-//             'is_amazon_choice'   => $video->is_amazon_choice ?? null,
-
-    //             // Ratings & scores
-//             'public_rating'      => $video->public_rating,
-//             'character_score'    => $video->character_score,
-//             'editorial_score'    => $video->editorial_score,
-//             'final_beastie_score'=> $video->final_beastie_score,
-//             'review_type'        => $video->review_type,
-
-    //             // Sponsorship
-//             'sponsored'          => $video->sponsored,
-//             'sponsorship_type'   => $video->sponsorship_type,
-
-    //             // Flags
-//             'is_draft'           => $video->is_draft,
-//             'is_ai_generated'    => $video->is_ai_generated,
-//             'is_finalized'       => $video->is_finalized,
-//             'is_qa_passed'       => $video->is_qa_passed ?? $video->qa_passed ?? null,
-//             'post_schedule_at'   => optional($video->post_schedule_at)->toDateTimeString() ?? $video->post_schedule_at,
-
-    //             // SEO / social
-//             'seo_title'          => $video->seo_title,
-//             'seo_description'    => $video->seo_description,
-//             'og_image_url'       => $video->og_image_url,
-//             'open_graph_image'   => $video->open_graph_image,
-//             'twitter_title'      => $video->twitter_title,
-//             'twitter_description'=> $video->twitter_description,
-//             'cta_text'           => $video->cta_text,
-
-    //             // Tags (raw + mapped)
-//             'hashtags'           => $video->hashtags,
-//             'tags_raw'           => $video->tags,
-//             'tag_ids'            => $video->tag_ids,
-//             'tag_ids_array'      => $video->tag_ids_array,
-//             'tags'               => $tagPairs,
-//             'highlight_tags'     => $video->highlight_tags,
-//             'auto_tags'          => $video->auto_tags,
-
-    //             // Ownership / taxonomy IDs
-//             'character_id'       => $video->character_id,
-//             'channel_id'         => $video->channel_id,
-//             'category_id'        => $video->category_id,
-
-    //             // Engagement
-//             'views'              => $video->views ?? null,
-//             'likes'              => $video->likes ?? null,
-
-    //             // Timestamps
-//             'created_at'         => optional($video->created_at)->toDateTimeString(),
-//             'updated_at'         => optional($video->updated_at)->toDateTimeString(),
-
-    //             // -------- Relations --------
-//             'character' => $video->character ? [
-//                 'id'                       => $video->character->id,
-//                 'name'                     => $video->character->name,
-//                 'image'                    => $video->character->image ? asset($video->character->image) : null,
-//                 'character_page_url_slug'  => $video->character->character_page_url_slug,
-//                 'category_id'              => $video->character->category_id,
-//                 'regions'                  => $video->character->regions
-//                     ? $video->character->regions->map(fn ($r) => [
-//                         'id' => $r->id, 'region_code' => $r->region_code,
-//                     ])->values()
-//                     : [],
-//             ] : null,
-
-    //             'channel'  => $video->channel ?? null,   // refine/whitelist if needed
-//             'category' => $video->category ?? null,
-
-    //             'regions'  => $video->regions
-//                 ? $video->regions->map(fn ($r) => [
-//                     'id' => $r->id, 'region_code' => $r->region_code,
-//                 ])->values()
-//                 : [],
-
-    //             'highlight_tags_relation' => $video->highlightTags
-//                 ? $video->highlightTags->map(fn ($t) => [
-//                     'id' => $t->id,
-//                     'name' => $t->name ?? ($t->title ?? null),
-//                 ])->values()
-//                 : [],
-
-    //             'reviews' => $video->reviews
-//                 ? $video->reviews->map(function ($rev) {
-//                     return [
-//                         'id'         => $rev->id,
-//                         'user_id'    => $rev->user_id ?? null,
-//                         'rating'     => $rev->rating ?? null,
-//                         'title'      => $rev->title ?? null,
-//                         'body'       => $rev->body ?? $rev->comment ?? null,
-//                         'created_at' => optional($rev->created_at)->toDateTimeString(),
-//                         'updated_at' => optional($rev->updated_at)->toDateTimeString(),
-//                     ];
-//                 })->values()
-//                 : [],
-
-    //             'reviews_summary' => [
-//                 'count'   => $video->reviews ? $video->reviews->count() : 0,
-//                 'average' => $video->reviews ? round((float) $video->reviews->avg('rating'), 2) : null,
-//             ],
-//         ];
-
-    //         return response()->json([
-//             'status'  => true,
-//             'message' => $isSubscribed
-//                 ? 'Video details (paid + free) fetched successfully'
-//                 : 'Video details (free only) fetched successfully',
-//             'data'    => $data,
-//         ], 200);
-
-
-    // }
-
-
-
 
     private function hasValidSubscription(int $userId): bool
     {

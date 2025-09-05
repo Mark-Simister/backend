@@ -279,13 +279,14 @@ class UserController extends Controller
     // GET /api/me/profile  (optional helper for current user)
     public function me_api(Request $request)
     {
+        
         $user = $request->user(); // ApiUser via auth:api
         $user->load([
             'subscriptions_api' => fn ($q) => $q->with('listing')->latest(),
             'reviews_api'       => fn ($q) => $q->latest()->with(['video:id,title']),
             'roles',
         ]);
-
+        // dd($user);
         $data = $this->shapeUser($user);
 
         return response()->json([
@@ -358,5 +359,172 @@ class UserController extends Controller
             })->values(),
         ];
     }
+
+//     public function me_api(Request $request)
+// {
+//     $user = $request->user(); // ApiUser via auth:api
+//     $user->load([
+//         'subscriptions_api' => fn ($q) => $q->with('listing')->latest(),
+//         'reviews_api'       => fn ($q) => $q->latest()->with(['video:id,title']),
+//         'roles',
+//     ]);
+
+//     $data = $this->shapeUser($user);
+
+//     return response()->json([
+//         'status'  => true,
+//         'message' => 'Profile fetched successfully',
+//         'data'    => $data,
+//     ], 200);
+// }
+
+// /**
+//  * Normalize the JSON shape and categorize subscriptions:
+//  * - current_subscription: covers "now" (trial or paid)
+//  * - expired_subscriptions: ended before now
+//  * - future_subscriptions: start after now
+//  */
+// private function shapeUser(ApiUser $user): array
+// {
+//     $now = now();
+
+//     /**
+//      * Helpers to reason about a subscription timeline.
+//      */
+//     $isCanceled = static function ($s): bool {
+//         // Treat explicit canceled status or canceled_at set as canceled
+//         return ($s->subscription_status === 'canceled') || !is_null($s->canceled_at);
+//     };
+
+//     $periodStart = static function ($s) {
+//         // Prefer trial start when present, otherwise paid start
+//         return $s->trial_start_date ?? $s->subscription_start_date;
+//     };
+
+//     $periodEnd = static function ($s) {
+//         // Prefer trial end when it's in the future; otherwise paid end
+//         // (If both exist, we consider the furthest that still applies)
+//         // Practically: membership is active if NOW <= (trial_end or paid_end)
+//         return $s->trial_end_date ?: $s->subscription_end_date;
+//     };
+
+//     $isActiveNow = static function ($s, $now, $isCanceled, $periodStart, $periodEnd): bool {
+//         // Must be marked active or trialing, not canceled, and within dates.
+//         $statusOkay  = in_array($s->subscription_status, ['active','trialing'], true);
+//         if (!$statusOkay || $isCanceled($s)) {
+//             return false;
+//         }
+
+//         $start = $periodStart($s);
+//         $end   = $periodEnd($s);
+
+//         // If we have both, require: start <= now <= end
+//         // If start is null, just require now <= end
+//         // If end is null, assume open-ended after start
+//         $afterStart = $start ? $now->gte($start) : true;
+//         $beforeEnd  = $end   ? $now->lte($end)   : true;
+
+//         return $afterStart && $beforeEnd;
+//     };
+
+//     $isFuture = static function ($s, $now, $periodStart): bool {
+//         $start = $periodStart($s);
+//         return $start && $now->lt($start);
+//     };
+
+//     $isExpired = static function ($s, $now, $periodEnd): bool {
+//         $end = $periodEnd($s);
+//         // If we have an end date and it's in the past, it's expired
+//         return $end && $now->gt($end);
+//     };
+
+//     // Work with a copy sorted by the most relevant effective start descending
+//     $subs = $user->subscriptions_api
+//         ->sortByDesc(function ($s) use ($periodStart) {
+//             return optional($periodStart($s))->timestamp ?? -INF;
+//         })
+//         ->values();
+
+//     // Find the single "current" subscription (the one covering NOW)
+//     $current = $subs->first(function ($s) use ($now, $isCanceled, $periodStart, $periodEnd, $isActiveNow) {
+//         return $isActiveNow($s, $now, $isCanceled, $periodStart, $periodEnd);
+//     });
+
+//     // Future = start date in the future (regardless of status label)
+//     $future = $subs->filter(function ($s) use ($now, $periodStart, $isFuture) {
+//         return $isFuture($s, $now, $periodStart);
+//     })->values();
+
+//     // Expired = ended in the past
+//     $expired = $subs->filter(function ($s) use ($now, $periodEnd, $isExpired) {
+//         return $isExpired($s, $now, $periodEnd);
+//     })->values();
+
+//     // Flag
+//     $hasActiveSubscription = (bool) $current;
+
+//     // Shape a single subscription into your compact JSON
+//     $shapeOne = function ($s) {
+//         return [
+//             'id'                       => $s->id,
+//             'subscription_name'        => $s->subscription_name,
+//             'subscription_period'      => $s->subscription_period,
+//             'billing_cycle'            => $s->billing_cycle,
+//             'subscription_start_date'  => optional($s->subscription_start_date)->toDateString(),
+//             'subscription_end_date'    => optional($s->subscription_end_date)->toDateString(),
+//             'trial_start_date'         => optional($s->trial_start_date)->toDateString(),
+//             'trial_end_date'           => optional($s->trial_end_date)->toDateString(),
+//             'payment_status'           => $s->payment_status,
+//             'subscription_status'      => $s->subscription_status,
+//             'auto_renew'               => (bool) $s->auto_renew,
+//             'cancel_at_period_end'     => (bool) $s->cancel_at_period_end,
+//             'canceled_at'              => optional($s->canceled_at)->toDateTimeString(),
+//             'total_amount'             => $s->total_amount,
+//             'currency'                 => $s->currency,
+//             'listing'                  => $s->relationLoaded('listing') && $s->listing ? [
+//                 'id'   => $s->listing->id,
+//                 'name' => $s->listing->name ?? $s->listing->title ?? null,
+//             ] : null,
+//             'created_at'               => optional($s->created_at)->toDateTimeString(),
+//         ];
+//     };
+
+//     return [
+//         'id'    => $user->id,
+//         'name'  => $user->name,
+//         'email' => $user->email,
+//         'roles' => $user->roles->pluck('name')->values(),
+
+//         'has_active_subscription' => $hasActiveSubscription,
+
+//         // The one covering *today* (null if none)
+//         'current_subscription'    => $current ? $shapeOne($current) : null,
+
+//         // Already ended
+//         'expired_subscriptions'   => $expired->map($shapeOne)->values(),
+
+//         // Purchased but not started yet
+//         'future_subscriptions'    => $future->map($shapeOne)->values(),
+
+//         // (Optional) Keep your original flattened list (unchanged)
+//         'subscriptions' => $user->subscriptions_api->map($shapeOne)->values(),
+
+//         // Reviews as you had before
+//         'reviews' => $user->reviews_api->map(function ($r) {
+//             return [
+//                 'id'         => $r->id,
+//                 'rating'     => $r->rating,
+//                 'review'     => $r->review,
+//                 'status'     => $r->status,
+//                 'created_at' => optional($r->created_at)->toDateTimeString(),
+//                 'video'      => $r->relationLoaded('video') && $r->video ? [
+//                     'id'    => $r->video->id,
+//                     'title' => $r->video->title,
+//                 ] : null,
+//             ];
+//         })->values(),
+//     ];
+// }
+
 
 }

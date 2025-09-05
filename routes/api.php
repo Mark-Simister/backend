@@ -15,6 +15,7 @@ use App\Http\Controllers\SubscriptionListingController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\VideoController;
+use App\Http\Controllers\CommentController;
 
 use Illuminate\Support\Facades\Http;
 
@@ -94,8 +95,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('paid-videos-trending/{region}', [VideoController::class, 'paidVideosTrending']);
     Route::get('paid-videos-top-deals/{region}', [VideoController::class, 'paidVideosTopDeals']);
     Route::get('paid-trending-characters/{region}', [VideoController::class, 'charactersFromPaidVideos']);
-    Route::get('/videos/paid/{id}/{region?}', [VideoController::class, 'paidVideoDetails'])
-    ->whereNumber('id');
+    Route::get('/videos/{region}/{id}', [VideoController::class, 'paidVideosDetail']);
 
 
     Route::post('reviews', [ReviewController::class, 'store_api']);
@@ -128,7 +128,22 @@ Route::get('free-videos-trending/{region}', [VideoController::class, 'freeVideos
 Route::get('free-videos-top-deals/{region}', [VideoController::class, 'freeVideosTopDeals']);
 Route::get('free-trending-characters/{region}', [VideoController::class, 'charactersFromVideos']);
 
-Route::get('/video-detail/{region}/{id}', [VideoController::class, 'VideoDetail']); 
+Route::get('/free-videos/{region}/{id}', [VideoController::class, 'freeVideosDetail']);
+
+Route::prefix('videos/{video}')->group(function () {
+    Route::get('/comments', [CommentController::class, 'index']);
+    Route::post('/comments', [CommentController::class, 'store']);
+});
+
+Route::get('/comments/{comment}', [CommentController::class, 'show']);
+Route::get('/comments/{comment}/thread', [CommentController::class, 'thread']);
+Route::patch('/comments/{comment}', [CommentController::class, 'update']);
+Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+
+// Route::get('/videos/{region}/{id}', [VideoController::class, 'paidVideoDetail']);
+// Route::get('/videos/{region}/{id}', [VideoController::class, 'paidVideosDetail']);
+
+
 
     
 Route::get('/my-country', function (Request $request) {

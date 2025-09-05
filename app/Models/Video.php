@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class Video extends Model
 {
     use HasFactory;
@@ -128,6 +130,18 @@ class Video extends Model
             ->map(fn($s) => (int) $s)
             ->values()
             ->all();
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class)->orderBy('created_at', 'desc');
+    }
+
+    public function topLevelComments(): HasMany
+    {
+        return $this->hasMany(Comment::class)
+            ->whereNull('parent_id')
+            ->orderBy('created_at', 'desc');
     }
 
 }
