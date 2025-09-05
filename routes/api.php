@@ -90,7 +90,9 @@ Route::middleware(['auth:api'])->group(function () {
    Route::get('videos/{region?}', [VideoController::class, 'index_api']);
     // Route::get('videos/free', [VideoController::class, 'freeVideos']);
     // Route::get('videos/paid', [VideoController::class, 'paidVideos']);
-    Route::get('paid-videos/{region}', [VideoController::class, 'freeVideos']);
+    Route::get('paid-videos/{region}', [VideoController::class, 'paidVideos']);
+    Route::get('paid-videos-trending/{region}', [VideoController::class, 'paidVideosTrending']);
+    Route::get('paid-videos-top-deals/{region}', [VideoController::class, 'paidVideosTopDeals']);
     Route::post('reviews', [ReviewController::class, 'store_api']);
     Route::get('my-reviews', [ReviewController::class, 'myReviews']);
 
@@ -117,6 +119,8 @@ Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
 
 
 Route::get('free-videos/{region}', [VideoController::class, 'freeVideos']);
+Route::get('free-videos-trending/{region}', [VideoController::class, 'freeVideosTrending']);
+Route::get('free-videos-top-deals/{region}', [VideoController::class, 'freeVideosTopDeals']);
     
 Route::get('/my-country', function (Request $request) {
     // Try real client IP from common proxy/CDN headers, else fallback to Laravel's IP.

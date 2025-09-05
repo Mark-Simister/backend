@@ -43,7 +43,7 @@
                                     <i class="bi bi-pencil-square"></i> Edit
                                 </a>
                                 @endcan
-                                @can('highlight_tag.delete')
+                                {{-- @can('highlight_tag.delete')
                                 <form action="{{ route('admin.highlight_tags.destroy', $highlightTag) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this highlight tag?')">
                                     @csrf
                                     @method('DELETE')
@@ -51,7 +51,7 @@
                                         <i class="bi bi-trash"></i> Delete
                                     </button>
                                 </form>
-                                @endcan
+                                @endcan --}}
                             </td>
                         </tr>
                     @endforeach
