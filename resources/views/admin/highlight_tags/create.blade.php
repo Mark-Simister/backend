@@ -6,16 +6,32 @@
     <div class="card-body">
         <h4>Add Highlight Tag</h4>
         @can('highlight_tag.create')
-        <form action="{{ route('admin.highlight_tags.store') }}" method="POST">
+        <form action="{{ route('admin.highlight_tags.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
-            <div class="form-group mt-3">
+            {{-- <div class="form-group mt-3">
                 <label for="emoji">Emoji <span class="text-danger">*</span></label>
                 <input type="text" name="emoji" id="emoji" class="form-control" placeholder="e.g. 🔥" value="{{ old('emoji') }}" required>
                 @error('emoji')
                     <span class="text-danger">{{ $message }}</span>
                 @enderror
+            </div> --}}
+            <div class="form-group mt-3">
+                <label for="emoji">Emoji Image</label>
+                <input type="file" name="emoji" id="emoji" class="form-control" accept="image/*">
+                @if(isset($highlightTag) && $highlightTag->emoji)
+                    <div class="mt-2">
+                        <img src="{{ asset($highlightTag->emoji) }}" 
+                            alt="{{ $highlightTag->label }}" 
+                            width="50" height="50" 
+                            style="object-fit:contain;">
+                    </div>
+                @endif
+                @error('emoji')
+                    <span class="text-danger">{{ $message }}</span>
+                @enderror
             </div>
+
 
             <div class="form-group mt-3">
                 <label for="label">Label <span class="text-danger">*</span></label>
