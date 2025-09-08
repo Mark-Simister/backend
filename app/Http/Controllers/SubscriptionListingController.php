@@ -447,79 +447,84 @@ class SubscriptionListingController extends Controller
     //         ], 500);
     //     }
     // }
-    public function index_region_api(Request $request, $region = null)
-    {
-        try {
-            $input = strtoupper($region ?? (string) $request->input('region', ''));
-            $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
-            $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
+    public function index_region_api(Request $request, $region)
+{
+    try {
+        // Ensure the region is valid by converting it to uppercase
+        $input = strtoupper($region);
+        $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
 
-            $regionCurrency = match ($regionCode) {
-                'AU' => 'AUD',
-                'CA' => 'CAD',
-                'UK' => 'GBP',
-                'US' => 'USD',
-                'GLOBAL' => 'INR',
-                default => 'USD',
-            };
+        // Validate the region
+        $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
-            $baseCurrency = 'USD';
+        // Set the currency based on the region
+        $regionCurrency = match ($regionCode) {
+            'AU' => 'AUD',
+            'CA' => 'CAD',
+            'UK' => 'GBP',
+            'US' => 'USD',
+            'GLOBAL' => 'INR',
+            default => 'USD',
+        };
 
-            $query = SubscriptionListing::select('id', 'subscription_name', 'sub_description', 'price', 'duration', 'duration_unit', 'type')
-                ->whereHas('regions', function ($q) use ($regionCode) {
-                    $q->where('region_code', $regionCode);
-                })
-                ->with(['regions:id,region_code'])
-                ->orderBy('id');
+        $baseCurrency = 'USD';
 
-            $plans = $query->get();
+        // Query the subscription listings based on the region
+        $query = SubscriptionListing::select('id', 'subscription_name', 'sub_description', 'price', 'duration', 'duration_unit', 'type')
+            ->whereHas('regions', function ($q) use ($regionCode) {
+                $q->where('region_code', $regionCode);
+            })
+            ->with(['regions:id,region_code'])
+            ->orderBy('id');
 
-            $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
+        $plans = $query->get();
 
-            $data = $plans->map(function ($plan) use ($fxRate, $regionCode, $regionCurrency, $baseCurrency) {
-                if ($plan->relationLoaded('regions')) {
-                    $plan->regions->each->makeHidden(['pivot']);
-                }
+        // Get the real-time currency exchange rate
+        $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
 
-                $priceLocal = round(((float) $plan->price) * $fxRate, 2);
+        // Map the subscription listings with the converted price and other data
+        $data = $plans->map(function ($plan) use ($fxRate, $regionCode, $regionCurrency, $baseCurrency) {
+            if ($plan->relationLoaded('regions')) {
+                $plan->regions->each->makeHidden(['pivot']);
+            }
 
-                return [
-                    'id' => $plan->id,
-                    'subscription_name' => $plan->subscription_name,
-                    'sub_description' => $plan->sub_description,
+            // Convert the price to the local currency
+            $priceLocal = round(((float) $plan->price) * $fxRate, 2);
 
-                    'price' => $priceLocal,
-                    'currency' => $regionCurrency,
-                    'currency_symbol' => $this->currencySymbol($regionCurrency),
-                    'display_price' => $this->formatMoney($priceLocal, $regionCurrency),
+            return [
+                'id' => $plan->id,
+                'subscription_name' => $plan->subscription_name,
+                'sub_description' => $plan->sub_description,
+                'price' => $priceLocal,
+                'currency' => $regionCurrency,
+                'currency_symbol' => $this->currencySymbol($regionCurrency),
+                'display_price' => $this->formatMoney($priceLocal, $regionCurrency),
+                'duration' => $plan->duration,
+                'duration_unit' => $plan->duration_unit,
+                'type' => $plan->type,
+                'region' => $regionCode,
+                'base_currency' => $baseCurrency,
+                'fx_rate_used' => $fxRate,
+                'regions' => $plan->regions->map(fn($r) => [
+                    'id' => $r->id,
+                    'region_code' => $r->region_code,
+                ]),
+            ];
+        });
 
-                    'duration' => $plan->duration,
-                    'duration_unit' => $plan->duration_unit,
-                    'type' => $plan->type,
-
-                    'region' => $regionCode,
-                    'base_currency' => $baseCurrency,
-                    'fx_rate_used' => $fxRate,
-
-                    'regions' => $plan->regions->map(fn($r) => [
-                        'id' => $r->id,
-                        'region_code' => $r->region_code,
-                    ]),
-                ];
-            });
-
-            return response()->json([
-                'status' => true,
-                'message' => "Subscriptions for region {$regionCode} fetched successfully",
-                'data' => $data,
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to fetch subscriptions',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'status' => true,
+            'message' => "Subscriptions for region {$regionCode} fetched successfully",
+            'data' => $data,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to fetch subscriptions',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
+
 
 }

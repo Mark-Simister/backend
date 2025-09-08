@@ -131,7 +131,8 @@ Route::get('free-trending-characters/{region}', [VideoController::class, 'charac
 
 Route::get('/free-videos/{region}/{id}', [VideoController::class, 'freeVideosDetail']);
 
-Route::get('/subscription-listings/by-region/{region?}', [SubscriptionListingController::class, 'index_region_api']);
+// Route::get('/subscription-listings/by-region/{region?}', [SubscriptionListingController::class, 'index_region_api']);
+Route::get('/subscription-listings/region/{region}', [SubscriptionListingController::class, 'index_region_api']);
 
 Route::prefix('videos/{video}')->group(function () {
     Route::get('/comments', [CommentController::class, 'index']);
