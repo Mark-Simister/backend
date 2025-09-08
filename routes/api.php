@@ -43,11 +43,11 @@ Route::middleware(['auth:api'])->group(function () {
     });
     Route::prefix('regions')->group(function () {
     // Route::get('/', [RegionController::class, 'index_api']);
-    Route::post('/', [RegionController::class, 'store_api']);
-    Route::get('/{id}', [RegionController::class, 'show_api']);
-    Route::put('/{id}', [RegionController::class, 'update_api']);
-    Route::delete('/{id}', [RegionController::class, 'destroy_api']);
-});
+        Route::post('/', [RegionController::class, 'store_api']);
+        Route::get('/{id}', [RegionController::class, 'show_api']);
+        Route::put('/{id}', [RegionController::class, 'update_api']);
+        Route::delete('/{id}', [RegionController::class, 'destroy_api']);
+    });
 
     // Channels list API
     // Route::get('channels', [ChannelController::class, 'index_api']);
