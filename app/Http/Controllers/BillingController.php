@@ -1202,7 +1202,7 @@ public function purchase(Request $req)
         'transaction_id' => $stripeSub->id,
     ]);
 
-    // Force payment status to succeeded
+    // Force payment status to succeeded and avoid going to webhook
     if ($pi) {
         $pi->status = 'succeeded'; // Force success
 
@@ -1224,7 +1224,7 @@ public function purchase(Request $req)
         ]);
     }
 
-    // Otherwise, wait for webhook
+    // Otherwise, wait for webhook (should not happen if payment is forced)
     return response()->json([
         'subscription_id' => $subscription->id,
         'status' => 'incomplete',
