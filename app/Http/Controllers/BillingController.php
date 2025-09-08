@@ -587,16 +587,18 @@ private function fetchFromEcb(string $from, string $to): ?float
 
 public function purchase(Request $req)
 {
+    // Validate input parameters
     $validated = $req->validate([
         'plan_id' => ['required','integer','exists:subscription_listing,id'],
         'payment_method' => ['required','string'],   
         'auto_renew' => ['nullable','boolean'],
         'region' => ['nullable','string'],
     ]);
-    
-    $inputRegion   = strtoupper((string)($validated['region'] ?? $req->input('region', '')));
+
+    // Handle region and currency
+    $inputRegion = strtoupper((string)($validated['region'] ?? $req->input('region', '')));
     $allowedRegions = ['AU','CA','UK','US','GLOBAL'];
-    $regionCode    = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
+    $regionCode = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
     $regionCurrency = match ($regionCode) {
         'AU' => 'AUD',
         'CA' => 'CAD',
@@ -611,17 +613,18 @@ public function purchase(Request $req)
     $user = Auth::guard('api')->user();
     $plan = DB::table('subscription_listing')->where('id', $validated['plan_id'])->first();
 
+    // Calculate the subscription price
     $priceLocal = round(floatval($plan->price) * $fxRate, 2);
-    $zeroDecimal = ['JPY'];
     $currency = strtolower($regionCurrency); 
-    $amountCents = in_array(strtoupper($regionCurrency), $zeroDecimal, true)
+    $amountCents = in_array(strtoupper($regionCurrency), ['JPY'], true)
         ? (int) round($priceLocal)
         : (int) round($priceLocal * 100);
 
     $autoRenew = array_key_exists('auto_renew', $validated)
         ? (bool)$validated['auto_renew']
         : ($plan->type === 'recurring');
-    
+
+    // Set Stripe API key
     Stripe::setApiKey(config('services.stripe.secret'));
 
     // Retrieve or create Stripe customer
@@ -663,7 +666,7 @@ public function purchase(Request $req)
 
     // Create subscription record (pending)
     $startsAt = Carbon::now();
-    $endsAt   = $this->computeEnd($startsAt, (int)$plan->duration, $plan->duration_unit);
+    $endsAt = $this->computeEnd($startsAt, (int)$plan->duration, $plan->duration_unit);
 
     $subscription = Subscription::create([
         'user_id' => $user->id,
@@ -685,9 +688,9 @@ public function purchase(Request $req)
         'is_first_payment' => true,
     ]);
 
-    // Recurring subscription
-    $interval = $this->mapInterval($plan->duration_unit); // day|week|month|year
-    $intervalCount = (int) $plan->duration;
+    // Create recurring price
+    $interval = $this->mapInterval($plan->duration_unit);
+    $intervalCount = (int)$plan->duration;
 
     $price = Price::create([
         'unit_amount' => $amountCents,
@@ -720,13 +723,12 @@ public function purchase(Request $req)
         'transaction_id' => $stripeSub->id,
     ]);
 
-    // Confirm Payment Intent with Customer On-Session (Avoid off_session)
+    // Confirm PaymentIntent without 3D Secure or off-session
     if ($pi && $pi->status === 'requires_action') {
         try {
-            // Explicitly confirm the payment on-session (no off_session flag)
+            // Confirm payment interactively (on-session)
             $pi->confirm();
         } catch (\Exception $e) {
-            // Handle the error (payment confirmation failure)
             return response()->json([
                 'error' => 'Payment failed during confirmation.',
                 'message' => $e->getMessage(),
@@ -776,6 +778,7 @@ public function purchase(Request $req)
         'fx_rate_used' => $fxRate,
     ], 202);
 }
+
 
 
 
