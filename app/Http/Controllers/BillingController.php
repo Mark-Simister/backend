@@ -609,7 +609,7 @@ public function purchase(Request $req)
     $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
     
     $user = Auth::guard('api')->user();
-    $plan = DB::table('subscription_listing')->where('id',$validated['plan_id'])->first();
+    $plan = DB::table('subscription_listing')->where('id', $validated['plan_id'])->first();
 
     $priceLocal = round(floatval($plan->price) * $fxRate, 2);
     $zeroDecimal = ['JPY'];
@@ -625,7 +625,7 @@ public function purchase(Request $req)
     Stripe::setApiKey(config('services.stripe.secret'));
 
     // Retrieve or create Stripe customer
-    $existingCustomerId = Subscription::where('user_id',$user->id)
+    $existingCustomerId = Subscription::where('user_id', $user->id)
         ->whereNotNull('stripe_customer_id')
         ->value('stripe_customer_id');
 
@@ -720,20 +720,20 @@ public function purchase(Request $req)
         'transaction_id' => $stripeSub->id,
     ]);
 
-    // Forcefully succeed the payment and skip 3D Secure
+    // Confirm Payment Intent with Customer On-Session (Avoid off_session)
     if ($pi && $pi->status === 'requires_action') {
         try {
-            // Attempt to confirm the payment off-session (force success)
-            $pi->confirm(['off_session' => true]);
+            // Explicitly confirm the payment on-session (no off_session flag)
+            $pi->confirm();
         } catch (\Exception $e) {
-            // Handle any error that might arise
+            // Handle the error (payment confirmation failure)
             return response()->json([
-                'error' => 'Payment failed during forced confirmation.',
+                'error' => 'Payment failed during confirmation.',
                 'message' => $e->getMessage(),
             ], 500);
         }
 
-        // After confirmation, update the subscription status
+        // After confirmation, check if the payment succeeded
         if ($pi->status === 'succeeded') {
             $subscription->update([
                 'payment_status' => 'succeeded',
@@ -776,6 +776,7 @@ public function purchase(Request $req)
         'fx_rate_used' => $fxRate,
     ], 202);
 }
+
 
 
 

@@ -77,67 +77,200 @@ class AuthController extends Controller
      * Authenticate a user and issue a JWT.
      * Blocks login until email is verified.
      */
+    // public function login(Request $request)
+    // {
+    //     $credentials = $request->only('email', 'password');
+
+    //     if (!$token = auth('api')->attempt($credentials)) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Invalid credentials.'
+    //         ], 401);
+    //     }
+
+    //     /** @var ApiUser $user */
+    //     $user = auth('api')->user();
+
+    //     if (!$user->hasRole('user')) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Access denied. Insufficient permissions.'
+    //         ], 403);
+    //     }
+
+    //     // Do not allow login if user is soft-deleted
+    //     if (method_exists($user, 'trashed') && $user->trashed()) {
+    //         auth('api')->logout();
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Your account has been deactivated. Please contact support.'
+    //         ], 410); // Gone
+    //     }
+
+    //     // Do not allow login if blocked
+    //     if (!empty($user->is_blocked) && $user->is_blocked) {
+    //         auth('api')->logout();
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Your account is blocked. Please contact support.'
+    //         ], 403); 
+    //     }
+
+    //     if (!$user->is_verified) {
+    //         if (!$user->otp_expires_at || Carbon::parse($user->otp_expires_at)->isPast()) {
+    //             $this->issueAndSendOtp($user);
+    //         }
+    //         // invalidate the token because we won’t let them in
+    //         auth('api')->logout();
+
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Email not verified. We have sent (or re-sent) a verification code to your email.',
+    //         ], 403);
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Login successful.',
+    //         'data' => [
+    //             'token' => $token,
+    //             'user' => $user
+    //         ]
+    //     ], 200);
+    // }
     public function login(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
+{
+    $credentials = $request->only('email', 'password');
 
-        if (!$token = auth('api')->attempt($credentials)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid credentials.'
-            ], 401);
+    if (!$token = auth('api')->attempt($credentials)) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Invalid credentials.'
+        ], 401);
+    }
+
+    /** @var ApiUser $user */
+    $user = auth('api')->user();
+
+    if (!$user->hasRole('user')) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Access denied. Insufficient permissions.'
+        ], 403);
+    }
+
+    // Do not allow login if user is soft-deleted
+    if (method_exists($user, 'trashed') && $user->trashed()) {
+        auth('api')->logout();
+        return response()->json([
+            'status' => false,
+            'message' => 'Your account has been deactivated. Please contact support.'
+        ], 410); // Gone
+    }
+
+    // Do not allow login if blocked
+    if (!empty($user->is_blocked) && $user->is_blocked) {
+        auth('api')->logout();
+        return response()->json([
+            'status' => false,
+            'message' => 'Your account is blocked. Please contact support.'
+        ], 403); 
+    }
+
+    if (!$user->is_verified) {
+        if (!$user->otp_expires_at || Carbon::parse($user->otp_expires_at)->isPast()) {
+            $this->issueAndSendOtp($user);
         }
-
-        /** @var ApiUser $user */
-        $user = auth('api')->user();
-
-        if (!$user->hasRole('user')) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Access denied. Insufficient permissions.'
-            ], 403);
-        }
-
-        // Do not allow login if user is soft-deleted
-        if (method_exists($user, 'trashed') && $user->trashed()) {
-            auth('api')->logout();
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account has been deactivated. Please contact support.'
-            ], 410); // Gone
-        }
-
-        // Do not allow login if blocked
-        if (!empty($user->is_blocked) && $user->is_blocked) {
-            auth('api')->logout();
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is blocked. Please contact support.'
-            ], 403); 
-        }
-
-        if (!$user->is_verified) {
-            if (!$user->otp_expires_at || Carbon::parse($user->otp_expires_at)->isPast()) {
-                $this->issueAndSendOtp($user);
-            }
-            // invalidate the token because we won’t let them in
-            auth('api')->logout();
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Email not verified. We have sent (or re-sent) a verification code to your email.',
-            ], 403);
-        }
+        // invalidate the token because we won’t let them in
+        auth('api')->logout();
 
         return response()->json([
-            'status' => true,
-            'message' => 'Login successful.',
-            'data' => [
-                'token' => $token,
-                'user' => $user
-            ]
-        ], 200);
+            'status' => false,
+            'message' => 'Email not verified. We have sent (or re-sent) a verification code to your email.',
+        ], 403);
     }
+
+    // Load additional relationships and data similar to profile
+    $user->load([
+        'subscriptions_api' => fn ($q) => $q->with('listing')->latest(),
+        'reviews_api' => fn ($q) => $q->latest()->with(['video:id,title']),
+        'roles',
+    ]);
+
+    $data = $this->shapeUser($user);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Login successful.',
+        'data' => [
+            'token' => $token,
+            'user' => $data
+        ]
+    ], 200);
+}
+
+private function shapeUser(ApiUser $user): array
+    {
+        // simple “active” flag (active OR trialing and within dates)
+        $hasActiveSubscription = (bool) optional($user->subscriptions_api->first(), function ($sub) {
+            $now = now();
+            $statusOkay  = in_array($sub->subscription_status, ['active','trialing'], true);
+            $notCanceled = $sub->subscription_status !== 'canceled' && is_null($sub->canceled_at);
+            $withinPaid  = $sub->subscription_end_date && $now->lte($sub->subscription_end_date);
+            $withinTrial = $sub->trial_end_date && $now->lte($sub->trial_end_date);
+            return $statusOkay && $notCanceled && ($withinPaid || $withinTrial);
+        });
+
+        return [
+            'id'       => $user->id,
+            'name'     => $user->name,
+            'email'    => $user->email,
+            'roles'    => $user->roles->pluck('name')->values(),
+
+            'has_active_subscription' => $hasActiveSubscription,
+
+            'subscriptions' => $user->subscriptions_api->map(function ($s) {
+                return [
+                    'id'                     => $s->id,
+                    'subscription_name'      => $s->subscription_name,
+                    'subscription_period'    => $s->subscription_period,
+                    'billing_cycle'          => $s->billing_cycle,
+                    'subscription_start_date'=> optional($s->subscription_start_date)->toDateString(),
+                    'subscription_end_date'  => optional($s->subscription_end_date)->toDateString(),
+                    'trial_start_date'       => optional($s->trial_start_date)->toDateString(),
+                    'trial_end_date'         => optional($s->trial_end_date)->toDateString(),
+                    'payment_status'         => $s->payment_status,
+                    'subscription_status'    => $s->subscription_status,
+                    'auto_renew'             => (bool) $s->auto_renew,
+                    'cancel_at_period_end'   => (bool) $s->cancel_at_period_end,
+                    'canceled_at'            => optional($s->canceled_at)->toDateTimeString(),
+                    'total_amount'           => $s->total_amount,
+                    'currency'               => $s->currency,
+                    'listing'                => $s->relationLoaded('listing') && $s->listing ? [
+                        'id'   => $s->listing->id,
+                        'name' => $s->listing->name ?? $s->listing->title ?? null,
+                    ] : null,
+                    'created_at'             => optional($s->created_at)->toDateTimeString(),
+                ];
+            })->values(),
+
+            'reviews' => $user->reviews_api->map(function ($r) {
+                return [
+                    'id'         => $r->id,
+                    'rating'     => $r->rating,
+                    'review'     => $r->review,
+                    'status'     => $r->status,
+                    'created_at' => optional($r->created_at)->toDateTimeString(),
+                    'video'      => $r->relationLoaded('video') && $r->video ? [
+                        'id'    => $r->video->id,
+                        'title' => $r->video->title,
+                    ] : null,
+                ];
+            })->values(),
+        ];
+    }
+
+
 
     /**
      * Resend OTP to email.
