@@ -19,4 +19,10 @@ class SubscriptionListing extends Model
         'duration_unit',
         'type',
     ];
+
+    public function regions()
+{
+    return $this->belongsToMany(Region::class, 'subscription_region', 'subscription_id', 'region_id');
+}
+
 }

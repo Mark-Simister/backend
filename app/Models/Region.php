@@ -35,4 +35,15 @@ class Region extends Model
     {
         return $this->belongsToMany(\App\Models\Category::class, 'category_region');
     }
+
+    public function subscriptions()
+    {
+        return $this->belongsToMany(SubscriptionListing::class, 'subscription_region', 'region_id', 'subscription_id');
+    }
+
+    public function regions()
+    {
+        return $this->belongsToMany(Region::class, 'subscription_region', 'subscription_id', 'region_id')
+            ->withTimestamps();
+    }
 }

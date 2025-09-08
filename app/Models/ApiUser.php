@@ -23,6 +23,7 @@ class ApiUser extends Authenticatable implements JWTSubject
         'email',
         'password',
         'phone',
+        'profile_image',
         'role',
         'is_verified',
         'is_blocked',

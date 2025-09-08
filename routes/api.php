@@ -103,6 +103,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::get('users/{id}', [UserController::class, 'show_api'])->whereNumber('id');
     Route::get('me/profile', [UserController::class, 'me_api']);
+    Route::post('/profile/update', [UserController::class, 'update_api']);
 
 
 });
@@ -129,6 +130,8 @@ Route::get('free-videos-top-deals/{region}', [VideoController::class, 'freeVideo
 Route::get('free-trending-characters/{region}', [VideoController::class, 'charactersFromVideos']);
 
 Route::get('/free-videos/{region}/{id}', [VideoController::class, 'freeVideosDetail']);
+
+Route::get('/subscription-listings/by-region/{region?}', [SubscriptionListingController::class, 'index_region_api']);
 
 Route::prefix('videos/{video}')->group(function () {
     Route::get('/comments', [CommentController::class, 'index']);

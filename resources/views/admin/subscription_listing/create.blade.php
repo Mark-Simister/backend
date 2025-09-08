@@ -50,6 +50,20 @@
                 @error('type') <span class="text-danger">{{ $message }}</span> @enderror
             </div>
 
+            <div class="form-group mt-3">
+                <label>Regions</label><br>
+                @foreach($regions as $region)
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" 
+                               name="regions[]" 
+                               value="{{ $region->id }}" 
+                               {{ (is_array(old('regions')) && in_array($region->id, old('regions'))) ? 'checked' : '' }}>
+                        <label class="form-check-label">{{ $region->name }}</label>
+                    </div>
+                @endforeach
+                @error('regions') <span class="text-danger d-block">{{ $message }}</span> @enderror
+            </div>
+
             <button type="submit" class="btn btn-success mt-3">Save</button>
         </form>
         @endcan

@@ -41,5 +41,8 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         'currency' => env('STRIPE_CURRENCY', 'usd'),
     ],
+    'exchangerate' => [
+        'key' => env('EXCHANGE_RATE_API_KEY'),
+    ],
 
 ];

@@ -6,6 +6,8 @@ use App\Models\ApiUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -276,7 +278,6 @@ class UserController extends Controller
         ], 200);
     }
 
-    // GET /api/me/profile  (optional helper for current user)
     public function me_api(Request $request)
     {
         
@@ -359,6 +360,71 @@ class UserController extends Controller
             })->values(),
         ];
     }
+
+    public function update_api(Request $request)
+    {
+        // dd($request->all());
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name'  => ['sometimes','string','max:255'],
+            'phone' => ['sometimes','string','max:30'],
+            'password' => ['sometimes','nullable','confirmed','min:8'],
+            'profile_image' => ['sometimes','file','image','mimes:jpeg,png,jpg,webp','max:5120'], 
+        ]);
+        // dd($validated);
+
+        $destination = public_path('users');
+        if (!File::exists($destination)) {
+            File::makeDirectory($destination, 0755, true);
+        }
+
+        $emailChanged = array_key_exists('email', $validated) && $validated['email'] !== $user->email;
+
+        if (array_key_exists('name', $validated))  $user->name  = $validated['name'];
+        if (array_key_exists('phone', $validated)) $user->phone = $validated['phone'];
+
+        if (array_key_exists('password', $validated) && $validated['password']) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        if ($emailChanged) {
+            $user->email_verified_at = null;
+        }
+
+        if ($request->hasFile('profile_image')) {
+            $file = $request->file('profile_image');
+
+            if ($user->profile_image) {
+                $oldPath = public_path('users/'.$user->profile_image);
+                if (File::exists($oldPath) && str_starts_with(realpath($oldPath), realpath($destination))) {
+                    @File::delete($oldPath);
+                }
+            }
+
+            $filename = 'user_'.$user->id.'_'.time().'.'.$file->getClientOriginalExtension();
+            $file->move($destination, $filename);
+            $user->profile_image = $filename;
+        }
+
+        $user->save();
+
+        $imageUrl = $user->profile_image ? url('users/'.$user->profile_image) : null;
+
+        return response()->json([
+            'message' => 'Profile updated successfully.',
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'email_verified_at' => $user->email_verified_at,
+                'role' => $user->role,
+                'profile_image' => $imageUrl,
+            ],
+        ]);
+    }
+
 
 //     public function me_api(Request $request)
 // {
