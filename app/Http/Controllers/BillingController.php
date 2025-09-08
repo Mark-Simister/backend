@@ -1204,27 +1204,29 @@ public function purchase(Request $req)
 
     // Handle requires_action (e.g., 3D Secure)
     if ($pi && $pi->status === 'requires_action') {
-        // Remove off_session=true and confirm interactively
-        try {
-            $pi->confirm(['payment_method' => $pmId]);
-            $subscription->update([
-                'last_payment_status' => $pi->status,
-                'last_payment_at' => now(),
-            ]);
-        } catch (\Stripe\Exception\ApiErrorException $e) {
-            return response()->json([
-                'error' => 'Payment confirmation failed.',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-
+    try {
+        // Confirm interactively (no off_session flag, this requires user authentication)
+        $pi = $pi->confirm(['payment_method' => $pmId]);
+        
+        // Track the payment status
+        $subscription->update([
+            'last_payment_status' => $pi->status,
+            'last_payment_at' => now(),
+        ]);
+    } catch (\Stripe\Exception\ApiErrorException $e) {
         return response()->json([
-            'requires_action' => true,
-            'payment_intent_client_secret' => $pi->client_secret,
-            'stripe_subscription_id' => $stripeSub->id,
-            'message' => '3DS authentication required',
-        ], 200);
+            'error' => 'Payment confirmation failed.',
+            'message' => $e->getMessage(),
+        ], 500);
     }
+
+    return response()->json([
+        'requires_action' => true,
+        'payment_intent_client_secret' => $pi->client_secret,
+        'stripe_subscription_id' => $stripeSub->id,
+        'message' => '3DS authentication required',
+    ], 200);
+}
 
     // Confirm if payment was successful
     if ($pi && $pi->status === 'succeeded') {
