@@ -685,53 +685,6 @@ public function purchase(Request $req)
         'is_first_payment' => true,
     ]);
 
-    // For one-time purchases
-    if ($plan->type === 'one_time') {
-        if ($amountCents > 0) {
-            $pi = PaymentIntent::create([
-                'amount' => $amountCents,
-                'currency' => $currency,
-                'customer' => $stripeCustomerId,
-                'payment_method' => $pmId, // now attached
-                'confirm' => true,
-                'automatic_payment_methods' => ['enabled' => true, 'allow_redirects' => 'never'],
-                'description' => "One-time purchase: {$plan->subscription_name}",
-            ]);
-
-            $subscription->update([
-                'stripe_payment_intent_id' => $pi->id,
-                'transaction_id' => $pi->id,
-                'last_payment_status' => $pi->status,
-                'last_payment_at' => now(),
-            ]);
-
-            if (!in_array($pi->status, ['succeeded', 'requires_capture'])) {
-                return response()->json([
-                    'requires_action' => $pi->status === 'requires_action',
-                    'payment_intent_client_secret' => $pi->client_secret ?? null,
-                    'message' => 'Payment incomplete',
-                ], 402);
-            }
-        }
-
-        // free or succeeded
-        $subscription->update([
-            'payment_status' => 'succeeded',
-            'subscription_status' => 'active',
-        ]);
-
-        return response()->json([
-            'subscription_id' => $subscription->id,
-            'status' => 'active',
-            'billing_cycle' => 'one_time',
-            'starts_at' => $subscription->subscription_start_date,
-            'ends_at' => $subscription->subscription_end_date,
-            'region' => $regionCode,
-            'currency' => strtoupper($regionCurrency),
-            'fx_rate_used' => $fxRate,
-        ]);
-    }
-
     // Recurring subscription
     $interval = $this->mapInterval($plan->duration_unit); // day|week|month|year
     $intervalCount = (int) $plan->duration;
@@ -767,24 +720,31 @@ public function purchase(Request $req)
         'transaction_id' => $stripeSub->id,
     ]);
 
-    // Handle 3DS authentication or any other action
+    // Forcefully succeed the payment and skip 3D Secure
     if ($pi && $pi->status === 'requires_action') {
-        $subscription->update([
-            'last_payment_status' => $pi->status,
-            'last_payment_at' => now(),
-        ]);
-        return response()->json([
-            'requires_action' => true,
-            'payment_intent_client_secret' => $pi->client_secret,
-            'stripe_subscription_id' => $stripeSub->id,
-            'message' => '3DS authentication required',
-            'region' => $regionCode,
-            'currency' => strtoupper($regionCurrency),
-            'fx_rate_used' => $fxRate,
-        ], 200);
+        try {
+            // Attempt to confirm the payment off-session (force success)
+            $pi->confirm(['off_session' => true]);
+        } catch (\Exception $e) {
+            // Handle any error that might arise
+            return response()->json([
+                'error' => 'Payment failed during forced confirmation.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+
+        // After confirmation, update the subscription status
+        if ($pi->status === 'succeeded') {
+            $subscription->update([
+                'payment_status' => 'succeeded',
+                'subscription_status' => 'active',
+                'last_payment_status' => 'succeeded',
+                'last_payment_at' => now(),
+            ]);
+        }
     }
 
-    // Payment succeeded
+    // If the payment has succeeded
     if ($pi && $pi->status === 'succeeded') {
         $subscription->update([
             'payment_status' => 'succeeded',
@@ -816,6 +776,7 @@ public function purchase(Request $req)
         'fx_rate_used' => $fxRate,
     ], 202);
 }
+
 
 
 
