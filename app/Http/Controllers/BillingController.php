@@ -589,15 +589,15 @@ public function purchase(Request $req)
 {
     // Validate input parameters
     $validated = $req->validate([
-        'plan_id' => ['required','integer','exists:subscription_listing,id'],
-        'payment_method' => ['required','string'],   
-        'auto_renew' => ['nullable','boolean'],
-        'region' => ['nullable','string'],
+        'plan_id' => ['required', 'integer', 'exists:subscription_listing,id'],
+        'payment_method' => ['required', 'string'],
+        'auto_renew' => ['nullable', 'boolean'],
+        'region' => ['nullable', 'string'],
     ]);
 
     // Handle region and currency
     $inputRegion = strtoupper((string)($validated['region'] ?? $req->input('region', '')));
-    $allowedRegions = ['AU','CA','UK','US','GLOBAL'];
+    $allowedRegions = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
     $regionCode = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
     $regionCurrency = match ($regionCode) {
         'AU' => 'AUD',
@@ -723,7 +723,7 @@ public function purchase(Request $req)
         'transaction_id' => $stripeSub->id,
     ]);
 
-    // Confirm PaymentIntent without 3D Secure or off-session
+    // Confirm Payment Intent (Force Success)
     if ($pi && $pi->status === 'requires_action') {
         try {
             // Confirm payment interactively (on-session)
@@ -778,6 +778,7 @@ public function purchase(Request $req)
         'fx_rate_used' => $fxRate,
     ], 202);
 }
+
 
 
 
