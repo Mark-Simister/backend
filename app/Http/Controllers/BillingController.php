@@ -617,7 +617,7 @@ public function purchase(Request $req)
 
         // Calculate subscription price
         $priceLocal = round(floatval($plan->price) * $fxRate, 2);
-        $currency = strtolower($regionCurrency);
+        $currency = strtolower($regionCurrency); 
         $amountCents = in_array(strtoupper($regionCurrency), ['JPY'], true)
             ? (int) round($priceLocal)
             : (int) round($priceLocal * 100);
@@ -719,51 +719,59 @@ public function purchase(Request $req)
             'transaction_id' => $stripeSub->id,
         ]);
 
-        // Force payment to complete without requiring customer action
-        if ($pi) {
+        // Confirm the payment interactively (on-session)
+        if ($pi && $pi->status === 'requires_action') {
             try {
-                // Force confirm the payment intent to simulate a successful payment
-                $pi->status = 'succeeded';  // Directly set payment intent to succeeded
-                $pi->save();  // Save the status change
+                $pi->confirm(['payment_method' => $pmId]);  // Confirm payment interactively
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => 'Payment failed during confirmation.',
+                    'message' => $e->getMessage(),
+                ], 500);
+            }
 
-                // Update subscription and payment status
+            // After confirmation, check if the payment succeeded
+            if ($pi->status === 'succeeded') {
                 $subscription->update([
                     'payment_status' => 'succeeded',
                     'subscription_status' => 'active',
                     'last_payment_status' => 'succeeded',
                     'last_payment_at' => now(),
                 ]);
-
-                // Create the payment record
-                Payment::create([
-                    'author_id' => $user->id,
-                    'amount' => $pi->amount_received / 100,
-                    'stripe_payment_id' => $pi->id,
-                    'status' => 'paid',
-                    'author_email' => $user->email,
-                    'payment_type' => 'subscription_payment',
-                    'transaction_id' => $stripeSub->id,
-                    'stripe_invoice_id' => $stripeSub->latest_invoice->id,
-                ]);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'error' => 'Forced payment confirmation failed.',
-                    'message' => $e->getMessage(),
-                ], 500);
             }
         }
 
+        // If the payment has succeeded
+        if ($pi && $pi->status === 'succeeded') {
+            $subscription->update([
+                'payment_status' => 'succeeded',
+                'subscription_status' => 'active',
+                'last_payment_status' => 'succeeded',
+                'last_payment_at' => now(),
+            ]);
+
+            return response()->json([
+                'subscription_id' => $subscription->id,
+                'status' => 'active',
+                'billing_cycle' => 'recurring',
+                'auto_renew' => $autoRenew,
+                'starts_at' => $subscription->subscription_start_date,
+                'ends_at' => $subscription->subscription_end_date,
+                'region' => $regionCode,
+                'currency' => strtoupper($regionCurrency),
+                'fx_rate_used' => $fxRate,
+            ]);
+        }
+
+        // Otherwise, wait for webhook
         return response()->json([
             'subscription_id' => $subscription->id,
-            'status' => 'active',
-            'billing_cycle' => 'recurring',
-            'auto_renew' => $autoRenew,
-            'starts_at' => $subscription->subscription_start_date,
-            'ends_at' => $subscription->subscription_end_date,
+            'status' => 'incomplete',
+            'message' => 'Awaiting payment confirmation',
             'region' => $regionCode,
             'currency' => strtoupper($regionCurrency),
             'fx_rate_used' => $fxRate,
-        ]);
+        ], 202);
     } catch (\Stripe\Exception\ApiErrorException $e) {
         return response()->json([
             'error' => 'Stripe API error.',
