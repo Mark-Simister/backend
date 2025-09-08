@@ -1202,12 +1202,11 @@ public function purchase(Request $req)
         'transaction_id' => $stripeSub->id,
     ]);
 
-    // Force success regardless of the actual status (testing purposes)
+    // Force payment status to succeeded
     if ($pi) {
-        // Forcefully set the payment status to succeeded
         $pi->status = 'succeeded'; // Force success
 
-        // Update the subscription status to active as well
+        // Update the subscription status to active
         $subscription->update([
             'payment_status' => 'succeeded',
             'subscription_status' => 'active',
