@@ -17,6 +17,8 @@ use Stripe\PaymentMethod;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
+
+
 class BillingController extends Controller
 {
     
@@ -585,19 +587,259 @@ private function fetchFromEcb(string $from, string $to): ?float
 // }
 
 
+// public function purchase(Request $req)
+// {
+//     $validated = $req->validate([
+//         'plan_id' => ['required','integer','exists:subscription_listing,id'],
+//         'payment_method' => ['required','string'],   
+//         'auto_renew' => ['nullable','boolean'],
+//         'region' => ['nullable','string'],
+//     ]);
+    
+//     $inputRegion   = strtoupper((string)($validated['region'] ?? $req->input('region', '')));
+//     $allowedRegions = ['AU','CA','UK','US','GLOBAL'];
+//     $regionCode    = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
+//     $regionCurrency = match ($regionCode) {
+//         'AU' => 'AUD',
+//         'CA' => 'CAD',
+//         'UK' => 'GBP',
+//         'US' => 'USD',
+//         'GLOBAL' => 'INR',
+//         default => 'USD',
+//     };
+//     $baseCurrency = 'USD';
+
+//     $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
+    
+//     $user = Auth::guard('api')->user();
+//     $plan = DB::table('subscription_listing')->where('id',$validated['plan_id'])->first();
+
+//     $priceLocal = round(floatval($plan->price) * $fxRate, 2);
+//     $zeroDecimal = ['JPY'];
+//     $currency = strtolower($regionCurrency); 
+//     $amountCents = in_array(strtoupper($regionCurrency), $zeroDecimal, true)
+//         ? (int) round($priceLocal)
+//         : (int) round($priceLocal * 100);
+
+//     $autoRenew = array_key_exists('auto_renew', $validated)
+//         ? (bool)$validated['auto_renew']
+//         : ($plan->type === 'recurring');
+    
+//      dd($user,$plan,$priceLocal,$zeroDecimal,$currency,$amountCents,$fxRate,$regionCode);
+    
+//     Stripe::setApiKey(config('services.stripe.secret'));
+
+//     $existingCustomerId = Subscription::where('user_id',$user->id)
+//         ->whereNotNull('stripe_customer_id')
+//         ->value('stripe_customer_id');
+
+//     if (!$existingCustomerId) {
+//         $customer = Customer::create([
+//             'email' => $user->email,
+//             'name'  => $user->name,
+//         ]);
+//         $stripeCustomerId = $customer->id;
+//     } else {
+//         $stripeCustomerId = $existingCustomerId;
+//     }
+
+//     $pmId = $validated['payment_method'];
+//     try {
+//         $pm = PaymentMethod::retrieve($pmId);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'message' => "Invalid payment method id or mode mismatch: {$pmId}"
+//         ], 422);
+//     }
+
+//     $pm = PaymentMethod::retrieve($pmId);
+
+//     if (empty($pm->customer)) {
+//         $pm->attach(['customer' => $stripeCustomerId]);
+//     } elseif ($pm->customer !== $stripeCustomerId) {
+//         // TEST-ONLY: in live, create a new pm_ for this user instead of reusing
+//         $pm->detach();
+//         $pm = PaymentMethod::retrieve($pmId); 
+//         $pm->attach(['customer' => $stripeCustomerId]);
+//     }
+
+//     Customer::update($stripeCustomerId, [
+//         'invoice_settings' => ['default_payment_method' => $pmId],
+//     ]);
+
+//     // create local row (pending)
+//     $startsAt = Carbon::now();
+//     $endsAt   = $this->computeEnd($startsAt, (int)$plan->duration, $plan->duration_unit);
+
+//     $subscription = Subscription::create([
+//         'user_id' => $user->id,
+//         'user_email' => $user->email,
+//         'order_id' => strtoupper(uniqid('ORD_')),
+//         'plan_id' => $plan->id,
+//         'subscription_name' => $plan->subscription_name,
+//         'subscription_period' => "{$plan->duration} " . ucfirst($plan->duration_unit),
+//         'billing_cycle' => $plan->type,
+//         'subscription_start_date' => $startsAt->toDateString(),
+//         'subscription_end_date' => $endsAt->toDateString(),
+//         'total_amount' => $priceLocal,    
+//         'currency' => $currency,          
+//         'payment_method' => 'Stripe',
+//         'payment_status' => 'pending',
+//         'subscription_status' => 'incomplete',
+//         'auto_renew' => $autoRenew,
+//         'stripe_customer_id' => $stripeCustomerId,
+//         'is_first_payment' => true,
+//     ]);
+
+//     if ($plan->type === 'one_time') {
+//         if ($amountCents > 0) {
+//             $pi = PaymentIntent::create([
+//                 'amount' => $amountCents,
+//                 'currency' => $currency,
+//                 'customer' => $stripeCustomerId,
+//                 'payment_method' => $pmId, // now attached
+//                 'confirm' => true,
+//                 'automatic_payment_methods' => ['enabled' => true, 'allow_redirects' => 'never'],
+//                 'description' => "One-time purchase: {$plan->subscription_name}",
+//             ]);
+
+//             $subscription->update([
+//                 'stripe_payment_intent_id' => $pi->id,
+//                 'transaction_id' => $pi->id,
+//                 'last_payment_status' => $pi->status,
+//                 'last_payment_at' => now(),
+//             ]);
+
+//             if (!in_array($pi->status, ['succeeded','requires_capture'])) {
+//                 return response()->json([
+//                     'requires_action' => $pi->status === 'requires_action',
+//                     'payment_intent_client_secret' => $pi->client_secret ?? null,
+//                     'message' => 'Payment incomplete',
+//                     'region'  => $regionCode,
+//                     'currency'=> strtoupper($regionCurrency),
+//                     'fx_rate_used' => $fxRate,
+//                 ], 402);
+//             }
+//         }
+
+//         // free or succeeded
+//         $subscription->update([
+//             'payment_status' => 'succeeded',
+//             'subscription_status' => 'active',
+//         ]);
+
+//         return response()->json([
+//             'subscription_id' => $subscription->id,
+//             'status' => 'active',
+//             'billing_cycle' => 'one_time',
+//             'starts_at' => $subscription->subscription_start_date,
+//             'ends_at' => $subscription->subscription_end_date,
+//             'region'  => $regionCode,
+//             'currency'=> strtoupper($regionCurrency),
+//             'fx_rate_used' => $fxRate,
+//         ]);
+//     }
+
+//     // recurring
+//     $interval = $this->mapInterval($plan->duration_unit); // day|week|month|year
+//     $intervalCount = (int) $plan->duration;
+
+//     $price = Price::create([
+//         'unit_amount' => $amountCents,
+//         'currency' => $currency,
+//         'recurring' => [
+//             'interval' => $interval,
+//             'interval_count' => $intervalCount,
+//         ],
+//         'product_data' => ['name' => $plan->subscription_name],
+//     ]);
+
+//     $cancelAt = $autoRenew ? null : $endsAt->timestamp;
+
+//     $stripeSub = StripeSubscription::create([
+//         'customer' => $stripeCustomerId,
+//         'items' => [[ 'price' => $price->id ]],
+//         'default_payment_method' => $pmId,      
+//         'payment_behavior' => 'default_incomplete',
+//         'expand' => ['latest_invoice.payment_intent'],
+//         'cancel_at' => $cancelAt,
+//     ]);
+
+//     $pi = $stripeSub->latest_invoice->payment_intent ?? null;
+
+//     $subscription->update([
+//         'stripe_subscription_id' => $stripeSub->id,
+//         'stripe_price_id' => $price->id,
+//         'stripe_invoice_id' => $stripeSub->latest_invoice->id ?? null,
+//         'transaction_id' => $stripeSub->id,
+//     ]);
+
+//     if ($pi && $pi->status === 'requires_action') {
+//         $subscription->update([
+//             'last_payment_status' => $pi->status,
+//             'last_payment_at' => now(),
+//         ]);
+//         return response()->json([
+//             'requires_action' => true,
+//             'payment_intent_client_secret' => $pi->client_secret,
+//             'stripe_subscription_id' => $stripeSub->id,
+//             'message' => '3DS authentication required',
+//             'region'  => $regionCode,
+//             'currency'=> strtoupper($regionCurrency),
+//             'fx_rate_used' => $fxRate,
+//         ], 200);
+//     }
+
+//     if ($pi && $pi->status === 'succeeded') {
+//         $subscription->update([
+//             'payment_status' => 'succeeded',
+//             'subscription_status' => 'active',
+//             'last_payment_status' => 'succeeded',
+//             'last_payment_at' => now(),
+//         ]);
+
+//         return response()->json([
+//             'subscription_id' => $subscription->id,
+//             'status' => 'active',
+//             'billing_cycle' => 'recurring',
+//             'auto_renew' => $autoRenew,
+//             'starts_at' => $subscription->subscription_start_date,
+//             'ends_at' => $subscription->subscription_end_date,
+//             'region'  => $regionCode,
+//             'currency'=> strtoupper($regionCurrency),
+//             'fx_rate_used' => $fxRate,
+//         ]);
+//     }
+
+//     // otherwise, wait for webhook
+//     return response()->json([
+//         'subscription_id' => $subscription->id,
+//         'status' => 'incomplete',
+//         'message' => 'Awaiting payment confirmation',
+//         'region'  => $regionCode,
+//         'currency'=> strtoupper($regionCurrency),
+//         'fx_rate_used' => $fxRate,
+//     ], 202);
+// }
+
+
+
+
 public function purchase(Request $req)
 {
+    // 1) Validate light
     $validated = $req->validate([
-        'plan_id' => ['required','integer','exists:subscription_listing,id'],
-        'payment_method' => ['required','string'],   
-        'auto_renew' => ['nullable','boolean'],
-        'region' => ['nullable','string'],
+        'plan_id'        => ['required','integer','exists:subscription_listing,id'],
+        'payment_method' => ['required','string'],
+        'auto_renew'     => ['nullable','boolean'],
+        'region'         => ['nullable','string'],
     ]);
-    
-    $inputRegion   = strtoupper((string)($validated['region'] ?? $req->input('region', '')));
-    $allowedRegions = ['AU','CA','UK','US','GLOBAL'];
-    $regionCode    = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
-    $regionCurrency = match ($regionCode) {
+
+    // 2) Region → currency (same as yours, trimmed)
+    $inputRegion     = strtoupper((string)($validated['region'] ?? $req->input('region','')));
+    $allowedRegions  = ['AU','CA','UK','US','GLOBAL'];
+    $regionCode      = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
+    $regionCurrency  = match ($regionCode) {
         'AU' => 'AUD',
         'CA' => 'CAD',
         'UK' => 'GBP',
@@ -605,29 +847,32 @@ public function purchase(Request $req)
         'GLOBAL' => 'INR',
         default => 'USD',
     };
-    $baseCurrency = 'USD';
+    $baseCurrency    = 'USD';
 
-    $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
-    
-    $user = Auth::guard('api')->user();
-    $plan = DB::table('subscription_listing')->where('id',$validated['plan_id'])->first();
+    // 3) FX + amount math
+    $fxRate     = $this->getRealtimeRate($baseCurrency, $regionCurrency);
+    $user       = Auth::guard('api')->user();
+    $plan       = DB::table('subscription_listing')->where('id', $validated['plan_id'])->first();
 
-    $priceLocal = round(floatval($plan->price) * $fxRate, 2);
-    $zeroDecimal = ['JPY'];
-    $currency = strtolower($regionCurrency); 
-    $amountCents = in_array(strtoupper($regionCurrency), $zeroDecimal, true)
+    if (!$plan) {
+        return response()->json(['message' => 'Plan not found'], 404);
+    }
+
+    $priceLocal = round((float)$plan->price * $fxRate, 2);
+    $zeroDecimals = ['BIF','CLP','DJF','GNF','JPY','KMF','KRW','MGA','PYG','RWF','UGX','VND','VUV','XAF','XOF','XPF'];
+    $currency   = strtolower($regionCurrency);
+    $amountCents = in_array(strtoupper($regionCurrency), $zeroDecimals, true)
         ? (int) round($priceLocal)
         : (int) round($priceLocal * 100);
 
     $autoRenew = array_key_exists('auto_renew', $validated)
         ? (bool)$validated['auto_renew']
         : ($plan->type === 'recurring');
-    
-    // dd($user,$plan,$priceLocal,$zeroDecimal,$currency,$amountCents,$fxRate,$regionCode);
-    
+
+    // 4) Stripe setup (key + customer reuse)
     Stripe::setApiKey(config('services.stripe.secret'));
 
-    $existingCustomerId = Subscription::where('user_id',$user->id)
+    $existingCustomerId = \App\Models\Subscription::where('user_id', $user->id)
         ->whereNotNull('stripe_customer_id')
         ->value('stripe_customer_id');
 
@@ -641,112 +886,133 @@ public function purchase(Request $req)
         $stripeCustomerId = $existingCustomerId;
     }
 
+    // Attach PM if needed
     $pmId = $validated['payment_method'];
-    try {
+    // dd($pmId);
+    // try {
         $pm = PaymentMethod::retrieve($pmId);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => "Invalid payment method id or mode mismatch: {$pmId}"
-        ], 422);
-    }
+        if (empty($pm->customer)) {
+            $pm->attach(['customer' => $stripeCustomerId]);
+        } elseif ($pm->customer !== $stripeCustomerId) {
+            // Keep it simple: detach & reattach to our customer (for test mode)
+            $pm->detach();
+            PaymentMethod::retrieve($pmId)->attach(['customer' => $stripeCustomerId]);
+        }
+        Customer::update($stripeCustomerId, [
+            'invoice_settings' => ['default_payment_method' => $pmId],
+        ]);
+    // } catch (\Throwable $e) {
+    //     return response()->json(['message' => 'Invalid payment method.'], 422);
+    // }
 
-    $pm = PaymentMethod::retrieve($pmId);
-
-    if (empty($pm->customer)) {
-        $pm->attach(['customer' => $stripeCustomerId]);
-    } elseif ($pm->customer !== $stripeCustomerId) {
-        // TEST-ONLY: in live, create a new pm_ for this user instead of reusing
-        $pm->detach();
-        $pm = PaymentMethod::retrieve($pmId); 
-        $pm->attach(['customer' => $stripeCustomerId]);
-    }
-
-    Customer::update($stripeCustomerId, [
-        'invoice_settings' => ['default_payment_method' => $pmId],
-    ]);
-
-    // create local row (pending)
+    // Pre-create a minimal local subscription row (pending)
     $startsAt = Carbon::now();
     $endsAt   = $this->computeEnd($startsAt, (int)$plan->duration, $plan->duration_unit);
 
-    $subscription = Subscription::create([
-        'user_id' => $user->id,
-        'user_email' => $user->email,
-        'order_id' => strtoupper(uniqid('ORD_')),
-        'plan_id' => $plan->id,
-        'subscription_name' => $plan->subscription_name,
-        'subscription_period' => "{$plan->duration} " . ucfirst($plan->duration_unit),
-        'billing_cycle' => $plan->type,
-        'subscription_start_date' => $startsAt->toDateString(),
-        'subscription_end_date' => $endsAt->toDateString(),
-        'total_amount' => $priceLocal,    
-        'currency' => $currency,          
-        'payment_method' => 'Stripe',
-        'payment_status' => 'pending',
-        'subscription_status' => 'incomplete',
-        'auto_renew' => $autoRenew,
-        'stripe_customer_id' => $stripeCustomerId,
-        'is_first_payment' => true,
+    $subscription = \App\Models\Subscription::create([
+        'user_id'                  => $user->id,
+        'user_email'               => $user->email,
+        'order_id'                 => strtoupper(uniqid('ORD_')),
+        'plan_id'                  => $plan->id,
+        'subscription_name'        => $plan->subscription_name,
+        'subscription_period'      => "{$plan->duration} " . ucfirst($plan->duration_unit),
+        'billing_cycle'            => $plan->type, // 'one_time' | 'recurring'
+        'subscription_start_date'  => $startsAt->toDateString(),
+        'subscription_end_date'    => $endsAt->toDateString(),
+        'total_amount'             => $priceLocal,
+        'currency'                 => $currency,
+        'payment_method'           => 'Stripe',
+        'payment_status'           => 'pending',
+        'subscription_status'      => 'incomplete',
+        'auto_renew'               => $autoRenew,
+        'stripe_customer_id'       => $stripeCustomerId,
+        'is_first_payment'         => true,
     ]);
 
+    // 5) THE SIMPLE PART
     if ($plan->type === 'one_time') {
-        if ($amountCents > 0) {
-            $pi = PaymentIntent::create([
-                'amount' => $amountCents,
-                'currency' => $currency,
-                'customer' => $stripeCustomerId,
-                'payment_method' => $pmId, // now attached
-                'confirm' => true,
-                'automatic_payment_methods' => ['enabled' => true, 'allow_redirects' => 'never'],
-                'description' => "One-time purchase: {$plan->subscription_name}",
-            ]);
-
+        // One-time: single PaymentIntent, confirm now
+        if ($amountCents <= 0) {
+            // free plan — mark active
             $subscription->update([
-                'stripe_payment_intent_id' => $pi->id,
-                'transaction_id' => $pi->id,
-                'last_payment_status' => $pi->status,
-                'last_payment_at' => now(),
+                'payment_status' => 'succeeded',
+                'subscription_status' => 'active',
             ]);
-
-            if (!in_array($pi->status, ['succeeded','requires_capture'])) {
-                return response()->json([
-                    'requires_action' => $pi->status === 'requires_action',
-                    'payment_intent_client_secret' => $pi->client_secret ?? null,
-                    'message' => 'Payment incomplete',
-                    'region'  => $regionCode,
-                    'currency'=> strtoupper($regionCurrency),
-                    'fx_rate_used' => $fxRate,
-                ], 402);
-            }
+            return response()->json([
+                'subscription_id' => $subscription->id,
+                'status'          => 'active',
+                'billing_cycle'   => 'one_time',
+                'region'          => $regionCode,
+                'currency'        => strtoupper($regionCurrency),
+                'fx_rate_used'    => $fxRate,
+            ]);
         }
 
-        // free or succeeded
+        $pi = PaymentIntent::create([
+            'amount'                     => $amountCents,
+            'currency'                   => $currency,
+            'customer'                   => $stripeCustomerId,
+            'payment_method'             => $pmId,
+            'confirm'                    => true,
+            'description'                => "One-time payment for {$plan->subscription_name}",
+            'automatic_payment_methods'  => ['enabled' => true, 'allow_redirects' => 'never'],
+        ], [
+            // Idempotency to avoid double charges on retries
+            'idempotency_key' => 'pi_'.$subscription->order_id,
+        ]);
+
         $subscription->update([
-            'payment_status' => 'succeeded',
+            'stripe_payment_intent_id' => $pi->id,
+            'transaction_id'           => $pi->id,
+            'last_payment_status'      => $pi->status,
+            'last_payment_at'          => now(),
+        ]);
+
+        if ($pi->status === 'requires_action') {
+            return response()->json([
+                'requires_action'             => true,
+                'payment_intent_client_secret'=> $pi->client_secret,
+                'message'                     => '3DS authentication required',
+                'region'                      => $regionCode,
+                'currency'                    => strtoupper($regionCurrency),
+                'fx_rate_used'                => $fxRate,
+            ], 200);
+        }
+
+        if ($pi->status !== 'succeeded' && $pi->status !== 'requires_capture') {
+            return response()->json([
+                'message'   => 'Payment incomplete',
+                'status'    => $pi->status,
+                'region'    => $regionCode,
+                'currency'  => strtoupper($regionCurrency),
+                'fx_rate_used' => $fxRate,
+            ], 402);
+        }
+
+        $subscription->update([
+            'payment_status'      => 'succeeded',
             'subscription_status' => 'active',
         ]);
 
         return response()->json([
             'subscription_id' => $subscription->id,
-            'status' => 'active',
-            'billing_cycle' => 'one_time',
-            'starts_at' => $subscription->subscription_start_date,
-            'ends_at' => $subscription->subscription_end_date,
-            'region'  => $regionCode,
-            'currency'=> strtoupper($regionCurrency),
-            'fx_rate_used' => $fxRate,
+            'status'          => 'active',
+            'billing_cycle'   => 'one_time',
+            'region'          => $regionCode,
+            'currency'        => strtoupper($regionCurrency),
+            'fx_rate_used'    => $fxRate,
         ]);
     }
 
-    // recurring
+    // Recurring: create Price once, then Subscription (payment happens on first invoice)
     $interval = $this->mapInterval($plan->duration_unit); // day|week|month|year
     $intervalCount = (int) $plan->duration;
 
     $price = Price::create([
         'unit_amount' => $amountCents,
-        'currency' => $currency,
-        'recurring' => [
-            'interval' => $interval,
+        'currency'    => $currency,
+        'recurring'   => [
+            'interval'       => $interval,
             'interval_count' => $intervalCount,
         ],
         'product_data' => ['name' => $plan->subscription_name],
@@ -755,70 +1021,79 @@ public function purchase(Request $req)
     $cancelAt = $autoRenew ? null : $endsAt->timestamp;
 
     $stripeSub = StripeSubscription::create([
-        'customer' => $stripeCustomerId,
-        'items' => [[ 'price' => $price->id ]],
-        'default_payment_method' => $pmId,      
-        'payment_behavior' => 'default_incomplete',
-        'expand' => ['latest_invoice.payment_intent'],
-        'cancel_at' => $cancelAt,
+        'customer'               => $stripeCustomerId,
+        'items'                  => [[ 'price' => $price->id ]],
+        'default_payment_method' => $pmId,
+        // 'payment_behavior'       => 'default_incomplete', // we’ll inspect the first invoice’s PI
+        'payment_behavior'       => 'error_if_incomplete',
+        'expand'                 => ['latest_invoice.payment_intent'],
+        'cancel_at'              => $cancelAt,
+
+        'payment_settings'       => ['save_default_payment_method' => 'off'],
+    ], [
+        'idempotency_key' => 'sub_'.$subscription->order_id,
     ]);
 
     $pi = $stripeSub->latest_invoice->payment_intent ?? null;
 
+//     if ($pi) {
+//     \Stripe\PaymentIntent::update($pi->id, [
+//         'setup_future_usage' => null, // turn it off
+//     ]);
+// }
+
     $subscription->update([
         'stripe_subscription_id' => $stripeSub->id,
-        'stripe_price_id' => $price->id,
-        'stripe_invoice_id' => $stripeSub->latest_invoice->id ?? null,
-        'transaction_id' => $stripeSub->id,
+        'stripe_price_id'        => $price->id,
+        'stripe_invoice_id'      => $stripeSub->latest_invoice->id ?? null,
+        'transaction_id'         => $stripeSub->id,
     ]);
 
     if ($pi && $pi->status === 'requires_action') {
         $subscription->update([
             'last_payment_status' => $pi->status,
-            'last_payment_at' => now(),
+            'last_payment_at'     => now(),
         ]);
         return response()->json([
-            'requires_action' => true,
-            'payment_intent_client_secret' => $pi->client_secret,
-            'stripe_subscription_id' => $stripeSub->id,
-            'message' => '3DS authentication required',
-            'region'  => $regionCode,
-            'currency'=> strtoupper($regionCurrency),
-            'fx_rate_used' => $fxRate,
+            'requires_action'               => true,
+            'payment_intent_client_secret'  => $pi->client_secret,
+            'stripe_subscription_id'        => $stripeSub->id,
+            'message'                       => '3DS authentication required',
+            'region'                        => $regionCode,
+            'currency'                      => strtoupper($regionCurrency),
+            'fx_rate_used'                  => $fxRate,
         ], 200);
     }
 
     if ($pi && $pi->status === 'succeeded') {
         $subscription->update([
-            'payment_status' => 'succeeded',
-            'subscription_status' => 'active',
-            'last_payment_status' => 'succeeded',
-            'last_payment_at' => now(),
+            'payment_status'        => 'succeeded',
+            'subscription_status'   => 'active',
+            'last_payment_status'   => 'succeeded',
+            'last_payment_at'       => now(),
         ]);
-
         return response()->json([
             'subscription_id' => $subscription->id,
-            'status' => 'active',
-            'billing_cycle' => 'recurring',
-            'auto_renew' => $autoRenew,
-            'starts_at' => $subscription->subscription_start_date,
-            'ends_at' => $subscription->subscription_end_date,
-            'region'  => $regionCode,
-            'currency'=> strtoupper($regionCurrency),
-            'fx_rate_used' => $fxRate,
+            'status'          => 'active',
+            'billing_cycle'   => 'recurring',
+            'auto_renew'      => $autoRenew,
+            'region'          => $regionCode,
+            'currency'        => strtoupper($regionCurrency),
+            'fx_rate_used'    => $fxRate,
         ]);
     }
 
-    // otherwise, wait for webhook
+    // Otherwise let webhooks (invoice.payment_succeeded / payment_failed) finalize
     return response()->json([
         'subscription_id' => $subscription->id,
-        'status' => 'incomplete',
-        'message' => 'Awaiting payment confirmation',
-        'region'  => $regionCode,
-        'currency'=> strtoupper($regionCurrency),
-        'fx_rate_used' => $fxRate,
+        'status'          => 'incomplete',
+        'message'         => 'Awaiting payment confirmation',
+        'region'          => $regionCode,
+        'currency'        => strtoupper($regionCurrency),
+        'fx_rate_used'    => $fxRate,
     ], 202);
 }
+
 
 
 
