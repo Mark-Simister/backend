@@ -76,7 +76,6 @@ class VideoController extends Controller
 
             // Step 4 meta fields
 
-            // ---- New Fields ----
             // 'tags' => 'nullable|string',
             // 'tags.*' => 'string',
             'tag_ids' => ['nullable', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],

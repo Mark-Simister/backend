@@ -78,4 +78,16 @@ class ApiUser extends Authenticatable implements JWTSubject
         return $this->is_blocked ? 'Blocked' : 'Active';
     }
 
+    public function likedVideos_api()
+    {
+        return $this->belongsToMany(\App\Models\Video::class, 'video_likes')->withTimestamps();
+    }
+    public function favoriteVideos_api()
+    {
+        return $this->belongsToMany(\App\Models\Video::class, 'video_favorites')->withTimestamps();
+    }
+    public function videoWatchHistories_api()
+    {
+        return $this->hasMany(\App\Models\VideoWatchHistory::class)->latest('watched_at');
+    }
 }

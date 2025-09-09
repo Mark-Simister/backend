@@ -144,4 +144,17 @@ class Video extends Model
             ->orderBy('created_at', 'desc');
     }
 
+    public function likedByUsers()
+    {
+        return $this->belongsToMany(\App\Models\User::class, 'video_likes')->withTimestamps();
+    }
+    public function favoritedByUsers()
+    {
+        return $this->belongsToMany(\App\Models\User::class, 'video_favorites')->withTimestamps();
+    }
+    public function watchHistories()
+    {
+        return $this->hasMany(\App\Models\VideoWatchHistory::class);
+    }
+
 }

@@ -16,6 +16,7 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\VideoEngagementController;
 
 use Illuminate\Support\Facades\Http;
 
@@ -106,6 +107,34 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('users/{id}', [UserController::class, 'show_api'])->whereNumber('id');
     Route::get('me/profile', [UserController::class, 'me_api']);
     Route::post('/profile/update', [UserController::class, 'update_api']);
+
+    // VideoEngagements
+    
+    // Likes
+    Route::post   ('videos/{video}/like',     [VideoEngagementController::class, 'like'])    ->name('api.videos.like');
+    Route::delete ('videos/{video}/like',     [VideoEngagementController::class, 'unlike'])  ->name('api.videos.unlike');
+
+    // Favourites
+    Route::post   ('videos/{video}/favorite', [VideoEngagementController::class, 'favorite'])->name('api.videos.favorite');
+    Route::delete ('videos/{video}/favorite', [VideoEngagementController::class, 'unfavorite'])->name('api.videos.unfavorite');
+
+    // Watch history upsert
+    Route::post   ('videos/{video}/watch',    [VideoEngagementController::class, 'recordWatch'])->name('api.videos.watch');
+
+    // Lists (paginated)
+    Route::get('me/likes',        [VideoEngagementController::class, 'myLikes'])      ->name('api.me.likes');
+    Route::get('me/favourites',   [VideoEngagementController::class, 'myFavourites']) ->name('api.me.favourites');
+    Route::get('me/last-watched', [VideoEngagementController::class, 'myLastWatched'])->name('api.me.last_watched');
+
+     // Likes
+    Route::get('/me/likes', [VideoEngagementController::class, 'myLikes'])->name('api.me.likes');
+
+    // Favourites
+    Route::get('/me/favourites', [VideoEngagementController::class, 'myFavourites'])->name('api.me.favourites');
+
+    // Last watched videos
+    Route::get('/me/last-watched', [VideoEngagementController::class, 'myLastWatched'])->name('api.me.last_watched');
+
 
 
 });

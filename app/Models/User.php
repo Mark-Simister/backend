@@ -56,4 +56,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(Subscription::class);
     }
+
+    public function likedVideos()
+    {
+        return $this->belongsToMany(\App\Models\Video::class, 'video_likes')->withTimestamps();
+    }
+    public function favoriteVideos()
+    {
+        return $this->belongsToMany(\App\Models\Video::class, 'video_favorites')->withTimestamps();
+    }
+    public function videoWatchHistories()
+    {
+        return $this->hasMany(\App\Models\VideoWatchHistory::class)->latest('watched_at');
+    }
 }
