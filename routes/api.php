@@ -80,7 +80,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::delete('characters/{id}',     [CharacterController::class, 'destroy_api']);
 
     // Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
-    Route::post('/purchase', [BillingController::class, 'purchase']);
+    // Route::post('/purchase', [BillingController::class, 'purchase']);
+    Route::post('/purchase/region/{region}', [BillingController::class, 'purchase']);
+
     Route::post('/subscriptions/{id}/cancel', [BillingController::class, 'cancel']);
     //Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook'); 
     // Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])

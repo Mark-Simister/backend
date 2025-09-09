@@ -832,13 +832,23 @@ public function purchase(Request $req)
         'plan_id'        => ['required','integer','exists:subscription_listing,id'],
         'payment_method' => ['required','string'],
         'auto_renew'     => ['nullable','boolean'],
-        'region'         => ['nullable','string'],
+      //  'region'         => ['nullable','string'],
     ]);
 
     // 2) Region → currency (same as yours, trimmed)
-    $inputRegion     = strtoupper((string)($validated['region'] ?? $req->input('region','')));
-    $allowedRegions  = ['AU','CA','UK','US','GLOBAL'];
-    $regionCode      = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
+    // $inputRegion     = strtoupper((string)($validated['region'] ?? $req->input('region','')));
+    $allowedRegions = ['AU','CA','UK','US','GLOBAL'];
+
+    // Normalize route param
+    $routeRegion = $req->route('region');      // e.g. "US"
+    $inputRegion = strtoupper((string)$routeRegion);
+    $regionCode  = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
+
+    // (optional) merge so it's part of $validated
+    $req->merge(['region' => $regionCode]);
+    
+    // dd($routeRegion);
+   
     $regionCurrency  = match ($regionCode) {
         'AU' => 'AUD',
         'CA' => 'CAD',
@@ -865,6 +875,7 @@ public function purchase(Request $req)
         ? (int) round($priceLocal)
         : (int) round($priceLocal * 100);
 
+        // dd($inputRegion, $priceLocal, $zeroDecimals, $currency, $plan);
     $autoRenew = array_key_exists('auto_renew', $validated)
         ? (bool)$validated['auto_renew']
         : ($plan->type === 'recurring');
@@ -889,7 +900,7 @@ public function purchase(Request $req)
     // Attach PM if needed
     $pmId = $validated['payment_method'];
     // dd($pmId);
-    // try {
+    try {
         $pm = PaymentMethod::retrieve($pmId);
         if (empty($pm->customer)) {
             $pm->attach(['customer' => $stripeCustomerId]);
@@ -901,9 +912,9 @@ public function purchase(Request $req)
         Customer::update($stripeCustomerId, [
             'invoice_settings' => ['default_payment_method' => $pmId],
         ]);
-    // } catch (\Throwable $e) {
-    //     return response()->json(['message' => 'Invalid payment method.'], 422);
-    // }
+    } catch (\Throwable $e) {
+        return response()->json(['message' => 'Invalid payment method.'], 422);
+    }
 
     // Pre-create a minimal local subscription row (pending)
     $startsAt = Carbon::now();
