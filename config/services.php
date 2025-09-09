@@ -44,5 +44,10 @@ return [
     'exchangerate' => [
         'key' => env('EXCHANGE_RATE_API_KEY'),
     ],
+    'vimeo' => [
+    'client' => env('VIMEO_CLIENT'),
+    'secret' => env('VIMEO_SECRET'),
+    'access' => env('VIMEO_ACCESS'),
+],
 
 ];

@@ -30,34 +30,27 @@
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
-        <!-- Email -->
-        <div class="mb-3">
-            <label for="email" class="form-label">Email address</label>
-            <input type="email" id="email" name="email"
-                   class="form-control form-control-lg @error('email') is-invalid @enderror"
-                   value="{{ old('email') }}" required autofocus>
-            @error('email')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
-        </div>
 
-        <!-- Password with toggle -->
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <div class="input-group">
-                <input type="password" id="password" name="password"
-                       class="form-control form-control-lg @error('password') is-invalid @enderror"
-                       required>
-                <button type="button" class="btn btn-outline-secondary" id="togglePassword">
-                    <i class="bi bi-eye"></i>
-                </button>
-                @error('password')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-        </div>
+       <div class="mb-3">
+    <label for="email" class="form-label">Email address</label>
+    <input type="email" id="email" name="email"
+           class="form-control form-control-lg @error('email') is-invalid @enderror" value="{{ old('email') }}" required autofocus>
+    @error('email')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
 
-        <!-- Remember & Forgot Password -->
+    <div class="mb-3">
+    <label for="password" class="form-label">Password</label>
+    <div class="input-group">
+        <input type="password" id="password" name="password" class="form-control form-control-lg @error('password') is-invalid @enderror" required>
+        <button class="btn btn-outline-secondary" type="button" id="togglePassword">👁️</button>
+        @error('password')
+            <div class="invalid-feedback d-block">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="form-check">
                 <input type="checkbox" class="form-check-input" name="remember" id="remember_me">
@@ -66,25 +59,29 @@
             <a href="{{ route('password.request') }}" class="text-decoration-none">Forgot password?</a>
         </div>
 
-        <!-- Submit -->
         <div class="d-grid mb-3">
             <button type="submit" class="btn btn-primary btn-lg">Sign In</button>
         </div>
+
+        {{-- <p class="text-center text-muted">Don’t have an account? <a href="{{ route('register') }}" class="text-decoration-none">Create</a></p> --}}
     </form>
 
     <!-- Password toggle script -->
+    
     <script>
-        const togglePassword = document.querySelector('#togglePassword');
-        const passwordField = document.querySelector('#password');
+document.addEventListener("DOMContentLoaded", function () {
+    const passwordInput = document.getElementById("password");
+    const toggleBtn = document.getElementById("togglePassword");
 
-        togglePassword.addEventListener('click', function () {
-            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordField.setAttribute('type', type);
-
-            // Switch Bootstrap Icons
-            this.innerHTML = type === 'password'
-                ? '<i class="bi bi-eye"></i>'
-                : '<i class="bi bi-eye-slash"></i>';
-        });
-    </script>
+    toggleBtn.addEventListener("click", function () {
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            toggleBtn.textContent = "👁️‍🗨"; // eye with slash
+        } else {
+            passwordInput.type = "password";
+            toggleBtn.textContent = "👁️"; // normal eye
+        }
+    });
+});
+</script>
 </x-guest-layout>

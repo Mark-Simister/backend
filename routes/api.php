@@ -17,6 +17,7 @@ use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\VideoEngagementController;
+// use App\Http\Controllers\VimeoController;
 
 use Illuminate\Support\Facades\Http;
 
@@ -174,6 +175,10 @@ Route::get('/comments/{comment}', [CommentController::class, 'show']);
 Route::get('/comments/{comment}/thread', [CommentController::class, 'thread']);
 Route::patch('/comments/{comment}', [CommentController::class, 'update']);
 Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+
+
+
+// Route::get('/vimeo/videos', [VimeoController::class, 'index']);
 
 // Route::get('/videos/{region}/{id}', [VideoController::class, 'paidVideoDetail']);
 // Route::get('/videos/{region}/{id}', [VideoController::class, 'paidVideosDetail']);

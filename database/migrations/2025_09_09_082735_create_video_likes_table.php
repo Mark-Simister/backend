@@ -25,3 +25,5 @@ return new class extends Migration
         Schema::dropIfExists('video_likes');
     }
 };
+
+

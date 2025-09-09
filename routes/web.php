@@ -20,6 +20,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\CronJobController;
 use App\Http\Controllers\TagController;
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Controllers\VimeoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -211,7 +212,7 @@ Route::get('/pm-maker', function () {
     ]);
 })->name('pm.maker');
 
-
+Route::get('/vimeo/videos', [VimeoController::class, 'index']);
 // Cron-jobs
 // Route::post('/jobs/cancel-overdue-renewals', [CronJobController::class, 'cancelOverdueRenewals'])
 //     ->name('jobs.cancel-overdue-renewals');
