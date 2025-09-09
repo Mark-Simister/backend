@@ -71,8 +71,8 @@ class VideoController extends Controller
             'affiliate_link' => 'nullable|url',
             'thumbnail_url' => 'nullable',
             // 'thumbnail_url'    => 'nullable|required_without:thumbnail_image|url',
-            'thumbnail_image' => 'nullable|image|mimes:jpg,jpeg,png|max:10048',
-            // 'thumbnail_image'  => 'nullable|required_without:thumbnail_url|image|mimes:jpg,jpeg,png|max:10048',
+            'thumbnail_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            // 'thumbnail_image'  => 'nullable|required_without:thumbnail_url|image|mimes:jpg,jpeg,png|max:5120',
 
             // Step 4 meta fields
 
@@ -114,7 +114,7 @@ class VideoController extends Controller
             'character_score' => 'nullable|numeric',
             'editorial_score' => 'nullable|numeric',
             'final_beastiescore' => 'nullable|string|max:255',
-            'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:10048', // For thumbnail image
+            'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120', // For thumbnail image
         ]);
 
 
@@ -512,8 +512,8 @@ class VideoController extends Controller
             'affiliate_link' => 'nullable|url',
             // 'thumbnail_url'    => 'nullable|url|required_without:thumbnail_image', // Required without image
             'thumbnail_url' => 'nullable|url', // Required without image
-            // 'thumbnail_image'  => 'nullable|image|mimes:jpg,jpeg,png|max:10048|required_without:thumbnail_url', // Required without URL
-            'thumbnail_image' => 'nullable|image|mimes:jpg,jpeg,png|max:10048',
+            // 'thumbnail_image'  => 'nullable|image|mimes:jpg,jpeg,png|max:5120|required_without:thumbnail_url', // Required without URL
+            'thumbnail_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
 
             // Other Fields
             // 'tags' => 'nullable|string',
@@ -553,7 +553,7 @@ class VideoController extends Controller
             'character_score' => 'nullable|numeric',
             'editorial_score' => 'nullable|numeric',
             'final_beastiescore' => 'nullable|string|max:255',
-            'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:10048',
+            'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
         ]);
 
         if ($validator->fails()) {

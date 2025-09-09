@@ -54,7 +54,7 @@ class CategoryController extends Controller
         $request->validate([
             'name' => 'required|unique:categories,name',
             'channel_id' => 'required|exists:channels,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'regions' => 'array|nullable',
             'regions.*' => 'integer|exists:regions,id',
         ]);
@@ -129,7 +129,7 @@ class CategoryController extends Controller
         $request->validate([
             'name' => 'required|unique:categories,name,' . $category->id,
             'channel_id' => 'required|exists:channels,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'regions' => 'nullable|array',
             'regions.*' => 'integer|exists:regions,id',
         ]);
@@ -300,7 +300,7 @@ class CategoryController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:categories,name',
             'channel_id' => 'required|exists:channels,id',
-            'category_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'category_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -383,7 +383,7 @@ class CategoryController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:categories,name,' . $id,
             'channel_id' => 'required|exists:channels,id',
-            'category_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'category_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         if ($validator->fails()) {
