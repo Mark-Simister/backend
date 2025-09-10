@@ -83,4 +83,10 @@ class Character extends Model
     {
         return $this->belongsToMany(\App\Models\Region::class, 'character_region');
     }
+    public function subscriptionRegions()
+{
+    return $this->belongsToMany(Region::class, 'subscription_region', 'subscription_id', 'region_id')
+        ->withTimestamps();
+}
+
 }

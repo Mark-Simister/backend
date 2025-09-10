@@ -99,7 +99,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('paid-videos-trending/{region}', [VideoController::class, 'paidVideosTrending']);
     Route::get('paid-videos-top-deals/{region}', [VideoController::class, 'paidVideosTopDeals']);
     Route::get('paid-trending-characters/{region}', [VideoController::class, 'charactersFromPaidVideos']);
-    Route::get('/videos/{region}/{id}', [VideoController::class, 'paidVideosDetail']);
+    Route::get('/paid-videos/{region}/{id}', [VideoController::class, 'paidVideosDetail']);
 
 
     Route::post('reviews', [ReviewController::class, 'store_api']);
@@ -144,6 +144,11 @@ Route::middleware(['auth:api'])->group(function () {
 Route::get('regions', [RegionController::class, 'index_api']);
 Route::get('channels', [ChannelController::class, 'index_api']);
 Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
+Route::get(
+    '/channels/{channel}/details/{region?}',
+    [ChannelController::class, 'showChannelDetailsByRegion']
+)->name('channels.details');
+
 Route::get('/region/{region?}', [ChannelController::class, 'filter_region_api']);
 Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api']);
