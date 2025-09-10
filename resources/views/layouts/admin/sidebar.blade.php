@@ -71,6 +71,14 @@
             </a>
         </li>
         @endcan
+        @can('video.view')
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.vimeo.index') }}">
+                <i class="ti-video-clapper menu-icon"></i>
+                <span class="menu-title">Vimeo Videos</span>
+            </a>
+        </li>
+        @endcan
         @can('rating_review.view')
         <li class="nav-item {{ request()->is('admin/reviews*') ? 'active' : '' }}">
             <a class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}"

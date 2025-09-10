@@ -112,6 +112,9 @@ Route::middleware(['auth'])
         Route::put('videos/{video}/update-product', [VideoController::class, 'updateProduct'])
             ->name('videos.update.product')
             ->middleware('permission:video.edit');
+        Route::get('/vimeo', [VimeoController::class, 'index'])->name('vimeo.index');
+        Route::post('/vimeo/assign', [VimeoController::class, 'assign'])->name('vimeo.assign')
+            ->middleware('permission:video.edit');
 
 
         // Users (maybe only super_admin + managers)
@@ -212,7 +215,7 @@ Route::get('/pm-maker', function () {
     ]);
 })->name('pm.maker');
 
-Route::get('/vimeo/videos', [VimeoController::class, 'index']);
+
 // Cron-jobs
 // Route::post('/jobs/cancel-overdue-renewals', [CronJobController::class, 'cancelOverdueRenewals'])
 //     ->name('jobs.cancel-overdue-renewals');

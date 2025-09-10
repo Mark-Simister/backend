@@ -341,7 +341,7 @@ class VideoController extends Controller
         $validated = $request->validate([
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:1000'],
-            'hashtags' => ['nullable', 'string'], // gets json-encoded by mutator
+            'hashtags' => ['nullable', 'string'], 
             'cta_text' => ['nullable', 'string', 'max:255'],
             'og_image_url' => ['nullable', 'string', 'max:255'],
             'open_graph_image' => ['nullable', 'string', 'max:255'],

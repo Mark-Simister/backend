@@ -116,22 +116,34 @@
                 <label for="description">Video Description <span class="text-danger">*</span></label>
                 <textarea name="description" id="description" class="form-control" required>{{ old('description', $video->description ?? '') }}</textarea>
             </div>
+            @php
+                $defaultType = old('type', request('type', $video->type ?? ''));
+            @endphp
 
             <div class="mb-3">
                 <label for="type">Video Platform Type <span class="text-danger">*</span></label>
-                <select name="type" id="type" class="form-select" required>
-                    <option value=""  disabled selected >-- Select Platform --</option>
+                {{-- <select name="type" id="type" class="form-select" required>
+                    <option value="" disabled selected>-- Select Platform --</option>
                     <option value="youtube" {{ old('type', $video->type ?? '') == 'youtube' ? 'selected' : '' }}>YouTube
                     </option>
                     <option value="vimeo" {{ old('type', $video->type ?? '') == 'vimeo' ? 'selected' : '' }}>Vimeo
                     </option>
+                </select> --}}
+                <select name="type" id="type" class="form-select" required>
+                    <option value="" disabled {{ $defaultType ? '' : 'selected' }}>-- Select Platform --</option>
+                    <option value="youtube" {{ $defaultType === 'youtube' ? 'selected' : '' }}>YouTube</option>
+                    <option value="vimeo" {{ $defaultType === 'vimeo' ? 'selected' : '' }}>Vimeo</option>
                 </select>
+
             </div>
 
             <div class="mb-3">
                 <label for="video_url">Video URL <span class="text-danger">*</span></label>
+                {{-- <input type="url" name="video_url" id="video_url" class="form-control" required
+                    value="{{ old('video_url', $video->video_url ?? '') }}"> --}}
                 <input type="url" name="video_url" id="video_url" class="form-control" required
-                    value="{{ old('video_url', $video->video_url ?? '') }}">
+                    value="{{ old('video_url', request('video_url', $video->video_url ?? '')) }}">
+
             </div>
 
             <div class="d-flex justify-content-end">
@@ -347,7 +359,7 @@
             <div class="mb-3">
                 <label for="sponsorship_type">Sponsorship Type</label>
                 <select name="sponsorship_type" id="sponsorship_type" class="form-select">
-                    <option value=""  disabled selected >-- Select Sponsorship Type --</option>
+                    <option value="" disabled selected>-- Select Sponsorship Type --</option>
                     <option value="sponsored"
                         {{ old('sponsorship_type', $video->sponsorship_type ?? '') == 'sponsored' ? 'selected' : '' }}>
                         Sponsored</option>
@@ -373,7 +385,7 @@
             <div class="mb-3">
                 <label for="highlight_tags">Highlight Tags</label>
                 <select name="highlight_tags[]" id="highlight_tags" class="form-select" multiple>
-                    <option value=""  disabled selected >-- Select Highlight Tags --</option>
+                    <option value="" disabled selected>-- Select Highlight Tags --</option>
                     @foreach ($highlight_tags as $highlight_tag)
                         <option value="{{ $highlight_tag->id }}"
                             {{ in_array((string) $highlight_tag->id, array_map('strval', $hlSelected)) ? 'selected' : '' }}>
@@ -386,7 +398,7 @@
             <div class="mb-3">
                 <label for="video_type">Video Type</label>
                 <select name="video_type" id="video_type" class="form-select">
-                    <option value=""  disabled selected >-- Select Video Type --</option>
+                    <option value="" disabled selected>-- Select Video Type --</option>
                     <option value="short"
                         {{ old('video_type', $video->video_type ?? '') == 'short' ? 'selected' : '' }}>Short</option>
                     <option value="full_review"

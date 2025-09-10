@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Region;
 use App\Models\ChannelRegion;
+use App\Models\Subscription;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
@@ -334,7 +335,7 @@ class ChannelController extends Controller
             $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
             // Only channels that have the requested region
-            $channels = \App\Models\Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+            $channels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 })
