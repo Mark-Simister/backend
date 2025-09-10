@@ -149,7 +149,8 @@ Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api']);
 Route::match(['GET','POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
 Route::get   ('characters',          [CharacterController::class, 'index_api']);
- Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
+Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
+Route::get('/characters/{id}/with-videos/{region}', [CharacterController::class, 'showWithVideos']);
 Route::get('/characters/region/{region?}', [CharacterController::class, 'index_by_region_api']);
 
 Route::get('character-tags', [CharacterTagController::class, 'index_api']);
