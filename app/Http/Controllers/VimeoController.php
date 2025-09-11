@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Vimeo\Vimeo;
 use App\Models\Video;
 use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 class VimeoController extends Controller
 {
@@ -20,81 +21,118 @@ class VimeoController extends Controller
 
         $this->vimeo = new Vimeo($client, $secret, $access);
     }
-    public function index(VimeoService $vimeo)
-    {
-        $fields = implode(',', [
-            'uri',
-            'name',
-            'description',
-            'link',
-            'privacy',
-            'created_time',
-            'duration',
-            'pictures.sizes.link',
-        ]);
+    public function index(Request $request, VimeoService $vimeo)
+{
+    $page = max(1, (int) $request->integer('page', 1));
+    $perPage = 24;
 
-        $result = $vimeo->listAllMyVideos(100, $fields);
-        $videos = $result['videos'] ?? [];
+    $fields = implode(',', [
+        'uri',
+        'name',
+        'description',
+        'link',
+        'privacy',
+        'created_time',
+        'duration',
+        'pictures.sizes.link',
+    ]);
 
-        $total = $result['total'] ?? count($videos);
+    $result = $vimeo->listAllMyVideos($perPage, $fields, $page); // make sure your service accepts $page
+    $videos = $result['videos'] ?? [];
+    $total  = $result['total']  ?? count($videos);
 
-        $alreadyAssigned = Video::where('type', 'vimeo')->pluck('id', 'video_url');
+    $prevPage = $page > 1 ? $page - 1 : null;
+    $nextPage = ($page * $perPage) < $total ? $page + 1 : null;
 
-        $assigned = [];
-        $unassigned = [];
+    // Already assigned Vimeo links -> local video id
+    $alreadyAssigned = Video::where('type', 'vimeo')->pluck('id', 'video_url');
 
-        foreach ($videos as $v) {
-            $link = $v['link'] ?? '';
-            if ($link && $alreadyAssigned->has($link)) {
-                $assigned[] = $v;
-            } else {
-                $unassigned[] = $v;
-            }
+    $assigned = [];
+    $unassigned = [];
+    foreach ($videos as $v) {
+        $link = $v['link'] ?? '';
+        if ($link && $alreadyAssigned->has($link)) {
+            $assigned[] = $v;
+        } else {
+            $unassigned[] = $v;
         }
-
-        $assignedVideos = Video::where('type', 'vimeo')
-            ->with('character')
-            ->latest()
-            ->get();
-        $vimeoByUrl = collect($assigned)->keyBy('link');
-
-        return view('admin.vimeo.index', compact(
-            'videos',
-            'total',
-            'assigned',
-            'unassigned',
-            'alreadyAssigned',
-            'assignedVideos',
-            'vimeoByUrl'
-        ));
     }
 
+    // Videos you can assign TO (filter to things not yet linked to any provider URL)
+    $assignableVideos = Video::query()
+        ->whereNull('video_url')                // no URL yet
+        ->orWhere('type', '!=', 'vimeo')       // or currently a different source
+        ->orderByDesc('id')
+        ->get(['id', 'title']);                // lightweight
 
+    // if you want to show already assigned, useful for badges
+    $assignedVideos = Video::where('type', 'vimeo')
+        ->with('character')
+        ->latest()->get();
 
+    $vimeoByUrl = collect($assigned)->keyBy('link');
 
-    /**
-     * Assign (upsert) into your existing `videos` table with type=vimeo.
-     */
-    public function assign(Request $request)
-    {
-        $data = $request->validate([
-            'uri' => ['required', 'string'],
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'link' => ['required', 'url'],
-            'thumbnail' => ['nullable', 'url'],
-        ]);
+    // Optional error handling passed to view
+    $error = $result['error'] ?? null;
 
-        $video = Video::updateOrCreate(
-            ['type' => 'vimeo', 'video_url' => $data['link']],
-            [
-                'title' => $data['name'],
-                'description' => $data['description'] ?? '',
-                'thumbnail_url' => $data['thumbnail'] ?? null,
-                'type' => 'vimeo',
-            ]
-        );
+    return view('admin.vimeo.index', compact(
+        'videos',
+        'total',
+        'assigned',
+        'unassigned',
+        'alreadyAssigned',
+        'assignedVideos',
+        'vimeoByUrl',
+        'assignableVideos',
+        'page',
+        'prevPage',
+        'nextPage',
+        'error'
+    ));
+}
 
-        return back()->with('success', 'Assigned Vimeo video: ' . $video->title);
+public function assign(Request $request)
+{
+    $data = $request->validate([
+        'video_id'   => ['required', Rule::exists('videos', 'id')],
+        'vimeo_link' => ['required', 'url'],
+        'title'      => ['nullable', 'string', 'max:255'],
+        'thumb'      => ['nullable', 'url'],
+        'duration'   => ['nullable', 'integer', 'min:0'],
+        'description'=> ['nullable', 'string'],
+    ]);
+
+    $video = Video::findOrFail($data['video_id']);
+
+    // if this Vimeo link is already used by a different row, block it
+    $conflict = Video::where('video_url', $data['vimeo_link'])
+        ->where('id', '!=', $video->id)
+        ->exists();
+
+    if ($conflict) {
+        return back()->with('error', 'That Vimeo video is already assigned to another item.');
     }
+
+    // Update the row
+    $video->type = 'vimeo';
+    $video->video_url = $data['vimeo_link'];
+
+    // Optionally hydrate some metadata
+    if (!empty($data['title']) && empty($video->title)) {
+        $video->title = $data['title'];
+    }
+    if (isset($data['duration'])) {
+        $video->duration_seconds = $data['duration']; // adapt to your schema
+    }
+    if (!empty($data['thumb']) && property_exists($video, 'thumbnail_url')) {
+        $video->thumbnail_url = $data['thumb'];
+    }
+    if (!empty($data['description']) && property_exists($video, 'description')) {
+        $video->description = $data['description'];
+    }
+
+    $video->save();
+
+    return back()->with('success', 'Vimeo video assigned successfully.');
+}
 }

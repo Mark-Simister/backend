@@ -56,15 +56,14 @@
                     <td>
                         @if($channel->image && file_exists(public_path($channel->image)))
                             <img src="{{ asset($channel->image) }}" 
-                                alt="{{ $channel->name }}" 
-                                class="channel-img" 
-                                width="80">
+                                 alt="{{ $channel->name }}" 
+                                 class="channel-img">
                         @else
                             <span class="text-muted">No Image</span>
                         @endif
                     </td>
                     <td>{{ $channel->name }}</td>
-                   <td>
+                    <td>
                         @foreach($channel->regions as $region)
                             <span class="badge bg-info">{{ $region->region_name }}</span>
                         @endforeach
@@ -73,18 +72,18 @@
                     <td class="text-center">
                         @can('channel.edit')
                         <a href="{{ route('admin.channels.edit', $channel) }}" 
-                           class="btn btn-sm btn-warning me-1">
+                           class="btn btn-sm btn-warning me-1" title="Edit">
                             <i class="bi bi-pencil-square"></i>
                         </a>
                         @endcan
+
                         @can('channel.delete')
                         <form action="{{ route('admin.channels.destroy', $channel) }}" 
                               method="POST" 
-                              class="d-inline" 
-                              onsubmit="return confirm('Are you sure you want to delete this channel?')">
+                              class="d-inline delete-channel-form">
                             @csrf
                             @method('DELETE')
-                            <button class="btn btn-sm btn-danger">
+                            <button type="button" class="btn btn-sm btn-danger delete-btn" title="Delete">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
@@ -104,13 +103,13 @@
 @endsection
 
 @push('scripts')
+<!-- DataTables Script -->
 <script>
     $(document).ready(function() {
         $('#channels-table').DataTable({
             responsive: true,
             pageLength: 10,
             ordering: true,
-           // order: [[ 4, 'desc' ]], // Order by Created date DESC
             autoWidth: false,
             language: {
                 search: "_INPUT_",
@@ -118,5 +117,36 @@
             }
         });
     });
+</script>
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- SweetAlert Delete Confirmation -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
 </script>
 @endpush

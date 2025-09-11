@@ -16,22 +16,61 @@ class VideoEngagementController extends Controller
     public function like(Video $video)
     {
         $user = Auth::user();
-        $user->likedVideos()->syncWithoutDetaching([$video->id]);
+
+
+        if (!$user->likedVideos()->where('video_id', $video->id)->exists()) {
+            $user->likedVideos()->attach($video->id);
+
+
+            $video->increment('likes');
+        }
 
         return response()->json([
             'status' => 'ok',
             'message' => 'Video liked',
-            'data' => ['video_id' => $video->id, 'liked' => true],
+            'data' => [
+                'video_id' => $video->id,
+                'liked' => true,
+                'likes_count' => $video->likes,
+            ],
         ], 200);
     }
 
-    // DELETE /videos/{video}/like
+    // DELETE /videos/{video}/unlike
     public function unlike(Video $video)
     {
         $user = Auth::user();
-        $user->likedVideos()->detach($video->id);
 
-        return response()->json([], 204);
+        if ($user->likedVideos()->where('video_id', $video->id)->exists()) {
+            $user->likedVideos()->detach($video->id);
+
+            // Decrement likes column but never go below 0
+            if ($video->likes > 0) {
+                $video->decrement('likes');
+            }
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Video unliked',
+            'data' => [
+                'video_id' => $video->id,
+                'liked' => false,
+                'likes_count' => $video->likes, // latest likes count
+            ],
+        ], 200);
+    }
+
+    // likes/video/count
+    public function likesCount(Video $video)
+    {
+        $count = $video->likes()->count(); // using hasMany VideoLike relation
+
+        return response()->json([
+            'status' => 'ok',
+            'video_id' => $video->id,
+            'likes_count' => $count,
+        ]);
     }
 
     // POST /videos/{video}/favorite
@@ -56,37 +95,39 @@ class VideoEngagementController extends Controller
         return response()->json([], 204);
     }
 
-    // POST /videos/{video}/watch
-    // body: { "last_position_seconds": 120, "watched_at": "2025-09-09T10:00:00Z" }
     public function recordWatch(Request $request, Video $video)
     {
-        $validated = $request->validate([
-            'last_position_seconds' => ['nullable', 'integer', 'min:0', 'max:86400'],
-            'watched_at' => ['nullable', 'date'],
-        ]);
+        $user = Auth::user();
 
-        $userId = Auth::id();
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+        }
 
-        $row = VideoWatchHistory::updateOrCreate(
-            ['user_id' => $userId, 'video_id' => $video->id],
-            [
-                'last_position_seconds' => $validated['last_position_seconds'] ?? null,
-                'watched_at' => isset($validated['watched_at'])
-                    ? Carbon::parse($validated['watched_at'])
-                    : now(),
-            ]
-        );
+        $alreadyWatched = VideoWatchHistory::where('user_id', $user->id)
+            ->where('video_id', $video->id)
+            ->exists();
+
+        if (!$alreadyWatched) {
+            VideoWatchHistory::create([
+                'user_id' => $user->id,
+                'video_id' => $video->id,
+            ]);
+
+            // Increment video views
+            $video->increment('views');
+        }
 
         return response()->json([
             'status' => 'ok',
-            'message' => 'Watch progress saved',
+            'message' => 'Watch recorded',
             'data' => [
                 'video_id' => $video->id,
-                'last_position_seconds' => $row->last_position_seconds,
-                'watched_at' => optional($row->watched_at)->toIso8601String(),
-            ],
+                'views' => $video->views,
+            ]
         ], 200);
     }
+
+
 
     // GET /me/last-watched?per_page=20
     public function myLastWatched(Request $request)
@@ -131,5 +172,5 @@ class VideoEngagementController extends Controller
         return response()->json($videos);
     }
 
-    
+
 }

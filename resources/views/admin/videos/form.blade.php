@@ -74,14 +74,34 @@
 
 <div class="">
     @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-3 ">
+        <div id="flashErrors" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <ul class="mb-3">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
         </div>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const el = document.getElementById('flashErrors');
+            if (!el) return;
+
+            setTimeout(function() {
+                // If Bootstrap JS is present, use its API for a proper dismiss
+                if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+                    bootstrap.Alert.getOrCreateInstance(el).close();
+                } else {
+                    // Fallback: fade out then remove
+                    el.style.transition = 'opacity .3s ease';
+                    el.style.opacity = '0';
+                    setTimeout(() => el.remove(), 300);
+                }
+            }, 5000);
+        });
+    </script>
+
     <!-- Progress Bar -->
     <div class="progress">
         <div id="formProgress" class="progress-bar" role="progressbar" style="width: 25%;">
@@ -137,14 +157,22 @@
 
             </div>
 
-            <div class="mb-3">
+            {{-- <div class="mb-3">
                 <label for="video_url">Video URL <span class="text-danger">*</span></label>
-                {{-- <input type="url" name="video_url" id="video_url" class="form-control" required
-                    value="{{ old('video_url', $video->video_url ?? '') }}"> --}}
                 <input type="url" name="video_url" id="video_url" class="form-control" required
                     value="{{ old('video_url', request('video_url', $video->video_url ?? '')) }}">
 
+            </div> --}}
+            <div class="mb-3">
+                <label for="video_url">
+                    Video URL <span id="videoUrlStar" class="text-danger">*</span>
+                </label>
+                <input type="url" name="video_url" id="video_url" class="form-control"
+                    value="{{ old('video_url', request('video_url', $video->video_url ?? '')) }}"
+                    {{ old('type', request('type', $video->type ?? '')) !== 'vimeo' ? 'required' : '' }}>
             </div>
+
+
 
             <div class="d-flex justify-content-end">
                 <button type="button" class="btn btn-primary next-step">Next</button>
@@ -167,8 +195,8 @@
                 <div id="character_error" class="invalid-feedback" style="display:none;">Please select a character.
                 </div>
             </div>
-            <div class="form-group">
-                <label for="regions">Select Regions:</label><br>
+            <div class="form-group" id="regions_group">
+                <label for="regions">Select Regions: <span class="text-danger">*</span></label><br>
                 @foreach ($regions as $region)
                     <div class="form-check form-check-inline">
                         <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"
@@ -181,7 +209,12 @@
                         </label>
                     </div>
                 @endforeach
+
+                <div id="regions_error" class="invalid-feedback d-none">
+                    Please select at least one region.
+                </div>
             </div>
+
             <div class="mb-3">
                 <label for="channel_id">Channel</label>
                 <select name="channel_id" id="channel_id" class="form-select" required>
@@ -207,7 +240,8 @@
                         </option>
                     @endforeach
                 </select>
-                <div id="category_error" class="invalid-feedback" style="display:none;">Please select a category.</div>
+                <div id="category_error" class="invalid-feedback" style="display:none;">Please select a category.
+                </div>
             </div>
 
             <div class="mb-3">
@@ -594,7 +628,7 @@
         });
     });
 </script>
-<script>
+{{-- <script>
     document.addEventListener("DOMContentLoaded", function() {
         const steps = document.querySelectorAll(".form-step");
         const nextBtns = document.querySelectorAll(".next-step");
@@ -739,7 +773,205 @@
 
         showStep(currentStep);
     });
+</script> --}}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const steps = document.querySelectorAll(".form-step");
+        const nextBtns = document.querySelectorAll(".next-step");
+        const prevBtns = document.querySelectorAll(".prev-step");
+        const indicators = document.querySelectorAll(".step-indicator");
+        const progressBar = document.getElementById("formProgress");
+        const currentStepEl = document.getElementById("currentStep");
+        const form = document.getElementById("stepForm");
+
+        // Vimeo URL required toggle (Step 1)
+        const typeSel = document.getElementById('type');
+        const urlInput = document.getElementById('video_url');
+        const star = document.getElementById('videoUrlStar');
+
+        function syncUrlRequired() {
+            const isVimeo = (typeSel?.value === 'vimeo');
+            if (!urlInput) return;
+            if (isVimeo) {
+                urlInput.removeAttribute('required');
+                if (star) star.style.display = 'none';
+            } else {
+                urlInput.setAttribute('required', 'required');
+                if (star) star.style.display = 'inline';
+            }
+        }
+        if (typeSel) {
+            syncUrlRequired();
+            typeSel.addEventListener('change', syncUrlRequired);
+        }
+
+        let currentStep = 0;
+
+        function showStep(index) {
+            steps.forEach((step, i) => step.classList.toggle("active", i === index));
+            updateRequiredAttributes(index);
+
+            const progress = ((index + 1) / steps.length) * 100;
+            if (progressBar) {
+                progressBar.style.width = progress + "%";
+                progressBar.textContent = `Step ${index + 1} of ${steps.length}`;
+            }
+            if (currentStepEl) currentStepEl.textContent = index + 1;
+
+            indicators.forEach((el, i) => el.classList.toggle("active", i === index));
+            currentStep = index;
+        }
+
+        function updateRequiredAttributes(stepIndex) {
+            steps.forEach((step, i) => {
+                const inputs = step.querySelectorAll("input, select, textarea");
+                inputs.forEach((input) => {
+                    if (input.dataset.alwaysOptional === "true") {
+                        input.removeAttribute("required");
+                        return;
+                    }
+                    if (i === stepIndex) {
+                        if (input.dataset.wasRequired === "true" || input.hasAttribute(
+                                "required")) {
+                            input.setAttribute("required", "required");
+                        }
+                    } else {
+                        if (input.hasAttribute("required")) {
+                            input.dataset.wasRequired = "true";
+                            input.removeAttribute("required");
+                        }
+                    }
+                });
+            });
+        }
+
+        function validateStep(stepIndex) {
+            const step = steps[stepIndex];
+            const inputs = step.querySelectorAll("input, select, textarea");
+            let valid = true;
+
+            // generic required check (adds/removes .is-invalid)
+            inputs.forEach((input) => {
+                const required = input.hasAttribute("required");
+                const value = (input.value || "").trim();
+                if (required && !value) {
+                    input.classList.add("is-invalid");
+                    valid = false;
+                } else {
+                    input.classList.remove("is-invalid");
+                }
+            });
+
+            // Step 2 explicit errors with messages
+            if (stepIndex === 1) {
+                const pairs = [{
+                        id: "character_id",
+                        err: "character_error"
+                    },
+                    {
+                        id: "channel_id",
+                        err: "channel_error"
+                    },
+                    {
+                        id: "category_id",
+                        err: "category_error"
+                    },
+                    {
+                        id: "access_level",
+                        err: "access_level_error"
+                    },
+                ];
+                pairs.forEach(({
+                    id,
+                    err
+                }) => {
+                    const el = document.getElementById(id);
+                    const msg = document.getElementById(err);
+                    const empty = !el || !el.value;
+                    if (empty) {
+                        if (el) el.classList.add("is-invalid");
+                        if (msg) msg.style.display = "block";
+                        valid = false;
+                    } else {
+                        if (el) el.classList.remove("is-invalid");
+                        if (msg) msg.style.display = "none";
+                    }
+                });
+
+                // Regions: require at least one checkbox
+                const regionChecks = document.querySelectorAll('input[name="regions[]"]');
+                const regionsError = document.getElementById('regions_error');
+
+                function updateRegionsError() {
+                    const oneChecked = Array.from(regionChecks).some(cb => cb.checked);
+                    // toggle error visibility
+                    if (regionsError) {
+                        regionsError.classList.toggle('d-none', oneChecked);
+                        regionsError.classList.toggle('d-block', !oneChecked);
+                    }
+                    // (optional) red border on the checkboxes group
+                    regionChecks.forEach(cb => cb.classList.toggle('is-invalid', !oneChecked));
+                }
+
+                // attach once on load
+                if (regionChecks.length) {
+                    regionChecks.forEach(cb => cb.addEventListener('change', updateRegionsError));
+                    updateRegionsError();
+                }
+            }
+
+
+            return valid;
+        }
+
+        // listeners
+        nextBtns.forEach((btn) => {
+            btn.addEventListener("click", function() {
+                if (!validateStep(currentStep)) return;
+                if (currentStep < steps.length - 1) showStep(currentStep + 1);
+            });
+        });
+
+        prevBtns.forEach((btn) => {
+            btn.addEventListener("click", function() {
+                if (currentStep > 0) showStep(currentStep - 1);
+            });
+        });
+
+        indicators.forEach((indicator, index) => {
+            indicator.addEventListener("click", function() {
+                if (index <= currentStep || validateStep(currentStep)) showStep(index);
+            });
+        });
+
+        // clear error on change for step 2 controls
+        ["character_id", "channel_id", "category_id", "access_level"].forEach(id => {
+            const el = document.getElementById(id);
+            const map = {
+                character_id: "character_error",
+                channel_id: "channel_error",
+                category_id: "category_error",
+                access_level: "access_level_error",
+            };
+            const msg = document.getElementById(map[id]);
+            if (el) {
+                el.addEventListener('change', function() {
+                    if (el.value) {
+                        el.classList.remove('is-invalid');
+                        if (msg) msg.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        form.addEventListener("submit", function(e) {
+            if (!validateStep(currentStep)) e.preventDefault();
+        });
+
+        showStep(currentStep);
+    });
 </script>
+
 
 
 <!-- JavaScript for Validation -->
@@ -829,5 +1061,26 @@
             accessLevelSelect.classList.remove('is-invalid');
             accessLevelError.style.display = 'none';
         }
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSel = document.getElementById('type');
+        const urlInput = document.getElementById('video_url');
+        const star = document.getElementById('videoUrlStar');
+
+        function syncUrlRequired() {
+            const isVimeo = (typeSel.value === 'vimeo');
+            if (isVimeo) {
+                urlInput.removeAttribute('required');
+                if (star) star.style.display = 'none';
+            } else {
+                urlInput.setAttribute('required', 'required');
+                if (star) star.style.display = 'inline';
+            }
+        }
+
+        syncUrlRequired();
+        typeSel.addEventListener('change', syncUrlRequired);
     });
 </script>

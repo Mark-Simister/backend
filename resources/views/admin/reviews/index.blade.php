@@ -27,7 +27,6 @@
     @endif
 
     @php
-        // If $reviews is a paginator, these are page-scoped counts; for global counts, compute in controller.
         $allReviews    = collect($reviews instanceof \Illuminate\Contracts\Pagination\Paginator ? $reviews->items() : $reviews);
         $pending       = $allReviews->where('status','pending');
         $approved      = $allReviews->where('status','approved');
@@ -38,7 +37,7 @@
             'approved' => 'success',
             'rejected' => 'secondary',
         ];
-        @endphp
+    @endphp
 
     @if ($allReviews->count())
         <div class="card shadow-sm border-0">
@@ -102,57 +101,56 @@
                                         <div class="text-muted small">/ 5</div>
                                     </td>
                                     <td>{{ Str::limit($review->review, 120) }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ $statusColor[$review->status] ?? 'light' }} badge-status">
-                                                {{ ucfirst($review->status) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {{ $review->created_at?->format('Y-m-d H:i') }}
-                                            <div class="text-muted small">{{ $review->created_at?->diffForHumans() }}</div>
-                                        </td>
-                                        <td>
-                                            @can('rating_review.edit')
-                                            <a href="{{ route('admin.reviews.edit', $review) }}" class="btn btn-warning btn-sm me-1">
-                                                <i class="bi bi-pencil-square"></i> Edit
-                                            </a>
-                                            @endcan
-                                            @if ($review->status !== 'approved')
-                                            @can('rating_review.approve')
-                                            <form action="{{ route('admin.reviews.approve', $review) }}" method="POST" class="d-inline">
-                                                @csrf @method('PATCH')
-                                                <button class="btn btn-success btn-sm me-1">
-                                                    <i class="bi bi-check2-circle"></i> Approve
-                                                </button>
-                                                </form>
-                                                @endcan
-                                                @endif
-                                                @if ($review->status !== 'rejected')
-                                            @can('rating_review.reject')
-                                            <form action="{{ route('admin.reviews.reject', $review) }}" method="POST" class="d-inline">
-                                                @csrf @method('PATCH')
-                                                <button class="btn btn-secondary btn-sm me-1">
-                                                    <i class="bi bi-x-circle"></i> Reject
-                                                </button>
-                                                </form>
-                                            @endcan
-                                            @endif
-                                            @can('rating_review.delete')
-                                            <form action="{{ route('admin.reviews.destroy', $review) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this review?')">
-                                                @csrf @method('DELETE')
-                                                <button class="btn btn-danger btn-sm">
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
-                                            </form>
-                                            @endcan
-                                        </td>
-                                    </tr>
+                                    <td>
+                                        <span class="badge bg-{{ $statusColor[$review->status] ?? 'light' }} badge-status">
+                                            {{ ucfirst($review->status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ $review->created_at?->format('Y-m-d H:i') }}
+                                        <div class="text-muted small">{{ $review->created_at?->diffForHumans() }}</div>
+                                    </td>
+                                    <td>
+                                        @can('rating_review.edit')
+                                        <a href="{{ route('admin.reviews.edit', $review) }}" class="btn btn-warning btn-sm me-1">
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </a>
+                                        @endcan
+                                        @if ($review->status !== 'approved')
+                                        @can('rating_review.approve')
+                                        <form action="{{ route('admin.reviews.approve', $review) }}" method="POST" class="d-inline review-action">
+                                            @csrf @method('PATCH')
+                                            <button class="btn btn-success btn-sm me-1">
+                                                <i class="bi bi-check2-circle"></i> Approve
+                                            </button>
+                                        </form>
+                                        @endcan
+                                        @endif
+                                        @if ($review->status !== 'rejected')
+                                        @can('rating_review.reject')
+                                        <form action="{{ route('admin.reviews.reject', $review) }}" method="POST" class="d-inline review-action">
+                                            @csrf @method('PATCH')
+                                            <button class="btn btn-secondary btn-sm me-1">
+                                                <i class="bi bi-x-circle"></i> Reject
+                                            </button>
+                                        </form>
+                                        @endcan
+                                        @endif
+                                        @can('rating_review.delete')
+                                        <form action="{{ route('admin.reviews.destroy', $review) }}" method="POST" class="d-inline review-action">
+                                            @csrf @method('DELETE')
+                                            <button class="btn btn-danger btn-sm">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                        @endcan
+                                    </td>
+                                </tr>
                                 @endforeach
                             </tbody>
                         </table>
-                        {{-- {{ $reviews->links() }} --}}
                     </div>
-                    
+
                     {{-- PENDING --}}
                     <div class="tab-pane fade" id="pending-pane" role="tabpanel" aria-labelledby="pending-tab" tabindex="0">
                         <table id="reviews-pending" class="table table-hover table-bordered align-middle">
@@ -203,7 +201,7 @@
                                             </a>
                                             @endcan
                                             @can('rating_review.approve')
-                                            <form action="{{ route('admin.reviews.approve', $review) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.reviews.approve', $review) }}" method="POST" class="d-inline review-action">
                                                 @csrf @method('PATCH')
                                                 <button class="btn btn-success btn-sm me-1">
                                                     <i class="bi bi-check2-circle"></i> Approve
@@ -211,7 +209,7 @@
                                             </form>
                                             @endcan
                                             @can('rating_review.reject')
-                                            <form action="{{ route('admin.reviews.reject', $review) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.reviews.reject', $review) }}" method="POST" class="d-inline review-action">
                                                 @csrf @method('PATCH')
                                                 <button class="btn btn-secondary btn-sm me-1">
                                                     <i class="bi bi-x-circle"></i> Reject
@@ -219,7 +217,7 @@
                                             </form>
                                             @endcan
                                             @can('rating_review.delete')
-                                            <form action="{{ route('admin.reviews.destroy', $review) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this review?')">
+                                            <form action="{{ route('admin.reviews.destroy', $review) }}" method="POST" class="d-inline review-action">
                                                 @csrf @method('DELETE')
                                                 <button class="btn btn-danger btn-sm">
                                                     <i class="bi bi-trash"></i> Delete
@@ -228,21 +226,21 @@
                                             @endcan
                                         </td>
                                     </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        {{-- APPROVED --}}
-                        <div class="tab-pane fade" id="approved-pane" role="tabpanel" aria-labelledby="approved-tab" tabindex="0">
-                            <table id="reviews-approved" class="table table-hover table-bordered align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 60px;">#</th>
-                                        <th>Video</th>
-                                        <th>User</th>
-                                        <th style="width: 90px;">Rating</th>
-                                        <th>Review</th>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- APPROVED --}}
+                    <div class="tab-pane fade" id="approved-pane" role="tabpanel" aria-labelledby="approved-tab" tabindex="0">
+                        <table id="reviews-approved" class="table table-hover table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 60px;">#</th>
+                                    <th>Video</th>
+                                    <th>User</th>
+                                    <th style="width: 90px;">Rating</th>
+                                    <th>Review</th>
                                     <th style="width: 120px;">Status</th>
                                     <th style="width: 140px;">Created</th>
                                     <th style="width: 260px;">Actions</th>
@@ -252,55 +250,54 @@
                                 @foreach ($approved as $index => $review)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
-                                        <td>
-                                            {{ $review->video->title ?? 'Video #'.$review->video_id }}
-                                            <div class="text-muted small">#{{ $review->video_id }}</div>
-                                        </td>
-                                        <td>
-                                            {{ $review->user->name ?? 'User #'.$review->user_id }}
-                                            @if(optional($review->user)->email)
-                                                <div class="text-muted small">{{ $review->user->email }}</div>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <strong>{{ $review->rating }}</strong>
-                                            <div class="text-muted small">/ 5</div>
-                                        </td>
-                                        <td>{{ Str::limit($review->review, 120) }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ $statusColor[$review->status] ?? 'light' }} badge-status">
-                                                {{ ucfirst($review->status) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {{ $review->created_at?->format('Y-m-d H:i') }}
-                                            <div class="text-muted small">{{ $review->created_at?->diffForHumans() }}</div>
-                                        </td>
-                                        <td>
-                                            @can('rating_review.edit')
-                                            <a href="{{ route('admin.reviews.edit', $review) }}" class="btn btn-warning btn-sm me-1">
-                                                <i class="bi bi-pencil-square"></i> Edit
-                                            </a>
-                                            @endcan
-                                            {{-- Allow rejecting if needed --}}
-                                            @can('rating_review.reject')
-                                            <form action="{{ route('admin.reviews.reject', $review) }}" method="POST" class="d-inline">
-                                                @csrf @method('PATCH')
-                                                <button class="btn btn-secondary btn-sm me-1">
-                                                    <i class="bi bi-x-circle"></i> Reject
-                                                </button>
-                                            </form>
-                                            @endcan
-                                            @can('rating_review.delete')
-                                            <form action="{{ route('admin.reviews.destroy', $review) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this review?')">
-                                                @csrf @method('DELETE')
-                                                <button class="btn btn-danger btn-sm">
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
-                                            </form>
-                                            @endcan
-                                        </td>
-                                    </tr>
+                                    <td>
+                                        {{ $review->video->title ?? 'Video #'.$review->video_id }}
+                                        <div class="text-muted small">#{{ $review->video_id }}</div>
+                                    </td>
+                                    <td>
+                                        {{ $review->user->name ?? 'User #'.$review->user_id }}
+                                        @if(optional($review->user)->email)
+                                            <div class="text-muted small">{{ $review->user->email }}</div>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <strong>{{ $review->rating }}</strong>
+                                        <div class="text-muted small">/ 5</div>
+                                    </td>
+                                    <td>{{ Str::limit($review->review, 120) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $statusColor[$review->status] ?? 'light' }} badge-status">
+                                            {{ ucfirst($review->status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ $review->created_at?->format('Y-m-d H:i') }}
+                                        <div class="text-muted small">{{ $review->created_at?->diffForHumans() }}</div>
+                                    </td>
+                                    <td>
+                                        @can('rating_review.edit')
+                                        <a href="{{ route('admin.reviews.edit', $review) }}" class="btn btn-warning btn-sm me-1">
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </a>
+                                        @endcan
+                                        @can('rating_review.reject')
+                                        <form action="{{ route('admin.reviews.reject', $review) }}" method="POST" class="d-inline review-action">
+                                            @csrf @method('PATCH')
+                                            <button class="btn btn-secondary btn-sm me-1">
+                                                <i class="bi bi-x-circle"></i> Reject
+                                            </button>
+                                        </form>
+                                        @endcan
+                                        @can('rating_review.delete')
+                                        <form action="{{ route('admin.reviews.destroy', $review) }}" method="POST" class="d-inline review-action">
+                                            @csrf @method('DELETE')
+                                            <button class="btn btn-danger btn-sm">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                        @endcan
+                                    </td>
+                                </tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -327,53 +324,52 @@
                                     <td>{{ $index + 1 }}</td>
                                     <td>
                                         {{ $review->video->title ?? 'Video #'.$review->video_id }}
-                                            <div class="text-muted small">#{{ $review->video_id }}</div>
-                                        </td>
-                                        <td>
-                                            {{ $review->user->name ?? 'User #'.$review->user_id }}
-                                            @if(optional($review->user)->email)
-                                            <div class="text-muted small">{{ $review->user->email }}</div>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <strong>{{ $review->rating }}</strong>
-                                            <div class="text-muted small">/ 5</div>
-                                        </td>
-                                        <td>{{ Str::limit($review->review, 120) }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ $statusColor[$review->status] ?? 'light' }} badge-status">
-                                                {{ ucfirst($review->status) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {{ $review->created_at?->format('Y-m-d H:i') }}
-                                            <div class="text-muted small">{{ $review->created_at?->diffForHumans() }}</div>
-                                        </td>
-                                        <td>
-                                            @can('rating_review.edit')
-                                            <a href="{{ route('admin.reviews.edit', $review) }}" class="btn btn-warning btn-sm me-1">
-                                                <i class="bi bi-pencil-square"></i> Edit
-                                            </a>
-                                            @endcan
-                                            {{-- Allow re-approving if needed --}}
-                                            @can('rating_review.approve')
-                                            <form action="{{ route('admin.reviews.approve', $review) }}" method="POST" class="d-inline">
-                                                @csrf @method('PATCH')
-                                                <button class="btn btn-success btn-sm me-1">
-                                                    <i class="bi bi-check2-circle"></i> Approve
-                                                </button>
-                                            </form>
-                                            @endcan
-                                            @can('rating_review.reject')
-                                            <form action="{{ route('admin.reviews.destroy', $review) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this review?')">
-                                                @csrf @method('DELETE')
-                                                <button class="btn btn-danger btn-sm">
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
-                                            </form>
-                                            @endcan
-                                        </td>
-                                    </tr>
+                                        <div class="text-muted small">#{{ $review->video_id }}</div>
+                                    </td>
+                                    <td>
+                                        {{ $review->user->name ?? 'User #'.$review->user_id }}
+                                        @if(optional($review->user)->email)
+                                        <div class="text-muted small">{{ $review->user->email }}</div>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <strong>{{ $review->rating }}</strong>
+                                        <div class="text-muted small">/ 5</div>
+                                    </td>
+                                    <td>{{ Str::limit($review->review, 120) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $statusColor[$review->status] ?? 'light' }} badge-status">
+                                            {{ ucfirst($review->status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ $review->created_at?->format('Y-m-d H:i') }}
+                                        <div class="text-muted small">{{ $review->created_at?->diffForHumans() }}</div>
+                                    </td>
+                                    <td>
+                                        @can('rating_review.edit')
+                                        <a href="{{ route('admin.reviews.edit', $review) }}" class="btn btn-warning btn-sm me-1">
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </a>
+                                        @endcan
+                                        @can('rating_review.approve')
+                                        <form action="{{ route('admin.reviews.approve', $review) }}" method="POST" class="d-inline review-action">
+                                            @csrf @method('PATCH')
+                                            <button class="btn btn-success btn-sm me-1">
+                                                <i class="bi bi-check2-circle"></i> Approve
+                                            </button>
+                                        </form>
+                                        @endcan
+                                        @can('rating_review.delete')
+                                        <form action="{{ route('admin.reviews.destroy', $review) }}" method="POST" class="d-inline review-action">
+                                            @csrf @method('DELETE')
+                                            <button class="btn btn-danger btn-sm">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                        @endcan
+                                    </td>
+                                </tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -390,33 +386,52 @@
 @endsection
 
 @push('scripts')
-    <script>
-        $(document).ready(function () {
-            // Initialize DT for each table
-            const dtOptions = {
-                responsive: true,
-                pageLength: 10,
-                ordering: true,
-               // order: [[0, 'desc']], // Latest entries on top
-                autoWidth: false,
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search reviews..."
-                },
-                columnDefs: [
-                    { orderable: false, targets: [7] } // disable sort on Actions
-                ]
-            };
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function () {
+    const dtOptions = {
+        responsive: true,
+        pageLength: 10,
+        ordering: true,
+        autoWidth: false,
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search reviews..."
+        },
+        columnDefs: [
+            { orderable: false, targets: [7] }
+        ]
+    };
 
-            $('#reviews-all').DataTable(dtOptions);
-            $('#reviews-pending').DataTable(dtOptions);
-            $('#reviews-approved').DataTable(dtOptions);
-            $('#reviews-rejected').DataTable(dtOptions);
+    $('#reviews-all').DataTable(dtOptions);
+    $('#reviews-pending').DataTable(dtOptions);
+    $('#reviews-approved').DataTable(dtOptions);
+    $('#reviews-rejected').DataTable(dtOptions);
 
-            // Fix column alignments when changing tabs (DataTables + Bootstrap tabs quirk)
-            $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function () {
-                $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
-            });
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function () {
+        $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+    });
+
+    // SweetAlert for actions
+    $('.review-action').on('submit', function(e){
+        e.preventDefault();
+        const form = this;
+        let actionText = $(form).find('button').text().trim();
+
+        Swal.fire({
+            title: `Are you sure you want to ${actionText.toLowerCase()} this review?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if(result.isConfirmed){
+                form.submit();
+            }
         });
-    </script>
+    });
+});
+</script>
 @endpush

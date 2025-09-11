@@ -60,7 +60,7 @@ Route::middleware(['auth'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        
+
         // Category CRUD
         Route::resource('categories', CategoryController::class)
             ->middleware('permission:category.view|category.create|category.edit|category.delete');
@@ -72,7 +72,7 @@ Route::middleware(['auth'])
         // Channels
         Route::resource('channels', ChannelController::class)
             ->middleware('permission:channel.view|channel.create|channel.edit|channel.delete');
-            
+
         Route::resource('regions', RegionController::class)
             ->middleware('permission:region.view|region.create|region.edit|region.delete');
 
@@ -91,12 +91,12 @@ Route::middleware(['auth'])
         // Videos
         Route::resource('videos', VideoController::class)
             ->middleware('permission:video.view|video.create|video.edit|video.delete');
-        Route::get('/tags', [TagController::class, 'index'])->name('tags.index');    
-        Route::post('/tags', [TagController::class, 'store'])->name('tags.store'); 
-         Route::get('/tags/by-ids', [TagController::class, 'byIds'])
-        ->name('tags.byIds');   
+        Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
+        Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
+        Route::get('/tags/by-ids', [TagController::class, 'byIds'])
+            ->name('tags.byIds');
 
-        
+
         Route::get('videos/{video}/edit-seo', [VideoController::class, 'editSeo'])
             ->name('videos.edit.seo')
             ->middleware('permission:video.edit');
@@ -113,16 +113,18 @@ Route::middleware(['auth'])
             ->name('videos.update.product')
             ->middleware('permission:video.edit');
         Route::get('/vimeo', [VimeoController::class, 'index'])->name('vimeo.index');
-        Route::post('/vimeo/assign', [VimeoController::class, 'assign'])->name('vimeo.assign')
-            ->middleware('permission:video.edit');
+        Route::post('/admin/vimeo/assign', [VimeoController::class, 'assign'])
+            ->middleware('can:video.update')
+            ->name('admin.vimeo.assign');
+
 
 
         // Users (maybe only super_admin + managers)
         Route::resource('users', UserController::class)
             ->middleware('permission:user.view|user.create|user.edit|user.delete');
-        
+
         Route::post('/users/{user}/toggle-block', [UserController::class, 'toggleBlock'])
-        ->name('users.toggle-block');
+            ->name('users.toggle-block');
 
 
         // Highlight tags
@@ -178,7 +180,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
     // Reviews (any of these perms can access the resource routes you enabled)
     Route::resource('reviews', ReviewController::class)
-        ->only(['index','create','store','edit','update','destroy'])
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->middleware('permission:rating_review.view|rating_review.create|rating_review.edit|rating_review.delete');
 
     // Review approve/reject (separate explicit permissions)

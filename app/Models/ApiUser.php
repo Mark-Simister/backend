@@ -86,8 +86,32 @@ class ApiUser extends Authenticatable implements JWTSubject
     {
         return $this->belongsToMany(\App\Models\Video::class, 'video_favorites')->withTimestamps();
     }
+    
+
+    public function likedVideos()
+    {
+        return $this->belongsToMany(
+            \App\Models\Video::class,
+            'video_likes',
+            'user_id',
+            'video_id'
+        )->withTimestamps();
+    }
+
     public function videoWatchHistories_api()
     {
         return $this->hasMany(\App\Models\VideoWatchHistory::class)->latest('watched_at');
     }
+    public function videoWatch()
+    {
+        return $this->hasMany(
+            \App\Models\VideoWatchHistory::class,
+            'video_likes',
+            'user_id',
+            'video_id',
+            'views'
+
+        )->withTimestamps();
+    }
+
 }

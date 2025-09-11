@@ -112,15 +112,22 @@ Route::middleware(['auth:api'])->group(function () {
     // VideoEngagements
     
     // Likes
-    Route::post   ('videos/{video}/like',     [VideoEngagementController::class, 'like'])    ->name('api.videos.like');
-    Route::delete ('videos/{video}/like',     [VideoEngagementController::class, 'unlike'])  ->name('api.videos.unlike');
+    Route::post   ('videos/{video}/like',     [VideoEngagementController::class, 'like'])->name('api.videos.like');
+    Route::delete ('videos/{video}/unlike',     [VideoEngagementController::class, 'unlike'])->name('api.videos.unlike');
+    Route::get('/videos-check/{video}/likes-count', [VideoEngagementController::class, 'likesCount']);
 
     // Favourites
     Route::post   ('videos/{video}/favorite', [VideoEngagementController::class, 'favorite'])->name('api.videos.favorite');
     Route::delete ('videos/{video}/favorite', [VideoEngagementController::class, 'unfavorite'])->name('api.videos.unfavorite');
 
-    // Watch history upsert
+    // Watch history 
     Route::post   ('videos/{video}/watch',    [VideoEngagementController::class, 'recordWatch'])->name('api.videos.watch');
+
+    Route::post('/channels/{id}/follow', [ChannelController::class, 'follow'])->name('channels.follow');
+
+    //  Route::delete('/channels/{id}/unfollow', [FollowChannelController::class, 'unfollow'])->name('channels.unfollow');
+
+     Route::get('/follows', [ChannelController::class, 'listFollows'])->name('channels.follows');
 
     // Lists (paginated)
     Route::get('me/likes',        [VideoEngagementController::class, 'myLikes'])      ->name('api.me.likes');
@@ -135,8 +142,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     // Last watched videos
     Route::get('/me/last-watched', [VideoEngagementController::class, 'myLastWatched'])->name('api.me.last_watched');
-
-
+    
 
 });
 
@@ -144,8 +150,12 @@ Route::middleware(['auth:api'])->group(function () {
 Route::get('regions', [RegionController::class, 'index_api']);
 Route::get('channels', [ChannelController::class, 'index_api']);
 Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
+// Route::get(
+//     '/channels/{channel}/details/{region?}',
+//     [ChannelController::class, 'showChannelDetailsByRegion']
+// )->name('channels.details');
 Route::get(
-    '/channels/{channel}/details/{region?}',
+    '/channel-detail/{channel}/{region?}',
     [ChannelController::class, 'showChannelDetailsByRegion']
 )->name('channels.details');
 

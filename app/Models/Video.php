@@ -144,10 +144,10 @@ class Video extends Model
             ->orderBy('created_at', 'desc');
     }
 
-    public function likedByUsers()
-    {
-        return $this->belongsToMany(\App\Models\User::class, 'video_likes')->withTimestamps();
-    }
+    // public function likedByUsers()
+    // {
+    //     return $this->belongsToMany(\App\Models\User::class, 'video_likes')->withTimestamps();
+    // }
     public function favoritedByUsers()
     {
         return $this->belongsToMany(\App\Models\User::class, 'video_favorites')->withTimestamps();
@@ -156,5 +156,19 @@ class Video extends Model
     {
         return $this->hasMany(\App\Models\VideoWatchHistory::class);
     }
+    public function likes()
+{
+    return $this->hasMany(\App\Models\VideoLike::class, 'video_id');
+}
+
+public function likedByUsers()
+{
+    return $this->belongsToMany(
+        \App\Models\User::class,
+        'video_likes',
+        'video_id',
+        'user_id'
+    )->withTimestamps();
+}
 
 }

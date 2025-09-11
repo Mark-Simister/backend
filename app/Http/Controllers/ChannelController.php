@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Region;
 use App\Models\ChannelRegion;
 use App\Models\Subscription;
+use App\Models\ChannelFollow;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
@@ -19,6 +20,7 @@ use App\Models\Character;
 use App\Models\Video;
 use App\Models\Tag;
 use App\Models\HighlightTag;
+use Illuminate\Support\Facades\Auth;
 
 
 class ChannelController extends Controller
@@ -1132,4 +1134,68 @@ class ChannelController extends Controller
             ], 500);
         }
     }
+
+    // Follow
+    public function follow($channelId)
+    {
+        $user = Auth::user();
+           
+        
+        $alreadyFollowed = ChannelFollow::where('user_id', $user->id)
+            ->where('channel_id', $channelId)
+            ->exists();
+        // dd($alreadyFollowed);
+        if ($alreadyFollowed) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Already following this channel',
+            ], 400);
+        }
+
+       
+        ChannelFollow::create([
+            'user_id' => $user->id,
+            'channel_id' => $channelId,
+        ]);
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Channel followed successfully',
+        ]);
+    }
+
+    // Unfollow
+
+
+    // public function unfollow($channelId)
+    // {
+    //     $user = Auth::user();
+
+    //     ChannelFollow::where('user_id', $user->id)
+    //         ->where('channel_id', $channelId)
+    //         ->delete();
+
+    //     return response()->json([
+    //         'status' => 'ok',
+    //         'message' => 'Channel unfollowed successfully',
+    //     ]);
+    // }
+
+public function listFollows()
+{
+    $follows = ChannelFollow::with('channel')
+        ->get()
+        ->map(function ($follow) {
+            return [
+                'channel_id'   => $follow->channel->id,
+                'channel_name' => $follow->channel->name,
+                // 'user_id'      => $follow->user_id,
+            ];
+        });
+
+    return response()->json([
+        'status' => 'ok',
+        'data'   => $follows,
+    ]);
+}
 }
