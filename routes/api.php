@@ -81,8 +81,6 @@ Route::middleware(['auth:api'])->group(function () {
     // Route::match(['put','patch'], '/characters/{id}', [CharacterController::class, 'update_api']);
     Route::delete('characters/{id}',     [CharacterController::class, 'destroy_api']);
 
-    // Route::get('/plans', [SubscriptionListingController::class, 'index_api']);
-    // Route::post('/purchase', [BillingController::class, 'purchase']);
     Route::post('/purchase/region/{region}', [BillingController::class, 'purchase']);
 
     Route::post('/subscriptions/{id}/cancel', [BillingController::class, 'cancel']);
@@ -93,8 +91,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('purchase/confirm', [BillingController::class, 'confirm']);
 
    Route::get('videos/{region?}', [VideoController::class, 'index_api']);
-    // Route::get('videos/free', [VideoController::class, 'freeVideos']);
-    // Route::get('videos/paid', [VideoController::class, 'paidVideos']);
     Route::get('paid-videos/{region}', [VideoController::class, 'paidVideos']);
     Route::get('paid-videos-trending/{region}', [VideoController::class, 'paidVideosTrending']);
     Route::get('paid-videos-top-deals/{region}', [VideoController::class, 'paidVideosTopDeals']);
@@ -150,10 +146,7 @@ Route::middleware(['auth:api'])->group(function () {
 Route::get('regions', [RegionController::class, 'index_api']);
 Route::get('channels', [ChannelController::class, 'index_api']);
 Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
-// Route::get(
-//     '/channels/{channel}/details/{region?}',
-//     [ChannelController::class, 'showChannelDetailsByRegion']
-// )->name('channels.details');
+
 Route::get(
     '/channel-detail/{channel}/{region?}',
     [ChannelController::class, 'showChannelDetailsByRegion']
@@ -193,15 +186,6 @@ Route::get('/comments/{comment}', [CommentController::class, 'show']);
 Route::get('/comments/{comment}/thread', [CommentController::class, 'thread']);
 Route::patch('/comments/{comment}', [CommentController::class, 'update']);
 Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
-
-
-
-// Route::get('/vimeo/videos', [VimeoController::class, 'index']);
-
-// Route::get('/videos/{region}/{id}', [VideoController::class, 'paidVideoDetail']);
-// Route::get('/videos/{region}/{id}', [VideoController::class, 'paidVideosDetail']);
-
-
 
     
 Route::get('/my-country', function (Request $request) {
@@ -294,10 +278,7 @@ Route::get('/my-country-get', function (Request $request) {
     // Normalize GB -> UK for your URLs
     if ($country === 'GB') $country = 'UK';
 
-    // Choose URL:
-    // - US → us subdomain
-    // - AU/CA/UK → their subdomains
-    // - Anything else → global root
+    
     $url = $map[$country] ?? $globalRoot;
 
     // Extra safety: ensure URL is only one of the allowed ones

@@ -39,23 +39,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Admin Routes — Protected by auth + role:admin
-// Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
-//     // Category CRUD Routes
-//     Route::resource('categories', CategoryController::class);
-//     Route::resource('permissions', PermissionController::class);
-//     Route::resource('channels', ChannelController::class);
-//     Route::resource('character_tags', CharacterTagController::class);
-//     Route::resource('character_roles', CharacterRoleController::class);
-//     Route::resource('characters', CharacterController::class);
-//     Route::resource('videos', VideoController::class);
-//     Route::resource('users', UserController::class);
-
-//     Route::resource('highlight_tags', HighlightTagController::class);
-//     Route::resource('subscription_listing', SubscriptionListingController::class);
-
-// });
-
 Route::middleware(['auth'])
     ->prefix('admin')
     ->name('admin.')
@@ -157,26 +140,6 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 });
 
 
-
-
-// USER submits review (always pending)
-// Route::middleware('auth')->post('/videos/{video}/reviews', [ReviewController::class, 'store'])
-//     ->name('reviews.store');
-
-// PUBLIC fetch approved reviews for a video
-// Route::get('/videos/{video}/reviews', [ReviewController::class, 'publicIndex'])
-//     ->name('reviews.public.index');
-
-
-// Route::prefix('admin')->middleware(['auth', 'role:super_admin|sub_admin'])->name('admin.')->group(function () {
-//     Route::resource('reviews', ReviewController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-//     Route::patch('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
-//     Route::patch('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('reviews.reject');
-//     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
-//     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
-//     Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
-// });
-
 Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
     // Reviews (any of these perms can access the resource routes you enabled)
     Route::resource('reviews', ReviewController::class)
@@ -205,9 +168,7 @@ Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () 
 
 
 // Stripe apyment related hooks
-// Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])
-//     ->withoutMiddleware(['auth:api', 'auth:sanctum','auth']) // list any auth middlewares you use
-//     ->name('stripe.webhook');
+
 Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])
     ->name('stripe.webhook');
 
@@ -219,8 +180,7 @@ Route::get('/pm-maker', function () {
 
 
 // Cron-jobs
-// Route::post('/jobs/cancel-overdue-renewals', [CronJobController::class, 'cancelOverdueRenewals'])
-//     ->name('jobs.cancel-overdue-renewals');
+
 Route::get('/jobs/cancel-overdue-renewals', [CronJobController::class, 'cancelOverdueRenewals']);
 
 Route::middleware(['auth'])->get('/admin-test', function () {
@@ -228,15 +188,7 @@ Route::middleware(['auth'])->get('/admin-test', function () {
 });
 
 
-// users
 
-// // user submits review
-// Route::middleware('auth')->post('/videos/{video}/reviews', [ReviewController::class, 'store'])
-//     ->name('reviews.store');
-
-// // public: fetch approved reviews
-// Route::get('/videos/{video}/reviews', [ReviewController::class, 'publicIndex'])
-//     ->name('reviews.public.index');
 
 
 require __DIR__ . '/auth.php';
