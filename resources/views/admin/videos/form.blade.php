@@ -68,6 +68,12 @@
         color: #0d6efd;
         font-weight: 600;
     }
+
+    .select2-container--default .select2-selection.is-invalid,
+    .select2-container--default .select2-selection--multiple.is-invalid,
+    .select2-container--default .select2-selection--single.is-invalid {
+        border: 1px solid red !important;
+    }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
@@ -126,6 +132,9 @@
 
         <!-- Step 1 -->
         <div class="form-step active">
+            @if (request('type') === 'vimeo' && filled(request('video_url')))
+                <input type="hidden" name="_from_vimeo_flow" value="1">
+            @endif
             <div class="mb-3">
                 <label for="title">Video Title <span class="text-danger">*</span></label>
                 <input type="text" name="title" id="title" class="form-control" required
@@ -582,6 +591,11 @@
         $select.on('change', syncHidden);
         syncHidden();
 
+        $select.on('change', function() {
+            const $ui = $select.next('.select2-container').find('.select2-selection');
+            if (($select.val() || []).length) $ui.removeClass('is-invalid');
+        });
+
         // Create new tag flow
         $('#createTagBtn').on('click', function() {
             const typed = $select.data('select2')?.dropdown?._search?.$search.val().trim() || '';
@@ -628,152 +642,7 @@
         });
     });
 </script>
-{{-- <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const steps = document.querySelectorAll(".form-step");
-        const nextBtns = document.querySelectorAll(".next-step");
-        const prevBtns = document.querySelectorAll(".prev-step");
-        const indicators = document.querySelectorAll(".step-indicator");
-        const progressBar = document.getElementById("formProgress");
-        const currentStepEl = document.getElementById("currentStep");
-        const form = document.getElementById("stepForm");
 
-        // thumbnail toggle
-        const thumbUrlOption = document.getElementById("thumb_url_option");
-        const thumbImageOption = document.getElementById("thumb_image_option");
-        const thumbUrlInput = document.getElementById("thumb_url_input");
-        const thumbImageInput = document.getElementById("thumb_image_input");
-
-        // Store old image and URL for validation
-        const oldThumbnailImage =
-            '{{ $video->thumbnail_image ?? '' }}'; // Get the old thumbnail image if exists
-        const oldThumbnailUrl = '{{ $video->thumbnail_url ?? '' }}'; // Get the old thumbnail URL if exists
-
-        const ratingTypeSelect = document.getElementById('rating_type');
-        const ratingFields = document.getElementById('rating_fields');
-        const reviewFields = document.getElementById('review_fields');
-
-        // Function to toggle the visibility of input fields based on the rating type selection
-        function toggleRatingReviewFields() {
-            const selectedType = ratingTypeSelect.value;
-
-            // Reset fields visibility
-            ratingFields.style.display = 'none';
-            reviewFields.style.display = 'none';
-
-            // Show relevant fields based on selection
-            if (selectedType === 'rating') {
-                ratingFields.style.display = 'block';
-            } else if (selectedType === 'review') {
-                reviewFields.style.display = 'block';
-            }
-        }
-
-        // Listen for changes on the rating type select
-        ratingTypeSelect.addEventListener('change', toggleRatingReviewFields);
-
-        // Initialize visibility based on the current selection
-        toggleRatingReviewFields();
-
-        let currentStep = 0;
-
-        function showStep(index) {
-            steps.forEach((step, i) => {
-                step.classList.toggle("active", i === index);
-            });
-
-            // update required fields
-            updateRequiredAttributes(index);
-
-            // update progress bar
-            const progress = ((index + 1) / steps.length) * 100;
-            progressBar.style.width = progress + "%";
-            progressBar.textContent = `Step ${index + 1} of ${steps.length}`;
-            currentStepEl.textContent = index + 1;
-
-            // update indicators
-            indicators.forEach((el, i) => {
-                el.classList.toggle("active", i === index);
-            });
-
-            currentStep = index;
-        }
-
-        function updateRequiredAttributes(stepIndex) {
-            steps.forEach((step, i) => {
-                const inputs = step.querySelectorAll("input, select, textarea");
-                inputs.forEach((input) => {
-                    if (input.dataset.alwaysOptional === "true") {
-                        input.removeAttribute("required");
-                        return;
-                    }
-
-                    if (i === stepIndex) {
-                        if (input.dataset.wasRequired === "true" || input.hasAttribute(
-                                "required")) {
-                            input.setAttribute("required", "required");
-                        }
-                    } else {
-                        if (input.hasAttribute("required")) {
-                            input.dataset.wasRequired = "true";
-                            input.removeAttribute("required");
-                        }
-                    }
-                });
-            });
-        }
-
-        function validateStep(stepIndex) {
-            const step = steps[stepIndex];
-            const inputs = step.querySelectorAll("input, select, textarea");
-            let valid = true;
-
-            inputs.forEach((input) => {
-                if (input.hasAttribute("required") && !input.value.trim()) {
-                    input.classList.add("is-invalid");
-                    valid = false;
-                } else {
-                    input.classList.remove("is-invalid");
-                }
-            });
-
-            return valid;
-        }
-
-        nextBtns.forEach((btn) => {
-            btn.addEventListener("click", function() {
-                if (!validateStep(currentStep)) return;
-                if (currentStep < steps.length - 1) {
-                    showStep(currentStep + 1);
-                }
-            });
-        });
-
-        prevBtns.forEach((btn) => {
-            btn.addEventListener("click", function() {
-                if (currentStep > 0) {
-                    showStep(currentStep - 1);
-                }
-            });
-        });
-
-        indicators.forEach((indicator, index) => {
-            indicator.addEventListener("click", function() {
-                if (index <= currentStep || validateStep(currentStep)) {
-                    showStep(index);
-                }
-            });
-        });
-
-        form.addEventListener("submit", function(e) {
-            if (!validateStep(currentStep)) {
-                e.preventDefault();
-            }
-        });
-
-        showStep(currentStep);
-    });
-</script> --}}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const steps = document.querySelectorAll(".form-step");
@@ -920,6 +789,20 @@
                 }
             }
 
+            if (stepIndex === 3) {
+                const $tags = $('#tags_select');
+                const selected = ($tags.val() || []);
+                const $ui = $tags.next('.select2-container').find('.select2-selection');
+
+                if (selected.length === 0) {
+                    $ui.addClass('is-invalid'); // red border
+                    $tags.select2('open'); // focus the Select2 input
+                    valid = false;
+                } else {
+                    $ui.removeClass('is-invalid');
+                }
+            }
+
 
             return valid;
         }
@@ -979,12 +862,10 @@
     document.getElementById('nextStepBtn').addEventListener('click', function() {
         let isValid = true;
 
-        // Reset all error messages
         document.querySelectorAll('.invalid-feedback').forEach(function(error) {
             error.style.display = 'none';
         });
 
-        // Check if Character is selected
         let characterSelect = document.getElementById('character_id');
         if (!characterSelect.value) {
             isValid = false;
@@ -994,7 +875,6 @@
             characterSelect.classList.remove('is-invalid');
         }
 
-        // Check if Channel is selected
         let channelSelect = document.getElementById('channel_id');
         if (!channelSelect.value) {
             isValid = false;
@@ -1004,7 +884,6 @@
             channelSelect.classList.remove('is-invalid');
         }
 
-        // Check if Category is selected
         let categorySelect = document.getElementById('category_id');
         if (!categorySelect.value) {
             isValid = false;
@@ -1014,7 +893,6 @@
             categorySelect.classList.remove('is-invalid');
         }
 
-        // Check if Access Level is selected
         let accessLevelSelect = document.getElementById('access_level');
         if (!accessLevelSelect.value) {
             isValid = false;
@@ -1026,7 +904,6 @@
 
     });
 
-    // Event listeners to remove error messages once the user selects a valid option
     document.getElementById('character_id').addEventListener('change', function() {
         let characterSelect = this;
         let characterError = document.getElementById('character_error');

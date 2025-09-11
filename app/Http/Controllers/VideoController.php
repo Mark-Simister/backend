@@ -78,7 +78,8 @@ class VideoController extends Controller
 
             // 'tags' => 'nullable|string',
             // 'tags.*' => 'string',
-            'tag_ids' => ['nullable', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
+            // 'tag_ids' => ['required', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
+            'tag_ids' => ['required', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
             'rating_type' => 'required|in:rating,review',
             'sponsorship_type' => 'required|in:sponsored,unsponsored',
             'public_rating' => 'nullable|numeric|min:1|max:5',
@@ -115,7 +116,10 @@ class VideoController extends Controller
             'editorial_score' => 'nullable|numeric',
             'final_beastiescore' => 'nullable|string|max:255',
             'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120', // For thumbnail image
-        ]);
+        ],
+    [
+        'tag_ids.required' => 'Tags are required.',
+    ]);
 
 
         // if ($validator->fails()) {
@@ -228,9 +232,7 @@ class VideoController extends Controller
         }
 
 
-        // Keep video_platforms as JSON to satisfy DB CHECK constraint
         if (isset($validated['video_platforms']) && is_array($validated['video_platforms'])) {
-            // ensure simple array of strings, remove empties/spaces
             $validated['video_platforms'] = json_encode(array_values(array_filter(array_map('trim', $validated['video_platforms']))));
         }
 
@@ -242,8 +244,9 @@ class VideoController extends Controller
         }
 
         // return redirect()->route('admin.videos.index')->with('success', 'Video created successfully.');
-
-        $toVimeo = $request->input('type') === 'vimeo' && $request->filled('video_url');
+        $typeFrom = strtolower(trim($request->input('type', $request->query('type', $validated['type'] ?? ''))));
+        $urlFrom = trim((string) $request->input('video_url', $request->query('video_url', $validated['video_url'] ?? '')));
+        $toVimeo = ($typeFrom === 'vimeo') && ($urlFrom !== '');
         // dd($toVimeo);
         return redirect()
             ->route($toVimeo ? 'admin.vimeo.index' : 'admin.videos.index')
@@ -524,7 +527,8 @@ class VideoController extends Controller
             // Other Fields
             // 'tags' => 'nullable|string',
             // 'tags.*' => 'string',
-            'tag_ids' => ['nullable', 'string', 'regex:/^\s*$|^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
+            // 'tag_ids' => ['required', 'string', 'regex:/^\s*$|^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
+            'tag_ids' => ['required', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
             'rating_type' => 'required|in:rating,review',
             'public_rating' => 'nullable|numeric|min:1|max:5',
             'review_details' => 'nullable|string',
@@ -560,7 +564,11 @@ class VideoController extends Controller
             'editorial_score' => 'nullable|numeric',
             'final_beastiescore' => 'nullable|string|max:255',
             'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
-        ]);
+        ],
+    [
+        'tag_ids.required' => 'Tags are required.',
+        'tag_ids.regex'    => 'Tags must be a comma-separated list of IDs.',
+    ]);
 
         if ($validator->fails()) {
             return redirect()->back()
@@ -704,8 +712,10 @@ class VideoController extends Controller
         }
 
         // return redirect()->route('admin.videos.index')->with('success', 'Video updated successfully.');
-
-        $toVimeo = $request->input('type') === 'vimeo' && $request->filled('video_url');
+        $video->refresh();
+        $typeFrom = strtolower(trim($request->input('type', $request->query('type', $video->type ?? ''))));
+        $urlFrom = trim((string) $request->input('video_url', $request->query('video_url', $video->video_url ?? '')));
+        $toVimeo = ($typeFrom === 'vimeo') && ($urlFrom !== '');
         // dd($toVimeo);
         return redirect()
             ->route($toVimeo ? 'admin.vimeo.index' : 'admin.videos.index')

@@ -171,4 +171,9 @@ public function likedByUsers()
     )->withTimestamps();
 }
 
+public function seoRegions()
+{
+    return $this->hasMany(SeoRegion::class);
+}
+
 }

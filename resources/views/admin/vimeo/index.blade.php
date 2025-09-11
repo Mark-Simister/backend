@@ -133,18 +133,7 @@
                                                     data-vimeo-title="{{ $v['name'] ?? '' }}">
                                                     <i class="bi bi-link-45deg"></i> Assign to an existing video
                                                 </button>
-                                                {{-- ADD: Assign to an existing Video (opens modal) --}}
-                                                @can('video.update')
-                                                    <button type="button"
-                                                        class="btn btn-outline-primary btn-sm ms-1 open-assign-modal"
-                                                        data-bs-toggle="modal" data-bs-target="#assignVimeoModal"
-                                                        data-vimeo-link="{{ $link }}"
-                                                        data-title="{{ $v['name'] ?? '' }}" data-thumb="{{ $thumb ?? '' }}"
-                                                        data-duration="{{ (int) ($v['duration'] ?? 0) }}"
-                                                        data-description="{{ Str::limit($v['description'] ?? '', 500) }}">
-                                                        <i class="bi bi-link-45deg"></i> Assign to existing
-                                                    </button>
-                                                @endcan
+
                                             </td>
                                         </tr>
                                     @endforeach
@@ -158,8 +147,7 @@
                 </div>
             </div>
             {{-- Assigned --}}
-            <div class="tab-pane fade" id="assigned-pane" role="tabpanel" aria-labelledby="assigned-tab"
-                tabindex="0">
+            <div class="tab-pane fade" id="assigned-pane" role="tabpanel" aria-labelledby="assigned-tab" tabindex="0">
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
                         <div class="table-responsive">
@@ -247,6 +235,14 @@
                                             </td> --}}
                                             <td>
                                                 {{-- Optional Play button (uses Vimeo ID if available) --}}
+                                                {{-- @if ($videoId)
+                                                    <button type="button" class="btn btn-success me-1 play-vimeo"
+                                                        data-bs-toggle="modal" data-bs-target="#vimeoPlayerModal"
+                                                        data-vimeo-id="{{ $videoId }}"
+                                                        data-title="{{ $video->title }}">
+                                                        <i class="bi bi-play-circle"></i> Play
+                                                    </button>
+                                                @endif --}}
                                                 @if ($videoId)
                                                     <button type="button" class="btn btn-success me-1 play-vimeo"
                                                         data-bs-toggle="modal" data-bs-target="#vimeoPlayerModal"
@@ -254,6 +250,8 @@
                                                         data-title="{{ $video->title }}">
                                                         <i class="bi bi-play-circle"></i> Play
                                                     </button>
+                                                @else
+                                                    &nbsp; {{-- ensures cell is not empty to avoid datatable issues --}}
                                                 @endif
 
                                                 {{-- @can('video.edit')
@@ -316,174 +314,191 @@
     {{-- ADD: Assign-to-existing modal --}}
     @can('video.update')
         {{-- ===== Assign to existing video (modal) ===== --}}
-@php
-    // Quick in-view query: all videos with empty video_url (assignable targets)
-    $assignableEmptyVideos = \App\Models\Video::query()
-        ->whereNull('video_url')
-        ->orderByDesc('id')
-        ->limit(500) // keep UI snappy
-        ->get(['id','title']);
-@endphp
+        @php
+            // Quick in-view query: all videos with empty video_url (assignable targets)
+            $assignableEmptyVideos = \App\Models\Video::query()
+                ->whereNull('video_url')
+                ->orderByDesc('id')
+                ->limit(500)
+                ->get(['id', 'title']);
+        @endphp
 
-<div class="modal fade" id="assignExistingModal" tabindex="-1" aria-labelledby="assignExistingModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 id="assignExistingModalLabel" class="modal-title">Assign Vimeo link to an existing video</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+        <div class="modal fade" id="assignExistingModal" tabindex="-1" aria-labelledby="assignExistingModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 id="assignExistingModalLabel" class="modal-title">Assign Vimeo link to an existing video</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
 
-      <div class="modal-body">
-        <div class="mb-3">
-          <label class="form-label">Select existing video (video_url is empty)</label>
-          <select id="existingVideoSelect" class="form-select" required>
-            <option value="" selected disabled>— Select a video —</option>
-            @forelse($assignableEmptyVideos as $opt)
-              <option value="{{ $opt->id }}">{{ $opt->id }} — {{ $opt->title }}</option>
-            @empty
-              <option value="" disabled>(No videos available to assign)</option>
-            @endforelse
-          </select>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Select existing video (video_url is empty)</label>
+                            <select id="existingVideoSelect" class="form-select" required>
+                                <option value="" selected disabled>— Select a video —</option>
+                                @forelse($assignableEmptyVideos as $opt)
+                                    <option value="{{ $opt->id }}">{{ $opt->id }} — {{ $opt->title }}</option>
+                                @empty
+                                    <option value="" disabled>(No videos available to assign)</option>
+                                @endforelse
+                            </select>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Vimeo URL</label>
+                                <input id="assignVimeoLink" type="url" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Platform (will be set)</label>
+                                <input type="text" class="form-control" value="vimeo" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-muted small" id="assignVimeoTitle"></div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="goAssignExistingBtn">
+                            Continue to Edit &nbsp;→
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="row g-3">
-          <div class="col-md-8">
-            <label class="form-label">Vimeo URL</label>
-            <input id="assignVimeoLink" type="url" class="form-control" readonly>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Platform (will be set)</label>
-            <input type="text" class="form-control" value="vimeo" readonly>
-          </div>
-        </div>
-
-        <div class="mt-2 text-muted small" id="assignVimeoTitle"></div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="goAssignExistingBtn">
-          Continue to Edit &nbsp;→
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
     @endcan
 
 @endsection
 
 @push('scripts')
     <script>
-  $(document).ready(function () {
-    // ===== DataTables =====
-    const unTbl = $('#vimeo-unassigned-table').length
-      ? $('#vimeo-unassigned-table').DataTable({
-          responsive: true,
-          pageLength: 10,
-          ordering: true,
-          autoWidth: false,
-          language: { search: "_INPUT_", searchPlaceholder: "Search unassigned..." },
-          columnDefs: [{ orderable: false, targets: [1, 7] }] // Thumb + Actions
-        })
-      : null;
+        $(document).ready(function() {
+            // ===== DataTables =====
+            const unTbl = $('#vimeo-unassigned-table').length ?
+                $('#vimeo-unassigned-table').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    ordering: true,
+                    autoWidth: false,
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Search unassigned..."
+                    },
+                    columnDefs: [{
+                        orderable: false,
+                        targets: [1, 7]
+                    }] 
+                }) :
+                null;
 
-    const asnTbl = $('#vimeo-assigned-table').length
-      ? $('#vimeo-assigned-table').DataTable({
-          responsive: true,
-          pageLength: 10,
-          ordering: true,
-          autoWidth: false,
-          language: { search: "_INPUT_", searchPlaceholder: "Search assigned..." },
-          columnDefs: [{ orderable: false, targets: [5, 6] }] // Edit + Actions
-        })
-      : null;
+            const asnTbl = $('#vimeo-assigned-table').length ?
+                $('#vimeo-assigned-table').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    ordering: true,
+                    autoWidth: false,
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Search assigned..."
+                    },
+                    columnDefs: [{
+                        orderable: false,
+                        targets: [5]
+                    }]
+                }) :
+                null;
 
-    // Recalc columns when switching tabs
-    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function (btn) {
-      btn.addEventListener('shown.bs.tab', function () {
-        setTimeout(function () {
-          if (unTbl) unTbl.columns().adjust().responsive.recalc();
-          if (asnTbl) asnTbl.columns().adjust().responsive.recalc();
-        }, 50);
-      });
-    });
+            // Recalc columns when switching tabs
+            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(btn) {
+                btn.addEventListener('shown.bs.tab', function() {
+                    setTimeout(function() {
+                        if (unTbl) unTbl.columns().adjust().responsive.recalc();
+                        if (asnTbl) asnTbl.columns().adjust().responsive.recalc();
+                    }, 50);
+                });
+            });
 
-    // ===== Vimeo Player Modal =====
-    const playerModal = document.getElementById('vimeoPlayerModal');
-    if (playerModal) {
-      const iframe = document.getElementById('vimeoFrame');
-      const titleEl = document.getElementById('vimeoPlayerModalLabel');
+            // ===== Vimeo Player Modal =====
+            const playerModal = document.getElementById('vimeoPlayerModal');
+            if (playerModal) {
+                const iframe = document.getElementById('vimeoFrame');
+                const titleEl = document.getElementById('vimeoPlayerModalLabel');
 
-      playerModal.addEventListener('show.bs.modal', function (event) {
-        const btn = event.relatedTarget;
-        const id = btn?.getAttribute('data-vimeo-id');
-        const title = btn?.getAttribute('data-title') || 'Vimeo Video';
-        if (titleEl) titleEl.textContent = title;
-        if (id && iframe) {
-          iframe.src = `https://player.vimeo.com/video/${id}?autoplay=1&title=0&byline=0&portrait=0`;
-        }
-      });
+                playerModal.addEventListener('show.bs.modal', function(event) {
+                    const btn = event.relatedTarget;
+                    const id = btn?.getAttribute('data-vimeo-id');
+                    const title = btn?.getAttribute('data-title') || 'Vimeo Video';
+                    if (titleEl) titleEl.textContent = title;
+                    if (id && iframe) {
+                        iframe.src =
+                            `https://player.vimeo.com/video/${id}?autoplay=1&title=0&byline=0&portrait=0`;
+                    }
+                });
 
-      playerModal.addEventListener('hidden.bs.modal', function () {
-        if (iframe) iframe.src = '';
-      });
-    }
+                playerModal.addEventListener('hidden.bs.modal', function() {
+                    if (iframe) iframe.src = '';
+                });
+            }
 
-    // ===== Assign to Existing (modal + redirect to edit) =====
-    // Expect:
-    //  - Button in table with class .open-assign-existing and data attributes:
-    //      data-vimeo-link, data-vimeo-title
-    //  - Modal with:
-    //      #assignExistingModal, #existingVideoSelect, #assignVimeoLink, #assignVimeoTitle, #goAssignExistingBtn
-    const baseEditUrl = "{{ url('/admin/videos') }}"; // => /admin/videos/{id}/edit
-    let cachedVimeoLink = '';
-    let cachedVimeoTitle = '';
+            // ===== Assign to Existing (delegate + programmatic show) =====
+            const baseEditUrl = "{{ url('/admin/videos') }}"; // => /admin/videos/{id}/edit
+            let cachedVimeoLink = '';
+            let cachedVimeoTitle = '';
 
-    // Open modal + fill fields
-    document.querySelectorAll('.open-assign-existing').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        cachedVimeoLink = btn.getAttribute('data-vimeo-link') || '';
-        cachedVimeoTitle = btn.getAttribute('data-vimeo-title') || '';
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('.open-assign-existing');
+                if (!btn) return;
 
-        const linkInput = document.getElementById('assignVimeoLink');
-        const titleHint = document.getElementById('assignVimeoTitle');
-        const selectEl  = document.getElementById('existingVideoSelect');
+                e.preventDefault();
 
-        if (linkInput) linkInput.value = cachedVimeoLink;
-        if (titleHint) titleHint.textContent = cachedVimeoTitle ? `Title: ${cachedVimeoTitle}` : '';
-        if (selectEl)  selectEl.classList.remove('is-invalid');
-      });
-    });
+                cachedVimeoLink = btn.getAttribute('data-vimeo-link') || btn.dataset.vimeoLink || '';
+                cachedVimeoTitle = btn.getAttribute('data-vimeo-title') || btn.dataset.vimeoTitle || '';
 
-    // Continue → redirect to edit page with query params so edit form pre-fills type + video_url
-    const goBtn = document.getElementById('goAssignExistingBtn');
-    if (goBtn) {
-      goBtn.addEventListener('click', function () {
-        const select = document.getElementById('existingVideoSelect');
-        const id = select?.value;
-        if (!id) {
-          select?.classList.add('is-invalid');
-          return;
-        }
-        const params = new URLSearchParams({
-          type: 'vimeo',
-          video_url: cachedVimeoLink || ''
-        }).toString();
+                const linkInput = document.getElementById('assignVimeoLink');
+                const titleHint = document.getElementById('assignVimeoTitle');
+                const selectEl = document.getElementById('existingVideoSelect');
 
-        window.location.href = `${baseEditUrl}/${encodeURIComponent(id)}/edit?${params}`;
-      });
-    }
+                if (linkInput) linkInput.value = cachedVimeoLink; // <-- fills the input
+                if (titleHint) titleHint.textContent = cachedVimeoTitle ? `Title: ${cachedVimeoTitle}` : '';
+                if (selectEl) selectEl.classList.remove('is-invalid');
 
-    // Optional: clear validation state when closing modal
-    const assignModal = document.getElementById('assignExistingModal');
-    if (assignModal) {
-      assignModal.addEventListener('hidden.bs.modal', function () {
-        const select = document.getElementById('existingVideoSelect');
-        if (select) select.classList.remove('is-invalid');
-      });
-    }
-  });
-</script>
+                const modalEl = document.getElementById('assignExistingModal');
+                if (modalEl) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                }
+            });
 
+            // Continue → redirect to edit page with query params so edit form pre-fills type + video_url
+            const goBtn = document.getElementById('goAssignExistingBtn');
+            if (goBtn) {
+                goBtn.addEventListener('click', function() {
+                    const select = document.getElementById('existingVideoSelect');
+                    const id = select?.value;
+                    if (!id) {
+                        select?.classList.add('is-invalid');
+                        return;
+                    }
+
+                    const params = new URLSearchParams({
+                        type: 'vimeo',
+                        video_url: cachedVimeoLink || ''
+                    }).toString();
+
+                    window.location.href = `${baseEditUrl}/${encodeURIComponent(id)}/edit?${params}`;
+                });
+            }
+
+            
+            const assignModal = document.getElementById('assignExistingModal');
+            if (assignModal) {
+                assignModal.addEventListener('hidden.bs.modal', function() {
+                    const select = document.getElementById('existingVideoSelect');
+                    if (select) select.classList.remove('is-invalid');
+                });
+            }
+        });
+    </script>
 @endpush
