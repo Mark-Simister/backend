@@ -41,11 +41,11 @@
                                     <td>
                                         <a href="{{ route('admin.permissions.edit', $permission) }}"
                                             class="btn btn-warning me-1">
-                                            <i class="bi bi-pencil-square"></i> Edit
+                                            <i class="bi bi-pencil-square"></i>
                                         </a>
                                         <a href="{{ route('admin.permissions.show', $permission) }}"
                                             class="btn btn-info me-1">
-                                            <i class="bi bi-eye"></i> View
+                                            <i class="bi bi-eye"></i>
                                         </a>
                                         {{-- 
                                 <form action="{{ route('admin.permissions.destroy', $permission) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this permission?')">

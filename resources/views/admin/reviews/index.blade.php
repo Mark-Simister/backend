@@ -132,7 +132,7 @@
                                                 @can('rating_review.edit')
                                                     <a href="{{ route('admin.reviews.edit', $review) }}"
                                                         class="btn btn-warning btn-sm me-1">
-                                                        <i class="bi bi-pencil-square"></i> Edit
+                                                        <i class="bi bi-pencil-square"></i>
                                                     </a>
                                                 @endcan
                                                 @if ($review->status !== 'approved')
@@ -141,7 +141,7 @@
                                                             method="POST" class="d-inline review-action">
                                                             @csrf @method('PATCH')
                                                             <button class="btn btn-success btn-sm me-1">
-                                                                <i class="bi bi-check2-circle"></i> Approve
+                                                                <i class="bi bi-check2-circle"></i> 
                                                             </button>
                                                         </form>
                                                     @endcan
@@ -152,7 +152,7 @@
                                                             method="POST" class="d-inline review-action">
                                                             @csrf @method('PATCH')
                                                             <button class="btn btn-secondary btn-sm me-1">
-                                                                <i class="bi bi-x-circle"></i> Reject
+                                                                <i class="bi bi-x-circle"></i>
                                                             </button>
                                                         </form>
                                                     @endcan
@@ -162,7 +162,7 @@
                                                         class="d-inline review-action">
                                                         @csrf @method('DELETE')
                                                         <button class="btn btn-danger btn-sm">
-                                                            <i class="bi bi-trash"></i> Delete
+                                                            <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>
                                                 @endcan
@@ -225,7 +225,7 @@
                                                 @can('rating_review.edit')
                                                     <a href="{{ route('admin.reviews.edit', $review) }}"
                                                         class="btn btn-warning btn-sm me-1">
-                                                        <i class="bi bi-pencil-square"></i> Edit
+                                                        <i class="bi bi-pencil-square"></i>
                                                     </a>
                                                 @endcan
                                                 @can('rating_review.approve')
@@ -233,7 +233,7 @@
                                                         method="POST" class="d-inline review-action">
                                                         @csrf @method('PATCH')
                                                         <button class="btn btn-success btn-sm me-1">
-                                                            <i class="bi bi-check2-circle"></i> Approve
+                                                            <i class="bi bi-check2-circle"></i>
                                                         </button>
                                                     </form>
                                                 @endcan
@@ -242,7 +242,7 @@
                                                         method="POST" class="d-inline review-action">
                                                         @csrf @method('PATCH')
                                                         <button class="btn btn-secondary btn-sm me-1">
-                                                            <i class="bi bi-x-circle"></i> Reject
+                                                            <i class="bi bi-x-circle"></i>
                                                         </button>
                                                     </form>
                                                 @endcan
@@ -251,7 +251,7 @@
                                                         method="POST" class="d-inline review-action">
                                                         @csrf @method('DELETE')
                                                         <button class="btn btn-danger btn-sm">
-                                                            <i class="bi bi-trash"></i> Delete
+                                                            <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>
                                                 @endcan
@@ -314,7 +314,7 @@
                                                 @can('rating_review.edit')
                                                     <a href="{{ route('admin.reviews.edit', $review) }}"
                                                         class="btn btn-warning btn-sm me-1">
-                                                        <i class="bi bi-pencil-square"></i> Edit
+                                                        <i class="bi bi-pencil-square"></i>
                                                     </a>
                                                 @endcan
                                                 @can('rating_review.reject')
@@ -322,7 +322,7 @@
                                                         method="POST" class="d-inline review-action">
                                                         @csrf @method('PATCH')
                                                         <button class="btn btn-secondary btn-sm me-1">
-                                                            <i class="bi bi-x-circle"></i> Reject
+                                                            <i class="bi bi-x-circle"></i>
                                                         </button>
                                                     </form>
                                                 @endcan
@@ -331,7 +331,7 @@
                                                         method="POST" class="d-inline review-action">
                                                         @csrf @method('DELETE')
                                                         <button class="btn btn-danger btn-sm">
-                                                            <i class="bi bi-trash"></i> Delete
+                                                            <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>
                                                 @endcan
@@ -395,7 +395,7 @@
                                                 @can('rating_review.edit')
                                                     <a href="{{ route('admin.reviews.edit', $review) }}"
                                                         class="btn btn-warning btn-sm me-1">
-                                                        <i class="bi bi-pencil-square"></i> Edit
+                                                        <i class="bi bi-pencil-square"></i>
                                                     </a>
                                                 @endcan
                                                 @can('rating_review.approve')
@@ -403,7 +403,7 @@
                                                         method="POST" class="d-inline review-action">
                                                         @csrf @method('PATCH')
                                                         <button class="btn btn-success btn-sm me-1">
-                                                            <i class="bi bi-check2-circle"></i> Approve
+                                                            <i class="bi bi-check2-circle"></i>
                                                         </button>
                                                     </form>
                                                 @endcan
@@ -412,7 +412,7 @@
                                                         method="POST" class="d-inline review-action">
                                                         @csrf @method('DELETE')
                                                         <button class="btn btn-danger btn-sm">
-                                                            <i class="bi bi-trash"></i> Delete
+                                                            <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>
                                                 @endcan

@@ -49,18 +49,18 @@
 
                                     <td>
                                         <a href="{{ route('admin.sub_admins.edit', $user) }}" class="btn btn-warning me-1">
-                                            <i class="bi bi-pencil-square"></i> Edit
+                                            <i class="bi bi-pencil-square"></i>
                                         </a>
                                         <a href="{{ route('admin.sub_admins.assign_role', $user) }}"
                                             class="btn btn-info me-1">
-                                            <i class="bi bi-person-plus"></i> Assign Role
+                                            <i class="bi bi-person-plus"></i>
                                         </a>
                                         <form action="{{ route('admin.sub_admins.destroy', $user) }}" method="POST"
                                             class="d-inline">
                                             @csrf
                                             @method('DELETE')
                                             <button class="btn btn-danger">
-                                                <i class="bi bi-trash"></i> Delete
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     </td>

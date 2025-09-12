@@ -57,17 +57,17 @@
                                     <td>{{ $role->name }}</td>
                                     <td>
                                         <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-warning me-1">
-                                            <i class="bi bi-pencil-square"></i> Edit
+                                            <i class="bi bi-pencil-square"></i>
                                         </a>
                                         <a href="{{ route('admin.roles.permissions', $role) }}" class="btn btn-info me-1">
-                                            <i class="bi bi-shield-lock"></i> Permissions
+                                            <i class="bi bi-shield-lock"></i>
                                         </a>
                                         <form action="{{ route('admin.roles.destroy', $role) }}" method="POST"
                                             class="d-inline">
                                             @csrf
                                             @method('DELETE')
                                             <button class="btn btn-danger">
-                                                <i class="bi bi-trash"></i> Delete
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     </td>

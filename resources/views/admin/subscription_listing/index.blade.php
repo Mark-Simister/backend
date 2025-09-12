@@ -48,7 +48,7 @@
                                         @can('subscription_list.edit')
                                             <a href="{{ route('admin.subscription_listing.edit', $subscription) }}"
                                                 class="btn btn-warning me-1">
-                                                <i class="bi bi-pencil-square"></i> Edit
+                                                <i class="bi bi-pencil-square"></i>
                                             </a>
                                         @endcan
                                         @can('subscription_list.create')
@@ -57,7 +57,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button class="btn btn-danger">
-                                                    <i class="bi bi-trash"></i> Delete
+                                                    <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
                                         @endcan

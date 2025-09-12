@@ -10,6 +10,15 @@ div.dt-container div.dt-length select {
  table.table.dataTable {
     width: 100% !important;
 }
+.chcrt .form-check-label{
+padding: 0px;
+    margin-bottom: 0px;
+}
+
+.chcrt  .form-check.form-check-inline{
+    display: flex;
+    align-items: center;
+}
 .region-flex {
     display: flex;
     align-items: center;

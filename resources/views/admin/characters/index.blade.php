@@ -51,7 +51,7 @@
                                         @can('character.edit')
                                             <a href="{{ route('admin.characters.edit', $character) }}"
                                                 class="btn btn-warning me-1">
-                                                <i class="bi bi-pencil-square"></i> Edit
+                                                <i class="bi bi-pencil-square"></i>
                                             </a>
                                         @endcan
                                         @can('character.delete')
@@ -60,7 +60,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="button" class="btn btn-danger delete-btn">
-                                                    <i class="bi bi-trash"></i> Delete
+                                                    <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
                                         @endcan

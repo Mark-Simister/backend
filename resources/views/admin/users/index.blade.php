@@ -72,12 +72,12 @@
 
                                         <a href="{{ route('admin.users.edit', $user) }}"
                                             class="btn btn-warning btn-sm me-1">
-                                            <i class="bi bi-pencil-square"></i> Edit
+                                            <i class="bi bi-pencil-square"></i>
                                         </a>
 
                                         <a href="{{ route('admin.users.show', $user->id) }}"
                                             class="btn btn-sm btn-outline-primary me-1">
-                                            View Details
+                                            <i class="bi bi-eye"></i>
                                         </a>
 
                                         <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
@@ -85,7 +85,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button class="btn btn-danger btn-sm">
-                                                <i class="bi bi-trash"></i> Delete
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     </td>
