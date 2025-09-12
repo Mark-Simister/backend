@@ -166,15 +166,22 @@
                 </div>
             </li>
 
-            <!-- Logout button OUTSIDE -->
-            <li class="nav-item">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-danger ms-2">
-                        <i class="ti-power-off me-1"></i> Logout
-                    </button>
-                </form>
-            </li>
+            <!-- Logout and profile  button OUTSIDE -->
+            <div class="extra_buttons" style="display:flex;">
+                <li class="nav-item me-0">
+                    <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-primary ms-2">
+                        <i class="ti-settings text-primary me-1"></i> 
+                    </a>
+                </li>
+                <li class="nav-item ms-0 me-2">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-danger ms-2">
+                            <i class="ti-power-off me-1"></i>
+                        </button>
+                    </form>
+                </li>
+            </div>
 
             <li class="nav-item nav-settings d-none d-lg-flex">
                 <a class="nav-link" href="#">
