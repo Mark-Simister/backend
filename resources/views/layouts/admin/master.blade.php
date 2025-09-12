@@ -14,15 +14,19 @@
     <link rel="stylesheet" href="{{ asset('admin/assets/vendors/font-awesome/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/assets/vendors/mdi/css/materialdesignicons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/assets/vendors/css/vendor.bundle.base.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin/assets/css/styles.css') }}">
 
     <!-- Plugin CSS for this page -->
-    <!-- <link rel="stylesheet" href="{{ asset('admin/assets/vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}"> -->
+    
+    {{-- <!-- <link rel="stylesheet" href="{{ asset('admin/assets/vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}"> -->}} --}}
     {{-- <link rel="stylesheet" href="{{ asset('admin/assets/vendors/datatables.net-bs5/dataTables.bootstrap5.css') }}"> --}}
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ asset('admin/assets/js/select.dataTables.min.css') }}">
+    {{-- <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet"> --}}
+    {{-- <link rel="stylesheet" type="text/css" href="{{ asset('admin/assets/js/select.dataTables.min.css') }}"> --}}
 
     <!-- External Plugin CSS -->
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"> 
 
     <!-- Main CSS -->
@@ -67,8 +71,11 @@
   {{-- <script src="{{ asset('admin/assets/js/dataTables.select.min.js') }}"></script> --}}
 
   <!-- External DataTables JS -->
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  {{-- <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script> --}}
+  
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Injected JS -->
   <script src="{{ asset('admin/assets/js/off-canvas.js') }}"></script>
@@ -79,7 +86,7 @@
   <!-- Custom JS for this page -->
   <script src="{{ asset('admin/assets/js/jquery.cookie.js') }}" type="text/javascript"></script>
   <script src="{{ asset('admin/assets/js/dashboard.js') }}"></script>
-  <!-- <script src="{{ asset('admin/assets/js/Chart.roundedBarCharts.js') }}"></script> -->
+  {{-- <!-- <script src="{{ asset('admin/assets/js/Chart.roundedBarCharts.js') }}"></script> --> --}}
 
   @stack('scripts')
 </body>

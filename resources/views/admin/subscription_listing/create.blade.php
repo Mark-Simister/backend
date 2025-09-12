@@ -50,7 +50,7 @@
                 @error('type') <span class="text-danger">{{ $message }}</span> @enderror
             </div>
 
-            <div class="form-group mt-3">
+            <div class="form-group region-flex mt-3">
                 <label>Regions</label><br>
                 @foreach($regions as $region)
                     <div class="form-check form-check-inline">

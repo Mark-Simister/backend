@@ -23,6 +23,7 @@ use App\Models\HighlightTag;
 use Illuminate\Support\Facades\Auth;
 
 
+
 class ChannelController extends Controller
 {
     public static function middleware(): array
@@ -718,8 +719,7 @@ class ChannelController extends Controller
                 return;
             $q->where(function ($sub) use ($ids, $matchAll) {
                 foreach ($ids as $idx => $id) {
-                    // $expr = "FIND_IN_SET(?, videos.highlight_tags)";
-                    $expr = "FIND_IN_SET(?, REPLACE(videos.highlight_tags, ' ', ''))";
+                    $expr = "FIND_IN_SET(?, videos.highlight_tags)";
                     if ($matchAll) {
                         $sub->whereRaw($expr, [$id]);
                     } else {
@@ -730,6 +730,7 @@ class ChannelController extends Controller
                 }
             });
         };
+        
 
         $input = strtoupper($region ?? $request->input('region', ''));
         $allowed = ['AU', 'CA', 'UK', 'US']; // extend as needed
@@ -747,6 +748,7 @@ class ChannelController extends Controller
         $hlFilter = $parseIds($hlInputRaw);
         $matchAll = $request->boolean('match_all', false);
         $tagIdsFilter = $parseIds($request->input('tag_ids', []));
+        
 
         $hasTagOrHlOrTagIds = !empty($tagsFilter) || !empty($hlFilter) || !empty($tagIdsFilter);
 
@@ -758,8 +760,7 @@ class ChannelController extends Controller
             if (!empty($tagIdsFilter)) {
                 $q->where(function ($sub) use ($tagIdsFilter, $matchAll) {
                     foreach ($tagIdsFilter as $idx => $tagId) {
-                        // $expr = 'FIND_IN_SET(?, videos.tag_ids)';
-                        $expr = 'FIND_IN_SET(?, REPLACE(videos.tag_ids, " ", ""))';
+                        $expr = 'FIND_IN_SET(?, videos.tag_ids)';
                         if ($matchAll) {
                             $sub->whereRaw($expr, [$tagId]);        // AND
                         } else {
@@ -867,9 +868,7 @@ class ChannelController extends Controller
         if (!empty($tagIdsFilter)) {
             $videosQuery->where(function ($sub) use ($tagIdsFilter, $matchAll) {
                 foreach ($tagIdsFilter as $idx => $tagId) {
-                    // $expr = 'FIND_IN_SET(?, videos.tag_ids)';
-                    $expr = 'FIND_IN_SET(?, REPLACE(videos.tag_ids, " ", ""))';
-
+                    $expr = 'FIND_IN_SET(?, videos.tag_ids)';
                     if ($matchAll) {
                         $sub->whereRaw($expr, [$tagId]);        // AND
                     } else {

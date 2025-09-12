@@ -14,7 +14,7 @@
                 <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
                 @error('name') <span class="text-danger">{{ $message }}</span> @enderror
             </div>
-            <div class="form-group">
+            <div class="form-group region-flex">
                 <label>Select Regions</label><br>
                 @foreach($regions as $region)
                     <div class="form-check form-check-inline">

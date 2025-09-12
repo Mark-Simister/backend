@@ -1,7 +1,14 @@
 @extends('layouts.admin.master')
 
 @section('title', 'Add Character')
-
+@push('styles')
+<style>
+    textarea.form-control, textarea.typeahead, textarea.tt-query, textarea.tt-hint, .select2-container--default .select2-selection--single textarea.select2-search__field, .select2-container--default textarea.select2-selection--single {
+    height: 56px !important;
+    min-height: 40px !important;
+}
+</style>
+@endpush
 @section('content')
     <div class="card">
         @if ($errors->any())
@@ -44,7 +51,7 @@
                         @enderror
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group region-flex">
                         <label>Select Regions:</label><br>
                         @foreach($regions as $region)
                             <div class="form-check form-check-inline">

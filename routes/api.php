@@ -138,7 +138,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     // Last watched videos
     Route::get('/me/last-watched', [VideoEngagementController::class, 'myLastWatched'])->name('api.me.last_watched');
-    
+    Route::get('/my-watch-histories', [VideoEngagementController::class, 'myWatchHistories'])->name('videos.watch_histories');
 
 });
 
@@ -156,6 +156,7 @@ Route::get('/region/{region?}', [ChannelController::class, 'filter_region_api'])
 Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api']);
 Route::get('/categories-pet/region/{region?}', [CategoryController::class, 'index_by_region_api_pets']);
+Route::get('/categories-people/region/{region?}', [CategoryController::class, 'index_by_region_api_people']);
 Route::match(['GET','POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
 Route::get   ('characters',          [CharacterController::class, 'index_api']);
 Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);

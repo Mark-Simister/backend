@@ -1,4 +1,5 @@
 <style>
+   
     .form-step {
         display: none;
     }
@@ -204,8 +205,8 @@
                 <div id="character_error" class="invalid-feedback" style="display:none;">Please select a character.
                 </div>
             </div>
-            <div class="form-group" id="regions_group">
-                <label for="regions">Select Regions: <span class="text-danger">*</span></label><br>
+            <div class="form-group region-flex" id="regions_group">
+                <label for="regions">Select Regions: <span class="text-danger">*</span></label>
                 @foreach ($regions as $region)
                     <div class="form-check form-check-inline">
                         <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"

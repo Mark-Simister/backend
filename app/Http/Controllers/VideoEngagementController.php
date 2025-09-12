@@ -172,5 +172,25 @@ class VideoEngagementController extends Controller
         return response()->json($videos);
     }
 
+    public function myWatchHistories()
+{
+    $user = Auth::user();
+    $data = VideoWatchHistory::with('video') 
+    // dd($data, $user);
+        ->where('user_id', $user->id)
+        ->get();
+    if ($data->isEmpty()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'No watch history found for this user',
+        ], 404);
+    }
 
+    return response()->json([
+        'status' => 'ok',
+        'user_id' => $user->id,
+        'watch_history' => $data,
+        
+    ]);
+}
 }

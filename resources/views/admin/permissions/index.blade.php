@@ -1,50 +1,53 @@
 @extends('layouts.admin.master')
 
 @push('styles')
-<style>
-    /*  */
-</style>
+    <style>
+        /*  */
+    </style>
 @endpush
 
 @section('title', 'Permissions')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Permissions</h2>
-    <a href="{{ route('admin.permissions.create') }}" class="btn btn-primary">+ Create Permission</a>
-</div>
-
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Permissions</h2>
+        <a href="{{ route('admin.permissions.create') }}" class="btn btn-primary">+ Create Permission</a>
     </div>
-@endif
 
-@if($permissions->count())
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
-            <table id="permissions-table" class="table table-hover table-bordered align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width: 60px;">#</th>
-                        <th>Name</th>
-                        <th style="width: 180px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($permissions as $permission)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $permission->name }}</td>
-                            <td>
-                                <a href="{{ route('admin.permissions.edit', $permission) }}" class="btn btn-warning me-1">
-                                    <i class="bi bi-pencil-square"></i> Edit
-                                </a>
-                                <a href="{{ route('admin.permissions.show', $permission) }}" class="btn btn-info me-1">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
-                                {{-- 
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if ($permissions->count())
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="permissions-table" class="table table-hover table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;">#</th>
+                                <th>Name</th>
+                                <th style="width: 180px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($permissions as $permission)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $permission->name }}</td>
+                                    <td>
+                                        <a href="{{ route('admin.permissions.edit', $permission) }}"
+                                            class="btn btn-warning me-1">
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </a>
+                                        <a href="{{ route('admin.permissions.show', $permission) }}"
+                                            class="btn btn-info me-1">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        {{-- 
                                 <form action="{{ route('admin.permissions.destroy', $permission) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this permission?')">
                                     @csrf
                                     @method('DELETE')
@@ -53,18 +56,19 @@
                                     </button>
                                 </form> 
                                 --}}
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    </div>
-@else
-    <div class="alert alert-info text-center mt-4">
-        <strong>No permissions found.</strong> Please create one to get started.
-    </div>
-@endif
+    @else
+        <div class="alert alert-info text-center mt-4">
+            <strong>No permissions found.</strong> Please create one to get started.
+        </div>
+    @endif
 @endsection
 
 {{-- @push('styles')

@@ -71,3 +71,16 @@ curl --location --request POST 'http://127.0.0.1:8000/api/channels/7/follow' \
 curl --location 'http://127.0.0.1:8000/api/follows' \
 --header 'Accept: application/json' \
 --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2xvZ2luIiwiaWF0IjoxNzU3NTAxNzg4LCJleHAiOjE3NTc1MDUzODgsIm5iZiI6MTc1NzUwMTc4OCwianRpIjoianJaWVFUdFpxMjR5a1FNUCIsInN1YiI6IjE5IiwicHJ2IjoiMGJmNmM3MWY3YzM5YjgxYTJjMWI3NTE2MGM5ZGEyZTU3YzJmZWQ2NiJ9.mmBYv4cQJ2TGUTR3n5InPI53OgcEElfwfCCpjnXokAA'
+
+
+---------------------------------------------------------12-09-2025
+Pets page
+curl --location 'http://127.0.0.1:8000/api/categories-pet/region/AU' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2xvZ2luIiwiaWF0IjoxNzU3Njc4MjY2LCJleHAiOjE3NTc2ODE4NjYsIm5iZiI6MTc1NzY3ODI2NiwianRpIjoiYUR0djhkZ2F0YTJ3VWw2YyIsInN1YiI6IjE0IiwicHJ2IjoiMGJmNmM3MWY3YzM5YjgxYTJjMWI3NTE2MGM5ZGEyZTU3YzJmZWQ2NiJ9.hJk17ReiyoQy4nDgyZnto9cRK3u5O_Pfd1kTp0h_FtU'
+
+
+People Page
+curl --location 'http://127.0.0.1:8000/api/categories-people/region/AU' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2xvZ2luIiwiaWF0IjoxNzU3Njc4MjY2LCJleHAiOjE3NTc2ODE4NjYsIm5iZiI6MTc1NzY3ODI2NiwianRpIjoiYUR0djhkZ2F0YTJ3VWw2YyIsInN1YiI6IjE0IiwicHJ2IjoiMGJmNmM3MWY3YzM5YjgxYTJjMWI3NTE2MGM5ZGEyZTU3YzJmZWQ2NiJ9.hJk17ReiyoQy4nDgyZnto9cRK3u5O_Pfd1kTp0h_FtU'

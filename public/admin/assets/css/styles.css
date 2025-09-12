@@ -1,0 +1,21 @@
+ select.form-select {
+    color: #000 !important; 
+}
+div.dt-container div.dt-length select {
+    width: 60px !important;
+    display: inline-block;
+    margin-right: .5em;
+    margin-left: 10px !important;
+}
+ table.table.dataTable {
+    width: 100% !important;
+}
+.region-flex {
+    display: flex;
+    align-items: center;
+    padding: 20px 0px;
+    margin: 0px !important;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+    
