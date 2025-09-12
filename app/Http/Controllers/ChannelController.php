@@ -718,7 +718,8 @@ class ChannelController extends Controller
                 return;
             $q->where(function ($sub) use ($ids, $matchAll) {
                 foreach ($ids as $idx => $id) {
-                    $expr = "FIND_IN_SET(?, videos.highlight_tags)";
+                    // $expr = "FIND_IN_SET(?, videos.highlight_tags)";
+                    $expr = "FIND_IN_SET(?, REPLACE(videos.highlight_tags, ' ', ''))";
                     if ($matchAll) {
                         $sub->whereRaw($expr, [$id]);
                     } else {
@@ -757,7 +758,8 @@ class ChannelController extends Controller
             if (!empty($tagIdsFilter)) {
                 $q->where(function ($sub) use ($tagIdsFilter, $matchAll) {
                     foreach ($tagIdsFilter as $idx => $tagId) {
-                        $expr = 'FIND_IN_SET(?, videos.tag_ids)';
+                        // $expr = 'FIND_IN_SET(?, videos.tag_ids)';
+                        $expr = 'FIND_IN_SET(?, REPLACE(videos.tag_ids, " ", ""))';
                         if ($matchAll) {
                             $sub->whereRaw($expr, [$tagId]);        // AND
                         } else {
@@ -865,7 +867,9 @@ class ChannelController extends Controller
         if (!empty($tagIdsFilter)) {
             $videosQuery->where(function ($sub) use ($tagIdsFilter, $matchAll) {
                 foreach ($tagIdsFilter as $idx => $tagId) {
-                    $expr = 'FIND_IN_SET(?, videos.tag_ids)';
+                    // $expr = 'FIND_IN_SET(?, videos.tag_ids)';
+                    $expr = 'FIND_IN_SET(?, REPLACE(videos.tag_ids, " ", ""))';
+
                     if ($matchAll) {
                         $sub->whereRaw($expr, [$tagId]);        // AND
                     } else {

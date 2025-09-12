@@ -66,8 +66,8 @@
         @can('video.view')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.videos.index') }}">
-                <i class="ti-youtube menu-icon"></i>
-                <span class="menu-title">Youtube Videos</span>
+                <i class="ti-control-play menu-icon"></i>
+                <span class="menu-title">All Videos</span>
             </a>
         </li>
         @endcan
@@ -75,7 +75,7 @@
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.vimeo.index') }}">
                 <i class="ti-vimeo menu-icon"></i>
-                <span class="menu-title">Vimeo Videos</span>
+                <span class="menu-title">Assign Vimeo Videos</span>
             </a>
         </li>
         @endcan

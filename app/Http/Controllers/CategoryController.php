@@ -11,6 +11,9 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use App\Models\CategoryRegion;
+use App\Models\Region;
+use App\Models\Channel;
+
 
 class CategoryController extends Controller
 {
@@ -41,8 +44,8 @@ class CategoryController extends Controller
 
     public function create()
     {
-        $channels = \App\Models\Channel::all();
-        $regions = \App\Models\Region::where('is_active', 1)->get();
+        $channels = Channel::all();
+        $regions = Region::where('is_active', 1)->get();
 
         return view('admin.categories.create', compact('channels', 'regions'));
     }
@@ -108,7 +111,7 @@ class CategoryController extends Controller
         // make sure relations are available
         $category->loadMissing('regions');
 
-        $channels = \App\Models\Channel::all();
+        $channels = Channel::all();
 
         // get selected region IDs straight from the relation query
         $selectedRegions = $category->regions()
@@ -116,7 +119,7 @@ class CategoryController extends Controller
             ->toArray();
 
         // show active regions OR ones already selected
-        $regions = \App\Models\Region::where('is_active', 1)
+        $regions = Region::where('is_active', 1)
             ->orWhereIn('id', $selectedRegions)
             ->get();
 
@@ -289,6 +292,103 @@ class CategoryController extends Controller
             ], 500);
         }
     }
+    public function index_by_region_api_pets(Request $request, $region = null)
+{
+    try {
+        // 1) Resolve region code (URL param takes precedence over body/query)
+        $input = strtoupper($region ?? $request->input('region', ''));
+        $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
+        $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
+
+        // 2) Base categories query: only slug=pets + region-matched
+        $query = Category::select('id', 'name', 'slug', 'channel_id', 'created_at', 'updated_at')
+            ->where('slug', 'pets')
+            ->whereHas('regions', function ($q) use ($regionCode) {
+                $q->where('region_code', $regionCode);
+            })
+            ->with([
+                'channel:id,name,image,created_at,updated_at',
+                'regions:id,region_code'
+            ])
+            ->latest();
+
+        if ($request->filled('channel_id')) {
+            $query->where('channel_id', (int) $request->input('channel_id'));
+        }
+
+        $categories = $query->get();
+
+        // 3) Transform categories payload
+        $data = $categories->map(function ($category) {
+            if ($category->relationLoaded('regions')) {
+                $category->regions->each->makeHidden(['pivot']);
+            }
+
+            // expose channel with image_url (Channel model appends it)
+            if ($category->relationLoaded('channel') && $category->channel) {
+                $category->channel->makeHidden(['image']); // keep image_url
+            }
+
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'channel' => $category->channel, // includes image_url via accessor
+                'regions' => $category->regions->map(fn ($r) => [
+                    'id' => $r->id,
+                    'region_code' => $r->region_code,
+                ]),
+                'category_image' => $category->category_image
+                    ? asset($category->category_image)
+                    : null,
+                'created_at' => $category->created_at->toDateTimeString(),
+            ];
+        });
+
+        // 4) RECOMMENDED CHANNELS:
+        //    - parent channels for the fetched categories
+        //    - same region
+        //    - distinct (avoid duplicates)
+        $channelIds = $categories->pluck('channel_id')->filter()->unique()->values();
+
+        $recommendedChannels = collect();
+        if ($channelIds->isNotEmpty()) {
+            $recommendedChannels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+                ->whereIn('id', $channelIds)
+                ->whereHas('regions', function ($q) use ($regionCode) {
+                    $q->where('region_code', $regionCode);
+                })
+                ->with([
+                    'regions:id,region_code'
+                ])
+                ->latest()
+                ->get();
+
+            // Clean up + expose image_url and hide pivots
+            $recommendedChannels->each(function ($channel) {
+                // image_url is appended by the model accessor
+                $channel->makeHidden(['image']);
+                if ($channel->relationLoaded('regions')) {
+                    $channel->regions->each->makeHidden(['pivot']);
+                }
+            });
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Categories and recommended channels fetched successfully',
+            'data' => $data,
+            'recommended_channels' => $recommendedChannels,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to fetch categories/channels',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
 
 
 

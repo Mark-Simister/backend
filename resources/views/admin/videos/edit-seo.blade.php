@@ -78,6 +78,7 @@
   </div>
 </div>
 
+
 @if(session('success'))
   <div class="alert alert-success alert-dismissible fade show" role="alert">
     <i class="bi bi-check-circle me-1"></i> {{ session('success') }}
@@ -100,11 +101,20 @@
 @method('PUT')
 
 <div class="row g-4">
+  
   {{-- LEFT: SEO form --}}
   <div class="col-12 col-lg-8">
     <div class="card card-soft">
       <div class="card-body p-4">
         <div class="card-section-title">Meta</div>
+        <div class="">
+                <label for="regions">Select Regions</label>
+                <select name="regions" id="regions" class="form-control">
+                    @foreach ($regions as $region)
+                        <option value="{{ $region->id }}">{{ $region->name }}</option>
+                    @endforeach
+                </select>
+            </div>
 
         {{-- Title + Counter --}}
         <div class="mb-3">
@@ -151,17 +161,16 @@
         <div class="row g-3">
           <div class="col-12">
             <label class="form-label fw-semibold">Hashtags (comma-separated)</label>
-            <input type="text" name="hashtags" id="hashtags" class="form-control"
-                   placeholder="e.g. tech, review, gadgets"
-                   value="{{ old('hashtags', is_array($video->hashtags) ? implode(', ', $video->hashtags) : ($video->hashtags ?? '')) }}">
+           <input type="text" name="hashtags" id="hashtags" class="form-control" placeholder="e.g. tech, review, gadgets" value="{{ old('hashtags', is_array($video->hashtags) ? implode(', ', $video->hashtags) : ($video->hashtags ?? '')) }}">
             <div id="hashtagChips" class="mt-2 d-flex flex-wrap gap-2"></div>
           </div>
           <div class="col-12 col-md-6">
             <label class="form-label fw-semibold">CTA Text</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-megaphone"></i></span>
-              <input type="text" name="cta_text" class="form-control" placeholder="e.g., Watch now, Learn more"
-                     value="{{ old('cta_text', $video->cta_text) }}">
+              <input type="text" name="cta_text" id="cta_text" class="form-control"
+       placeholder="e.g., Watch now, Learn more"
+       value="{{ old('cta_text', $video->cta_text) }}">
             </div>
           </div>
         </div>
@@ -175,20 +184,20 @@
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-image"></i></span>
               <input type="text" name="og_image_url" id="og_image_url" class="form-control"
-                     placeholder="https://…/image.jpg"
-                     value="{{ old('og_image_url', $video->og_image_url) }}">
+       placeholder="https://…/image.jpg"
+       value="{{ old('og_image_url', $video->og_image_url) }}">
             </div>
             <div class="form-text">Recommended 1200×630 (1.91:1).</div>
           </div>
           <div class="col-12 col-md-6">
             <label class="form-label fw-semibold">Twitter Title</label>
             <input type="text" name="twitter_title" id="twitter_title" class="form-control"
-                   value="{{ old('twitter_title', $video->twitter_title) }}" placeholder="Title for Twitter Card">
+       value="{{ old('twitter_title', $video->twitter_title) }}" placeholder="Title for Twitter Card">
           </div>
           <div class="col-12 col-md-6">
             <label class="form-label fw-semibold mt-3 mt-md-0">Twitter Description</label>
             <input type="text" name="twitter_description" id="twitter_description" class="form-control"
-                   value="{{ old('twitter_description', $video->twitter_description) }}" placeholder="Description for Twitter Card">
+       value="{{ old('twitter_description', $video->twitter_description) }}" placeholder="Description for Twitter Card">
           </div>
         </div>
 
@@ -336,6 +345,34 @@
   twDesc && twDesc.addEventListener('input', updateTwitter);
   ogInput && ogInput.addEventListener('input', updateOG);
   hashtags && hashtags.addEventListener('input', updateHashtags);
+
+  // --- NEW: Region change Ajax ---
+  const regionSelect = document.getElementById('regions');
+  if(regionSelect){
+    regionSelect.addEventListener('change', function(){
+      let regionId = this.value;
+      let videoId = "{{ $video->id }}";
+
+      fetch(`/admin/videos/${videoId}/seo/${regionId}`)
+        .then(res => res.json())
+        .then(data => {
+          sel('seo_title').value = data.seo_title || '';
+          sel('seo_description').value = data.seo_description || '';
+          sel('hashtags').value = data.hashtags || '';
+          sel('cta_text').value = data.cta_text || '';
+          sel('og_image_url').value = data.og_image_url || '';
+          sel('twitter_title').value = data.twitter_title || '';
+          sel('twitter_description').value = data.twitter_description || '';
+
+          // Re-render previews
+          updateCounts(); 
+          updateSerp(); 
+          updateTwitter(); 
+          updateHashtags(); 
+          updateOG();
+        });
+    });
+  }
 })();
 </script>
 @endpush

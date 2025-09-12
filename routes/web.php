@@ -87,6 +87,13 @@ Route::middleware(['auth'])
         Route::put('videos/{video}/update-seo', [VideoController::class, 'updateSeo'])
             ->name('videos.update.seo')
             ->middleware('permission:video.edit');
+        
+    //     Route::get('videos/{video}/seo/{region}', [VideoSeoController::class, 'regionData'])
+    //  ->name('videos.seo.region');
+
+        Route::get('videos/{video}/seo/{region}', [VideoController::class, 'getSeoByRegion'])
+            ->name('videos.seo.by-region')
+            ->middleware('permission:video.edit');
 
         Route::get('videos/{video}/edit-product', [VideoController::class, 'editProduct'])
             ->name('videos.edit.product')

@@ -17,6 +17,7 @@ use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use App\Models\Tag;
+use App\Models\Region;
 
 class VideoController extends Controller
 {
@@ -247,7 +248,7 @@ class VideoController extends Controller
         $typeFrom = strtolower(trim($request->input('type', $request->query('type', $validated['type'] ?? ''))));
         $urlFrom = trim((string) $request->input('video_url', $request->query('video_url', $validated['video_url'] ?? '')));
         $toVimeo = ($typeFrom === 'vimeo') && ($urlFrom !== '');
-        // dd($toVimeo);
+        // dd($typeFrom,$urlFrom,$toVimeo);
         return redirect()
             ->route($toVimeo ? 'admin.vimeo.index' : 'admin.videos.index')
             ->with('success', 'Video created successfully.');
@@ -259,7 +260,7 @@ class VideoController extends Controller
         $characters = Character::all();
         $categories = Category::all();
         $highlight_tags = HighlightTag::all();
-        $regions = \App\Models\Region::all();
+        $regions = Region::all();
         $selectedRegions = $video->regions->pluck('id')->toArray();
 
         // --- normalize video_platforms to array of strings ---
@@ -329,53 +330,173 @@ class VideoController extends Controller
         ));
     }
 
-    public function editSeo(Video $video)
-    {
-        [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
-            $this->prepareEditData($video);
+    // public function editSeo(Video $video)
+    // {
+    //     [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
+    //         $this->prepareEditData($video);
 
-        return view('admin.videos.edit-seo', compact(
-            'video',
-            'channels',
-            'characters',
-            'categories',
-            'highlight_tags',
-            'selectedPlatforms',
-            'videoHighlightTags'
-        ));
-    }
+    //     return view('admin.videos.edit-seo', compact(
+    //         'video',
+    //         'channels',
+    //         'characters',
+    //         'categories',
+    //         'highlight_tags',
+    //         'selectedPlatforms',
+    //         'videoHighlightTags'
+    //     ));
+    // }
+//     public function editSeo(Video $video)
+// {
+//     [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
+//         $this->prepareEditData($video);
+
+//     $selectedRegions = $video->regions->pluck('id')->toArray();
+
+//     $regions = \App\Models\Region::whereIn('id', $selectedRegions)->get();
+
+//     return view('admin.videos.edit-seo', compact(
+//         'video',
+//         'channels',
+//         'characters',
+//         'categories',
+//         'highlight_tags',
+//         'selectedPlatforms',
+//         'videoHighlightTags',
+//         'regions',
+//         'selectedRegions'
+//     ));
+// }
+
+public function editSeo(Video $video)
+{
+    [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
+        $this->prepareEditData($video);
+
+    // Selected region IDs for this video
+    $selectedRegions = $video->regions->pluck('id')->toArray();
+
+    // Get only active regions that exist in the selectedRegions
+    $regions = Region::where('region_name', '!=', 'Global')
+        ->where('is_active', 1)
+        ->whereIn('id', $selectedRegions) // only existing ones
+        ->get();
+
+    // Always prepend Global (id=0)
+    $regions->prepend((object)[ 'id' => 0, 'name' => 'Global' ]);
+
+    return view('admin.videos.edit-seo', compact(
+        'video',
+        'channels',
+        'characters',
+        'categories',
+        'highlight_tags',
+        'selectedPlatforms',
+        'videoHighlightTags',
+        'regions',
+        'selectedRegions'
+    ));
+}
+
+
+    // public function updateSeo(Request $request, Video $video)
+    // {
+    //     $validated = $request->validate([
+    //         'seo_title' => ['nullable', 'string', 'max:255'],
+    //         'seo_description' => ['nullable', 'string', 'max:1000'],
+    //         'hashtags' => ['nullable', 'string'],
+    //         'cta_text' => ['nullable', 'string', 'max:255'],
+    //         'og_image_url' => ['nullable', 'string', 'max:255'],
+    //         'open_graph_image' => ['nullable', 'string', 'max:255'],
+    //         'twitter_title' => ['nullable', 'string', 'max:255'],
+    //         'twitter_description' => ['nullable', 'string', 'max:280'],
+    //     ]);
+
+    //     // Only update SEO fields
+    //     $video->fill($request->only([
+    //         'seo_title',
+    //         'seo_description',
+    //         'hashtags',
+    //         'cta_text',
+    //         'og_image_url',
+    //         'open_graph_image',
+    //         'twitter_title',
+    //         'twitter_description',
+    //     ]));
+
+    //     $video->save();
+
+    //     return redirect()
+    //         ->route('admin.videos.edit.seo', $video)
+    //         ->with('success', 'SEO fields updated.');
+    // }
 
     public function updateSeo(Request $request, Video $video)
-    {
-        $validated = $request->validate([
-            'seo_title' => ['nullable', 'string', 'max:255'],
-            'seo_description' => ['nullable', 'string', 'max:1000'],
-            'hashtags' => ['nullable', 'string'],
-            'cta_text' => ['nullable', 'string', 'max:255'],
-            'og_image_url' => ['nullable', 'string', 'max:255'],
-            'open_graph_image' => ['nullable', 'string', 'max:255'],
-            'twitter_title' => ['nullable', 'string', 'max:255'],
-            'twitter_description' => ['nullable', 'string', 'max:280'],
-        ]);
+{
+    $regionId = $request->input('regions', 0);
 
-        // Only update SEO fields
-        $video->fill($request->only([
-            'seo_title',
-            'seo_description',
-            'hashtags',
-            'cta_text',
-            'og_image_url',
-            'open_graph_image',
-            'twitter_title',
-            'twitter_description',
-        ]));
+    $validated = $request->validate([
+        'seo_title' => ['nullable', 'string', 'max:255'],
+        'seo_description' => ['nullable', 'string', 'max:1000'],
+        'hashtags' => ['nullable', 'string'],
+        'cta_text' => ['nullable', 'string', 'max:255'],
+        'og_image_url' => ['nullable', 'string', 'max:255'],
+        'twitter_title' => ['nullable', 'string', 'max:255'],
+        'twitter_description' => ['nullable', 'string', 'max:280'],
+    ]);
 
-        $video->save();
-
-        return redirect()
-            ->route('admin.videos.edit.seo', $video)
-            ->with('success', 'SEO fields updated.');
+    if ($regionId == 0) {
+        // Update global
+        $video->update($validated);
+    } else {
+        // Update or Insert region SEO
+        \DB::table('seo_region')->updateOrInsert(
+            ['video_id' => $video->id, 'region_id' => $regionId],
+            array_merge($validated, ['updated_at' => now(), 'created_at' => now()])
+        );
     }
+
+    return redirect()
+        ->route('admin.videos.edit.seo', $video)
+        ->with('success', 'SEO fields updated.');
+}
+public function getSeoByRegion(Video $video, $regionId)
+{
+    if ($regionId == 0) {
+        // Global = from videos table
+        return response()->json([
+            'seo_title' => $video->seo_title,
+            'seo_description' => $video->seo_description,
+            'hashtags' => $video->hashtags,
+            'cta_text' => $video->cta_text,
+            'og_image_url' => $video->og_image_url,
+            'twitter_title' => $video->twitter_title,
+            'twitter_description' => $video->twitter_description,
+        ]);
+    }
+
+    $seo = \DB::table('seo_region')
+        ->where('video_id', $video->id)
+        ->where('region_id', $regionId)
+        ->first();
+
+    return response()->json($seo ?: []);
+}
+
+public function regionData(Video $video, Region $region)
+{
+    // Assuming you have a pivot/translation table for SEO fields per region
+    $seo = $video->seos()->where('region_id', $region->id)->first();
+
+    return response()->json([
+        'seo_title'          => $seo->seo_title ?? '',
+        'seo_description'    => $seo->seo_description ?? '',
+        'hashtags'           => $seo->hashtags ?? '',
+        'cta_text'           => $seo->cta_text ?? '',
+        'og_image_url'       => $seo->og_image_url ?? '',
+        'twitter_title'      => $seo->twitter_title ?? '',
+        'twitter_description'=> $seo->twitter_description ?? '',
+    ]);
+}
     private function prepareEditData(Video $video): array
     {
         $channels = Channel::all();

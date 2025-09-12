@@ -176,4 +176,9 @@ public function seoRegions()
     return $this->hasMany(SeoRegion::class);
 }
 
+public function seos()
+{
+    return $this->hasMany(SeoRegion::class);
+}
+
 }

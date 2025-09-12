@@ -155,6 +155,7 @@ Route::get(
 Route::get('/region/{region?}', [ChannelController::class, 'filter_region_api']);
 Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api']);
+Route::get('/categories-pet/region/{region?}', [CategoryController::class, 'index_by_region_api_pets']);
 Route::match(['GET','POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
 Route::get   ('characters',          [CharacterController::class, 'index_api']);
 Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
