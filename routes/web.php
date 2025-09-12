@@ -22,8 +22,11 @@ use App\Http\Controllers\TagController;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Http\Controllers\VimeoController;
 
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 
