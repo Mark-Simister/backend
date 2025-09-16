@@ -9,7 +9,10 @@ class Channel extends Model
     use HasFactory;
 
 
-    protected $fillable = ['name', 'image'];
+    protected $fillable = ['name', 'image','primary_color',
+        'secondary_color',
+        'accent_color',
+        'background_color',];
 
     protected $hidden = ['image'];
     protected $appends = ['image_url'];

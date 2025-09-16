@@ -84,3 +84,11 @@ People Page
 curl --location 'http://127.0.0.1:8000/api/categories-people/region/AU' \
 --header 'Accept: application/json' \
 --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2xvZ2luIiwiaWF0IjoxNzU3Njc4MjY2LCJleHAiOjE3NTc2ODE4NjYsIm5iZiI6MTc1NzY3ODI2NiwianRpIjoiYUR0djhkZ2F0YTJ3VWw2YyIsInN1YiI6IjE0IiwicHJ2IjoiMGJmNmM3MWY3YzM5YjgxYTJjMWI3NTE2MGM5ZGEyZTU3YzJmZWQ2NiJ9.hJk17ReiyoQy4nDgyZnto9cRK3u5O_Pfd1kTp0h_FtU'
+
+
+
+
+------------------------------------------------------------------------
+16-09-2025
+php artisan migrate --path=/database/migrations/2025_09_15_064753_add_colors_to_channels_table.php
+php artisan migrate --path=/database/migrations/2025_09_15_064833_create_global_colors_table.php

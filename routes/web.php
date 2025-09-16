@@ -21,6 +21,7 @@ use App\Http\Controllers\CronJobController;
 use App\Http\Controllers\TagController;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Http\Controllers\VimeoController;
+use App\Http\Controllers\GlobalColorController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -61,6 +62,8 @@ Route::middleware(['auth'])
 
         Route::resource('regions', RegionController::class)
             ->middleware('permission:region.view|region.create|region.edit|region.delete');
+
+        Route::resource('global-colors', GlobalColorController::class);
 
         // Character tags
         Route::resource('character_tags', CharacterTagController::class)

@@ -120,6 +120,10 @@ class ChannelController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
             'regions' => 'array|nullable',
             'regions.*' => 'integer|exists:regions,id', // validate each region id
+            'primary_color' => 'nullable|string|max:20',
+            'secondary_color' => 'nullable|string|max:20',
+            'accent_color' => 'nullable|string|max:20',
+            'background_color' => 'nullable|string|max:20',
         ]);
 
         $imagePath = null;
@@ -138,6 +142,10 @@ class ChannelController extends Controller
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
                 'image' => $imagePath,
+                'primary_color' => $request->primary_color,
+                'secondary_color' => $request->secondary_color,
+                'accent_color' => $request->accent_color,
+                'background_color' => $request->background_color,
             ]);
 
             // Insert pivot rows via ChannelRegion model
@@ -153,7 +161,6 @@ class ChannelController extends Controller
                 ])->all();
 
                 ChannelRegion::insert($rows);
-
             }
         });
 
@@ -220,6 +227,10 @@ class ChannelController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
             'regions' => 'nullable|array',
             'regions.*' => 'exists:regions,id',
+            'primary_color' => 'nullable|string|max:20',
+            'secondary_color' => 'nullable|string|max:20',
+            'accent_color' => 'nullable|string|max:20',
+            'background_color' => 'nullable|string|max:20',
         ]);
 
         $imagePath = $channel->image;
@@ -246,6 +257,10 @@ class ChannelController extends Controller
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
                 'image' => $imagePath,
+                'primary_color' => $request->primary_color,
+                'secondary_color' => $request->secondary_color,
+                'accent_color' => $request->accent_color,
+                'background_color' => $request->background_color,
             ]);
 
             // Remove old region links
@@ -443,7 +458,7 @@ class ChannelController extends Controller
                 ], 404);
             }
 
-            
+
             $includePaid = $user && $this->hasValidSubscription($user->id);
             $allowedTypes = $includePaid ? ['youtube', 'vimeo'] : ['youtube'];
 
@@ -475,10 +490,10 @@ class ChannelController extends Controller
                 ->whereIn('type', $allowedTypes)
                 ->whereIn('character_id', $characterIds)
                 ->whereHas('regions', function ($q) use ($regionCodes) {
-                    $q->whereIn('region_code', $regionCodes); 
+                    $q->whereIn('region_code', $regionCodes);
                 })
                 ->latest();
-                
+
             if ($filterCategoryId) {
                 $videoQuery->where('category_id', $filterCategoryId);
             }
@@ -594,12 +609,12 @@ class ChannelController extends Controller
 
             $allReviews = $allReviewRows->map(function ($rev) {
                 return [
-                    'id'                     => $rev->id,
-                    'video_id'               => $rev->video_id,
-                    'rating'                 => (int) $rev->rating,
-                    'review'                 => $rev->review,
-                    'created_at'             => optional($rev->created_at)->toDateTimeString(),
-                    'reviewer_name'          => optional($rev->user)->name,
+                    'id' => $rev->id,
+                    'video_id' => $rev->video_id,
+                    'rating' => (int) $rev->rating,
+                    'review' => $rev->review,
+                    'created_at' => optional($rev->created_at)->toDateTimeString(),
+                    'reviewer_name' => optional($rev->user)->name,
                     'reviewer_profile_image' => optional($rev->user)->profile_image
                         ? asset(optional($rev->user)->profile_image)
                         : null,
@@ -714,12 +729,29 @@ class ChannelController extends Controller
             });
         };
 
+        // $applyVideoHighlightFilter = function ($q, array $ids, bool $matchAll) {
+        //     if (empty($ids))
+        //         return;
+        //     $q->where(function ($sub) use ($ids, $matchAll) {
+        //         foreach ($ids as $idx => $id) {
+        //             $expr = "FIND_IN_SET(?, videos.highlight_tags)";
+        //             if ($matchAll) {
+        //                 $sub->whereRaw($expr, [$id]);
+        //             } else {
+        //                 $idx === 0
+        //                     ? $sub->whereRaw($expr, [$id])
+        //                     : $sub->orWhereRaw($expr, [$id]);
+        //             }
+        //         }
+        //     });
+        // };
         $applyVideoHighlightFilter = function ($q, array $ids, bool $matchAll) {
             if (empty($ids))
                 return;
             $q->where(function ($sub) use ($ids, $matchAll) {
                 foreach ($ids as $idx => $id) {
-                    $expr = "FIND_IN_SET(?, videos.highlight_tags)";
+                    // Strip leading/trailing quotes inside SQL before FIND_IN_SET
+                    $expr = "FIND_IN_SET(CAST(? AS CHAR), TRIM(BOTH '\"' FROM videos.highlight_tags))";
                     if ($matchAll) {
                         $sub->whereRaw($expr, [$id]);
                     } else {
@@ -730,7 +762,7 @@ class ChannelController extends Controller
                 }
             });
         };
-        
+
 
         $input = strtoupper($region ?? $request->input('region', ''));
         $allowed = ['AU', 'CA', 'UK', 'US']; // extend as needed
@@ -748,7 +780,7 @@ class ChannelController extends Controller
         $hlFilter = $parseIds($hlInputRaw);
         $matchAll = $request->boolean('match_all', false);
         $tagIdsFilter = $parseIds($request->input('tag_ids', []));
-        
+
 
         $hasTagOrHlOrTagIds = !empty($tagsFilter) || !empty($hlFilter) || !empty($tagIdsFilter);
 
@@ -1142,8 +1174,8 @@ class ChannelController extends Controller
     public function follow($channelId)
     {
         $user = Auth::user();
-           
-        
+
+
         $alreadyFollowed = ChannelFollow::where('user_id', $user->id)
             ->where('channel_id', $channelId)
             ->exists();
@@ -1155,7 +1187,7 @@ class ChannelController extends Controller
             ], 400);
         }
 
-       
+
         ChannelFollow::create([
             'user_id' => $user->id,
             'channel_id' => $channelId,
@@ -1184,21 +1216,21 @@ class ChannelController extends Controller
     //     ]);
     // }
 
-public function listFollows()
-{
-    $follows = ChannelFollow::with('channel')
-        ->get()
-        ->map(function ($follow) {
-            return [
-                'channel_id'   => $follow->channel->id,
-                'channel_name' => $follow->channel->name,
-                // 'user_id'      => $follow->user_id,
-            ];
-        });
+    public function listFollows()
+    {
+        $follows = ChannelFollow::with('channel')
+            ->get()
+            ->map(function ($follow) {
+                return [
+                    'channel_id' => $follow->channel->id,
+                    'channel_name' => $follow->channel->name,
+                    // 'user_id'      => $follow->user_id,
+                ];
+            });
 
-    return response()->json([
-        'status' => 'ok',
-        'data'   => $follows,
-    ]);
-}
+        return response()->json([
+            'status' => 'ok',
+            'data' => $follows,
+        ]);
+    }
 }
