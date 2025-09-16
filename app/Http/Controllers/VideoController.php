@@ -2355,12 +2355,13 @@ public function regionData(Video $video, Region $region)
             ->values();
 
         $data = [
+            'video' => [
             'id' => $video->id,
             'title' => $video->title,
             'description' => $video->description,
             'type' => $video->type,
             'video_url' => $video->video_url ?? '',
-            'thumbnail_url' => $video->thumbnail_url,
+            //'thumbnail_url' => $video->thumbnail_url,
             'character_id' => $video->character_id,
             'channel_id' => $video->channel_id,
             'category_id' => $video->category_id,
@@ -2371,8 +2372,6 @@ public function regionData(Video $video, Region $region)
             'sponsorship_type' => $video->sponsorship_type,
             'highlight_tags' => $video->highlight_tags,
             'auto_tags' => $video->auto_tags,
-            'created_at' => $video->created_at?->toDateTimeString(),
-            'updated_at' => $video->updated_at?->toDateTimeString(),
             'product_name' => $video->product_name,
             'product_asin_sku' => $video->product_asin_sku,
             'public_rating' => $video->public_rating,
@@ -2410,10 +2409,13 @@ public function regionData(Video $video, Region $region)
             'likes' => $video->likes,
             'sale_end_date' => $video->sale_end_date,
             'is_amazon_choice' => $video->is_amazon_choice,
+            'created_at' => $video->created_at?->toDateTimeString(),
+            'updated_at' => $video->updated_at?->toDateTimeString(),
             'regions' => $video->regions->map(fn($r) => [
                 'id' => $r->id,
                 'region_code' => $r->region_code,
             ]),
+            ],
             'related_products' => $related,
             'character_data' => $character ? $character : null,
         ];
