@@ -15,7 +15,7 @@
                 </a>
             </li>
         @endcan
-        @can('globalcolor.view')
+        @can('global_color.view')
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('admin.global-colors.index') }}">
                     <i class="ti-paint-bucket menu-icon"></i>
