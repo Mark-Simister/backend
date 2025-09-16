@@ -17,6 +17,7 @@ use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\VideoEngagementController;
+use App\Http\Controllers\GlobalColorController;
 // use App\Http\Controllers\VimeoController;
 
 use Illuminate\Support\Facades\Http;
@@ -146,6 +147,8 @@ Route::middleware(['auth:api'])->group(function () {
 Route::get('regions', [RegionController::class, 'index_api']);
 Route::get('channels', [ChannelController::class, 'index_api']);
 Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
+Route::get('global-colors', [GlobalColorController::class, 'index_api']);
+
 
 Route::get(
     '/channel-detail/{channel}/{region?}',

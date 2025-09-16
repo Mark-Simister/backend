@@ -92,3 +92,177 @@ curl --location 'http://127.0.0.1:8000/api/categories-people/region/AU' \
 16-09-2025
 php artisan migrate --path=/database/migrations/2025_09_15_064753_add_colors_to_channels_table.php
 php artisan migrate --path=/database/migrations/2025_09_15_064833_create_global_colors_table.php
+
+-- Insert Global / Main Landing Page (Core Brand) colors
+INSERT INTO global_colors (name, hex_value, `usage`, created_at, updated_at) VALUES
+('Midnight Black', '#0D0D0D', 'Main Landing Page (Core Brand) - Primary', NOW(), NOW()),
+('Vibrant Electric Blue', '#2E86C1', 'Main Landing Page (Core Brand) - Secondary', NOW(), NOW()),
+('Neon Green', '#1DB954', 'Main Landing Page (Core Brand) - Accent', NOW(), NOW()),
+('White', '#FFFFFF', 'Main Landing Page (Core Brand) - Text', NOW(), NOW()),
+('Soft Grey', '#BFC9CA', 'Main Landing Page (Core Brand) - Text', NOW(), NOW());
+
+-- Insert Common UI Areas colors
+INSERT INTO global_colors (name, hex_value, `usage`, created_at, updated_at) VALUES
+('Blue', '#2E86C1', 'Common UI Areas - Button Default', NOW(), NOW()),
+('Blue Hover', '#1A5276', 'Common UI Areas - Button Hover', NOW(), NOW()),
+('Dark Charcoal', '#1C1C1C', 'Common UI Areas - Background Panels/Modals', NOW(), NOW()),
+('White', '#FFFFFF', 'Common UI Areas - Typography (Headers)', NOW(), NOW()),
+('Off-White', '#F8F9F9', 'Common UI Areas - Typography (Body)', NOW(), NOW()),
+('Success Green', '#27AE60', 'Common UI Areas - Alert Success', NOW(), NOW()),
+('Warning Amber', '#F39C12', 'Common UI Areas - Alert Warning', NOW(), NOW()),
+('Error Red', '#E74C3C', 'Common UI Areas - Alert Error', NOW(), NOW());
+
+
+-- Update colors for the 'Bark Bench' channel (Pets Channel)
+UPDATE channels 
+SET 
+    primary_color = '#E74C3C', -- Warm Red
+    secondary_color = '#F4D03F', -- Golden Yellow
+    accent_color = '#27AE60', -- Grass Green
+    background_color = '#FFF9F2' -- Cream White
+WHERE name = 'Bark Bench';
+
+-- Update colors for the 'Night Gaze' channel (NightGainz)
+UPDATE channels 
+SET 
+    primary_color = '#C0392B', -- Crimson
+    secondary_color = '#000000', -- Black
+    accent_color = '#BDC3C7', -- Metallic Silver
+    background_color = '#1B1B1B' -- Deep Charcoal
+WHERE name = 'Night Gaze';
+
+-- Update colors for the 'Alien Tests' channel (AlienTests)
+UPDATE channels 
+SET 
+    primary_color = '#8E44AD', -- Cosmic Purple
+    secondary_color = '#00FFFF', -- Neon Cyan
+    accent_color = '#DFFF00', -- Lime
+    background_color = '#12122B' -- Dark Galaxy Blue
+WHERE name = 'Alien Tests';
+
+
+-- Update colors for the 'Whisker Width' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#6C3483', -- Deep Plum
+    secondary_color = '#AAB7B8', -- Silver Grey
+    accent_color = '#F1948A', -- Rose Pink
+    background_color = '#FAF3F6' -- Soft Ivory
+WHERE name = 'Whisker Width';
+
+-- Update colors for the 'Parrot' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#FF4D94', -- Hot Neon Pink
+    secondary_color = '#0A0A0A', -- Jet Black
+    accent_color = '#00D2FF', -- Electric Aqua
+    background_color = '#FFFFFF' -- White
+WHERE name = 'Parrot';
+
+-- Update colors for the 'Demo ava' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#8E44AD', -- Cosmic Purple
+    secondary_color = '#00FFFF', -- Neon Cyan
+    accent_color = '#DFFF00', -- Lime
+    background_color = '#12122B' -- Dark Galaxy Blue
+WHERE name = 'Demo ava';
+
+-- Update colors for the 'Parrot 2' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#FF4D94', -- Hot Neon Pink
+    secondary_color = '#0A0A0A', -- Jet Black
+    accent_color = '#00D2FF', -- Electric Aqua
+    background_color = '#FFFFFF' -- White
+WHERE name = 'Parrot 2';
+
+-- Update colors for the 'Parrot 3' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#FF4D94', -- Hot Neon Pink
+    secondary_color = '#0A0A0A', -- Jet Black
+    accent_color = '#00D2FF', -- Electric Aqua
+    background_color = '#FFFFFF' -- White
+WHERE name = 'Parrot 3';
+
+-- Update colors for the 'Big Foot Tried It' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#FF4D94', -- Hot Neon Pink
+    secondary_color = '#0A0A0A', -- Jet Black
+    accent_color = '#00D2FF', -- Electric Aqua
+    background_color = '#FFFFFF' -- White
+WHERE name = 'Big Foot Tried It';
+
+-- Update colors for the 'Crib Critics' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#FF4D94', -- Hot Neon Pink
+    secondary_color = '#0A0A0A', -- Jet Black
+    accent_color = '#00D2FF', -- Electric Aqua
+    background_color = '#FFFFFF' -- White
+WHERE name = 'Crib Critics';
+
+-- Update colors for the 'Yeti Approved' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#FF4D94', -- Hot Neon Pink
+    secondary_color = '#0A0A0A', -- Jet Black
+    accent_color = '#00D2FF', -- Electric Aqua
+    background_color = '#FFFFFF' -- White
+WHERE name = 'Yeti Approved';
+
+-- Update colors for the 'Lizard Lift' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#FF4D94', -- Hot Neon Pink
+    secondary_color = '#0A0A0A', -- Jet Black
+    accent_color = '#00D2FF', -- Electric Aqua
+    background_color = '#FFFFFF' -- White
+WHERE name = 'Lizard Lift';
+
+-- Update colors for the 'Audrey Hunt' channel (missing colors)
+UPDATE channels 
+SET 
+    primary_color = '#8E44AD', -- Cosmic Purple
+    secondary_color = '#00FFFF', -- Neon Cyan
+    accent_color = '#DFFF00', -- Lime
+    background_color = '#12122B' -- Dark Galaxy Blue
+WHERE name = 'Audrey Hunt';
+
+-- Update colors for the 'Pets Channel' (BarkTastic)
+UPDATE channels 
+SET 
+    primary_color = '#E74C3C', -- Warm Red
+    secondary_color = '#F4D03F', -- Golden Yellow
+    accent_color = '#27AE60', -- Grass Green
+    background_color = '#FFF9F2' -- Cream White
+WHERE name = 'Pets Channel';
+
+-- Update colors for the 'FitnessVibe Channel GLOBAL' (MoonRated)
+UPDATE channels 
+SET 
+    primary_color = '#BDC3C7', -- Moon Silver
+    secondary_color = '#7F8C8D', -- Wolf Grey
+    accent_color = '#2C3E50', -- Midnight Blue
+    background_color = '#145A32' -- Forest Green
+WHERE name = 'FitnessVibe Channel GLOBAL';
+
+-- Update colors for the 'My New Channel Canada' (MoonRated)
+UPDATE channels 
+SET 
+    primary_color = '#BDC3C7', -- Moon Silver
+    secondary_color = '#7F8C8D', -- Wolf Grey
+    accent_color = '#2C3E50', -- Midnight Blue
+    background_color = '#145A32' -- Forest Green
+WHERE name = 'My New Channel Canada';
+
+-- Update colors for the 'My New Channel2 US' (MoonRated)
+UPDATE channels 
+SET 
+    primary_color = '#BDC3C7', -- Moon Silver
+    secondary_color = '#7F8C8D', -- Wolf Grey
+    accent_color = '#2C3E50', -- Midnight Blue
+    background_color = '#145A32' -- Forest Green
+WHERE name = 'My New Channel2 US';

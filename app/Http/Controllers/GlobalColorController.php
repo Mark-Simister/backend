@@ -55,4 +55,17 @@ class GlobalColorController extends Controller
         $global_color->delete();
         return redirect()->route('admin.global-colors.index')->with('success', 'Color deleted successfully.');
     }
+
+    // API
+
+    public function index_api()
+    {
+        $colors = GlobalColor::latest()->get();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Global colors fetched successfully',
+            'data'    => $colors
+        ]);
+    }
 }
