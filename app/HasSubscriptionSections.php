@@ -164,7 +164,7 @@ trait HasSubscriptionSections
 
     protected function buildChannelByRegionQuery(string $regionCode)
 {
-    return Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+    return Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
         ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
         ->with(['regions:id,region_code'])
         ->latest();

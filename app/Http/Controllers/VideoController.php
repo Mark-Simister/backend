@@ -46,7 +46,7 @@ class VideoController extends Controller
         $characters = Character::all();
         $categories = Category::all();
         $highlight_tags = HighlightTag::all();
-        $regions = \App\Models\Region::where('is_active', 1)->get();
+        $regions = Region::where('is_active', 1)->get();
         return view('admin.videos.create', compact('channels', 'characters', 'categories', 'highlight_tags', 'regions'));
     }
 

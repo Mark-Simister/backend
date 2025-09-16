@@ -308,9 +308,10 @@ class ChannelController extends Controller
     {
         try {
             // Eager-load only what you need
-            $channels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+            // $channels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+            $channels = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
                 ->with([
-                    'regions:id,region_code' // adjust columns if needed
+                    'regions:id,region_code' 
                 ])
                 ->latest()
                 ->get();
@@ -353,7 +354,8 @@ class ChannelController extends Controller
             $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
             // Only channels that have the requested region
-            $channels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+            // $channels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+            $channels = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 })
@@ -405,7 +407,8 @@ class ChannelController extends Controller
             // ?paginate_videos=1&per_page=20&page=1 (if you ever want to paginate just videos)
             $filterCategoryId = $request->integer('category_id');
 
-            $channel = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+            //$channel = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+            $channel = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
                 ->where('id', $channelId)
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
@@ -805,7 +808,8 @@ class ChannelController extends Controller
             }
         };
 
-        $channelsQuery = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+        //$channelsQuery = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+        $channelsQuery = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
             ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
             ->with(['regions:id,region_code'])
             ->latest();
