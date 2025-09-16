@@ -22,6 +22,8 @@ use App\Http\Controllers\TagController;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Http\Controllers\VimeoController;
 use App\Http\Controllers\GlobalColorController;
+use App\Http\Controllers\AffiliateLinkController;
+
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -85,6 +87,26 @@ Route::middleware(['auth'])
         Route::get('/tags/by-ids', [TagController::class, 'byIds'])
             ->name('tags.byIds');
 
+        // Route for managing affiliate links (View all links for a video)
+Route::get('/videos/{videoId}/affiliate-links', [VideoController::class, 'manageLinks'])->name('videos.affiliate-links');
+
+// Route for storing a new affiliate link (POST method)
+// Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link');
+
+// Route for deleting an affiliate link (DELETE method)
+Route::delete('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'destroy'])->name('videos.affiliateLinks.destroy');
+
+// Route for updating an existing affiliate link (PATCH method)
+// Route::patch('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
+Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link');
+Route::post('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
+
+
+
+
+        Route::resource('affiliate-links', AffiliateLinkController::class);
+
+
 
         Route::get('videos/{video}/edit-seo', [VideoController::class, 'editSeo'])
             ->name('videos.edit.seo')
@@ -93,10 +115,10 @@ Route::middleware(['auth'])
         Route::put('videos/{video}/update-seo', [VideoController::class, 'updateSeo'])
             ->name('videos.update.seo')
             ->middleware('permission:video.edit');
-        
-    //     Route::get('videos/{video}/seo/{region}', [VideoSeoController::class, 'regionData'])
-    //  ->name('videos.seo.region');
 
+        //     Route::get('videos/{video}/seo/{region}', [VideoSeoController::class, 'regionData'])
+        //  ->name('videos.seo.region');
+    
         Route::get('videos/{video}/seo/{region}', [VideoController::class, 'getSeoByRegion'])
             ->name('videos.seo.by-region')
             ->middleware('permission:video.edit');

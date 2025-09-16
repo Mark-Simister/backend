@@ -452,7 +452,18 @@ class CategoryController extends Controller
                     ->when($regionCode !== 'GLOBAL', fn($q) => $q->where('rr.region_code', $regionCode))
 
                     ->whereNotNull('channels.id')
-                    ->groupBy('channels.id', 'channels.name', 'channels.image', 'channels.created_at', 'channels.updated_at')
+                    // ->groupBy('channels.id', 'channels.name', 'channels.image', 'channels.created_at', 'channels.updated_at')
+                    ->groupBy(
+                        'channels.id',
+                        'channels.name',
+                        'channels.image',
+                        'channels.primary_color',
+                        'channels.secondary_color',
+                        'channels.accent_color',
+                        'channels.background_color',
+                        'channels.created_at',
+                        'channels.updated_at'
+                    )
                     ->select(
                         'channels.*',
                         DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
@@ -565,7 +576,18 @@ class CategoryController extends Controller
                     ->when($regionCode !== 'GLOBAL', fn($q) => $q->where('rr.region_code', $regionCode))
 
                     ->whereNotNull('channels.id')
-                    ->groupBy('channels.id', 'channels.name', 'channels.image', 'channels.created_at', 'channels.updated_at')
+                    // ->groupBy('channels.id', 'channels.name', 'channels.image', 'channels.created_at', 'channels.updated_at')
+                    ->groupBy(
+                        'channels.id',
+                        'channels.name',
+                        'channels.image',
+                        'channels.primary_color',
+                        'channels.secondary_color',
+                        'channels.accent_color',
+                        'channels.background_color',
+                        'channels.created_at',
+                        'channels.updated_at'
+                    )
                     ->select(
                         'channels.*',
                         DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
@@ -610,6 +632,69 @@ class CategoryController extends Controller
             ], 500);
         }
     }
+
+    public function recommendedChannels(Request $request, $region = null)
+    {
+        try {
+            $input = strtoupper($region ?? $request->input('region', ''));
+            $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
+            $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
+
+            // Get the authenticated user
+            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+
+            $recommended = collect();
+
+            if ($user) {
+                // Fetch recommended channels based on the user's watch history
+                $recommended = Channel::query()
+                    ->leftJoin('videos', 'videos.channel_id', '=', 'channels.id')
+                    ->leftJoin('video_watch_histories as vwh', function ($join) use ($user) {
+                        $join->on('vwh.video_id', '=', 'videos.id')
+                            ->where('vwh.user_id', '=', $user->id);
+                    })
+                    ->leftJoin('channel_region as cr', 'cr.channel_id', '=', 'channels.id')
+                    ->leftJoin('regions as rr', 'rr.id', '=', 'cr.region_id')
+                    ->select(
+                        'channels.*',
+                        DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
+                        DB::raw('MAX(vwh.created_at) as last_watched_at')
+                    )
+                    ->groupBy(
+                        'channels.id',
+                        'channels.name',
+                        'channels.image',
+                        'channels.primary_color',
+                        'channels.secondary_color',
+                        'channels.accent_color',
+                        'channels.background_color',
+                        'channels.created_at',
+                        'channels.updated_at'
+                    )
+                    ->orderByDesc('watch_count')
+                    ->orderByDesc('last_watched_at')
+                    ->limit(20)
+                    ->get();
+
+
+
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Recommended channels fetched successfully',
+                'recommended_channels' => $recommended,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch recommended channels',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
 
 

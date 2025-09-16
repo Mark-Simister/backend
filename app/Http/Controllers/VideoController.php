@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use App\Models\Tag;
 use App\Models\Region;
+use App\Models\AffiliateLink;
 
 class VideoController extends Controller
 {
@@ -54,73 +55,76 @@ class VideoController extends Controller
     {
         // dd($request);
         //  Use Validator instead of request->validate
-        $validator = \Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'type' => 'required|in:youtube,vimeo',
-            'video_url' => 'nullable|url',
+        $validator = \Validator::make(
+            $request->all(),
+            [
+                'title' => 'required|string|max:255',
+                'description' => 'required|string',
+                'type' => 'required|in:youtube,vimeo',
+                'video_url' => 'nullable|url',
 
-            // Step 2 fields
-            'character_id' => 'required|exists:characters,id',
-            'channel_id' => 'nullable|exists:channels,id',
-            'category_id' => 'nullable|exists:categories,id',
-            'access_level' => 'required|in:public,premium,early_access',
-            'regions' => 'nullable|array',
-            'regions.*' => 'exists:regions,id',
+                // Step 2 fields
+                'character_id' => 'required|exists:characters,id',
+                'channel_id' => 'nullable|exists:channels,id',
+                'category_id' => 'nullable|exists:categories,id',
+                'access_level' => 'required|in:public,premium,early_access',
+                'regions' => 'nullable|array',
+                'regions.*' => 'exists:regions,id',
 
-            // Step 3 optional fields
-            'affiliate_link' => 'nullable|url',
-            'thumbnail_url' => 'nullable',
-            // 'thumbnail_url'    => 'nullable|required_without:thumbnail_image|url',
-            'thumbnail_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-            // 'thumbnail_image'  => 'nullable|required_without:thumbnail_url|image|mimes:jpg,jpeg,png|max:5120',
+                // Step 3 optional fields
+                'affiliate_link' => 'nullable|url',
+                'thumbnail_url' => 'nullable',
+                // 'thumbnail_url'    => 'nullable|required_without:thumbnail_image|url',
+                'thumbnail_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+                // 'thumbnail_image'  => 'nullable|required_without:thumbnail_url|image|mimes:jpg,jpeg,png|max:5120',
 
-            // Step 4 meta fields
+                // Step 4 meta fields
 
-            // 'tags' => 'nullable|string',
-            // 'tags.*' => 'string',
-            // 'tag_ids' => ['required', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
-            'tag_ids' => ['required', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
-            'rating_type' => 'required|in:rating,review',
-            'sponsorship_type' => 'required|in:sponsored,unsponsored',
-            'public_rating' => 'nullable|numeric|min:1|max:5',
-            'review_details' => 'nullable|string',
-            // 'highlight_tags'   => 'nullable|string', //  fixed
-            'highlight_tags' => 'nullable|array',  // Validate as an array
-            'highlight_tags.*' => 'exists:highlight_tags,id', // Validate each ID exists in the highlight_tags table
+                // 'tags' => 'nullable|string',
+                // 'tags.*' => 'string',
+                // 'tag_ids' => ['required', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
+                'tag_ids' => ['required', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
+                'rating_type' => 'required|in:rating,review',
+                'sponsorship_type' => 'required|in:sponsored,unsponsored',
+                'public_rating' => 'nullable|numeric|min:1|max:5',
+                'review_details' => 'nullable|string',
+                // 'highlight_tags'   => 'nullable|string', //  fixed
+                'highlight_tags' => 'nullable|array',  // Validate as an array
+                'highlight_tags.*' => 'exists:highlight_tags,id', // Validate each ID exists in the highlight_tags table
 
-            'auto_tags' => 'nullable|string', //  fixed
-            'video_type' => 'required|in:short,full_review,reel,live,compilation',
-            'video_platforms' => 'nullable|array',
-            'video_platforms.*' => 'string',
+                'auto_tags' => 'nullable|string', //  fixed
+                'video_type' => 'required|in:short,full_review,reel,live,compilation',
+                'video_platforms' => 'nullable|array',
+                'video_platforms.*' => 'string',
 
-            'raw_video_file' => 'nullable|file|mimes:mp4,mov,avi|max:51200',
-            'caption_file' => 'nullable|file|mimes:vtt,srt,txt|max:1024',
+                'raw_video_file' => 'nullable|file|mimes:mp4,mov,avi|max:51200',
+                'caption_file' => 'nullable|file|mimes:vtt,srt,txt|max:1024',
 
-            'status' => 'required|in:draft,published',
-            'is_ai_generated' => 'boolean',
-            'is_finalized' => 'boolean',
-            'qa_passed' => 'boolean',
-            'post_schedule_at' => 'nullable|date',
+                'status' => 'required|in:draft,published',
+                'is_ai_generated' => 'boolean',
+                'is_finalized' => 'boolean',
+                'qa_passed' => 'boolean',
+                'post_schedule_at' => 'nullable|date',
 
-            'seo_title' => 'nullable|string|max:255',
-            'seo_description' => 'nullable|string|max:500',
-            'hashtags' => 'nullable|string', //  fixed
-            'cta_text' => 'nullable|string|max:255',
-            'og_image_url' => 'nullable|url',
-            'twitter_title' => 'nullable|string|max:255',
-            'twitter_description' => 'nullable|string|max:500',
+                'seo_title' => 'nullable|string|max:255',
+                'seo_description' => 'nullable|string|max:500',
+                'hashtags' => 'nullable|string', //  fixed
+                'cta_text' => 'nullable|string|max:255',
+                'og_image_url' => 'nullable|url',
+                'twitter_title' => 'nullable|string|max:255',
+                'twitter_description' => 'nullable|string|max:500',
 
-            'product_name' => 'nullable|string|max:255',
-            'product_asin_sku' => 'nullable|string|max:255',
-            'character_score' => 'nullable|numeric',
-            'editorial_score' => 'nullable|numeric',
-            'final_beastiescore' => 'nullable|string|max:255',
-            'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120', // For thumbnail image
-        ],
-    [
-        'tag_ids.required' => 'Tags are required.',
-    ]);
+                'product_name' => 'nullable|string|max:255',
+                'product_asin_sku' => 'nullable|string|max:255',
+                'character_score' => 'nullable|numeric',
+                'editorial_score' => 'nullable|numeric',
+                'final_beastiescore' => 'nullable|string|max:255',
+                'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120', // For thumbnail image
+            ],
+            [
+                'tag_ids.required' => 'Tags are required.',
+            ]
+        );
 
 
         // if ($validator->fails()) {
@@ -350,11 +354,11 @@ class VideoController extends Controller
 //     [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
 //         $this->prepareEditData($video);
 
-//     $selectedRegions = $video->regions->pluck('id')->toArray();
+    //     $selectedRegions = $video->regions->pluck('id')->toArray();
 
-//     $regions = \App\Models\Region::whereIn('id', $selectedRegions)->get();
+    //     $regions = \App\Models\Region::whereIn('id', $selectedRegions)->get();
 
-//     return view('admin.videos.edit-seo', compact(
+    //     return view('admin.videos.edit-seo', compact(
 //         'video',
 //         'channels',
 //         'characters',
@@ -367,35 +371,35 @@ class VideoController extends Controller
 //     ));
 // }
 
-public function editSeo(Video $video)
-{
-    [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
-        $this->prepareEditData($video);
+    public function editSeo(Video $video)
+    {
+        [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
+            $this->prepareEditData($video);
 
-    // Selected region IDs for this video
-    $selectedRegions = $video->regions->pluck('id')->toArray();
+        // Selected region IDs for this video
+        $selectedRegions = $video->regions->pluck('id')->toArray();
 
-    // Get only active regions that exist in the selectedRegions
-    $regions = Region::where('region_name', '!=', 'Global')
-        ->where('is_active', 1)
-        ->whereIn('id', $selectedRegions) // only existing ones
-        ->get();
+        // Get only active regions that exist in the selectedRegions
+        $regions = Region::where('region_name', '!=', 'Global')
+            ->where('is_active', 1)
+            ->whereIn('id', $selectedRegions) // only existing ones
+            ->get();
 
-    // Always prepend Global (id=0)
-    $regions->prepend((object)[ 'id' => 0, 'name' => 'Global' ]);
+        // Always prepend Global (id=0)
+        $regions->prepend((object) ['id' => 0, 'name' => 'Global']);
 
-    return view('admin.videos.edit-seo', compact(
-        'video',
-        'channels',
-        'characters',
-        'categories',
-        'highlight_tags',
-        'selectedPlatforms',
-        'videoHighlightTags',
-        'regions',
-        'selectedRegions'
-    ));
-}
+        return view('admin.videos.edit-seo', compact(
+            'video',
+            'channels',
+            'characters',
+            'categories',
+            'highlight_tags',
+            'selectedPlatforms',
+            'videoHighlightTags',
+            'regions',
+            'selectedRegions'
+        ));
+    }
 
 
     // public function updateSeo(Request $request, Video $video)
@@ -431,72 +435,72 @@ public function editSeo(Video $video)
     // }
 
     public function updateSeo(Request $request, Video $video)
-{
-    $regionId = $request->input('regions', 0);
+    {
+        $regionId = $request->input('regions', 0);
 
-    $validated = $request->validate([
-        'seo_title' => ['nullable', 'string', 'max:255'],
-        'seo_description' => ['nullable', 'string', 'max:1000'],
-        'hashtags' => ['nullable', 'string'],
-        'cta_text' => ['nullable', 'string', 'max:255'],
-        'og_image_url' => ['nullable', 'string', 'max:255'],
-        'twitter_title' => ['nullable', 'string', 'max:255'],
-        'twitter_description' => ['nullable', 'string', 'max:280'],
-    ]);
+        $validated = $request->validate([
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:1000'],
+            'hashtags' => ['nullable', 'string'],
+            'cta_text' => ['nullable', 'string', 'max:255'],
+            'og_image_url' => ['nullable', 'string', 'max:255'],
+            'twitter_title' => ['nullable', 'string', 'max:255'],
+            'twitter_description' => ['nullable', 'string', 'max:280'],
+        ]);
 
-    if ($regionId == 0) {
-        // Update global
-        $video->update($validated);
-    } else {
-        // Update or Insert region SEO
-        \DB::table('seo_region')->updateOrInsert(
-            ['video_id' => $video->id, 'region_id' => $regionId],
-            array_merge($validated, ['updated_at' => now(), 'created_at' => now()])
-        );
+        if ($regionId == 0) {
+            // Update global
+            $video->update($validated);
+        } else {
+            // Update or Insert region SEO
+            \DB::table('seo_region')->updateOrInsert(
+                ['video_id' => $video->id, 'region_id' => $regionId],
+                array_merge($validated, ['updated_at' => now(), 'created_at' => now()])
+            );
+        }
+
+        return redirect()
+            ->route('admin.videos.edit.seo', $video)
+            ->with('success', 'SEO fields updated.');
+    }
+    public function getSeoByRegion(Video $video, $regionId)
+    {
+        if ($regionId == 0) {
+            // Global = from videos table
+            return response()->json([
+                'seo_title' => $video->seo_title,
+                'seo_description' => $video->seo_description,
+                'hashtags' => $video->hashtags,
+                'cta_text' => $video->cta_text,
+                'og_image_url' => $video->og_image_url,
+                'twitter_title' => $video->twitter_title,
+                'twitter_description' => $video->twitter_description,
+            ]);
+        }
+
+        $seo = \DB::table('seo_region')
+            ->where('video_id', $video->id)
+            ->where('region_id', $regionId)
+            ->first();
+
+        return response()->json($seo ?: []);
     }
 
-    return redirect()
-        ->route('admin.videos.edit.seo', $video)
-        ->with('success', 'SEO fields updated.');
-}
-public function getSeoByRegion(Video $video, $regionId)
-{
-    if ($regionId == 0) {
-        // Global = from videos table
+    public function regionData(Video $video, Region $region)
+    {
+        // Assuming you have a pivot/translation table for SEO fields per region
+        $seo = $video->seos()->where('region_id', $region->id)->first();
+
         return response()->json([
-            'seo_title' => $video->seo_title,
-            'seo_description' => $video->seo_description,
-            'hashtags' => $video->hashtags,
-            'cta_text' => $video->cta_text,
-            'og_image_url' => $video->og_image_url,
-            'twitter_title' => $video->twitter_title,
-            'twitter_description' => $video->twitter_description,
+            'seo_title' => $seo->seo_title ?? '',
+            'seo_description' => $seo->seo_description ?? '',
+            'hashtags' => $seo->hashtags ?? '',
+            'cta_text' => $seo->cta_text ?? '',
+            'og_image_url' => $seo->og_image_url ?? '',
+            'twitter_title' => $seo->twitter_title ?? '',
+            'twitter_description' => $seo->twitter_description ?? '',
         ]);
     }
-
-    $seo = \DB::table('seo_region')
-        ->where('video_id', $video->id)
-        ->where('region_id', $regionId)
-        ->first();
-
-    return response()->json($seo ?: []);
-}
-
-public function regionData(Video $video, Region $region)
-{
-    // Assuming you have a pivot/translation table for SEO fields per region
-    $seo = $video->seos()->where('region_id', $region->id)->first();
-
-    return response()->json([
-        'seo_title'          => $seo->seo_title ?? '',
-        'seo_description'    => $seo->seo_description ?? '',
-        'hashtags'           => $seo->hashtags ?? '',
-        'cta_text'           => $seo->cta_text ?? '',
-        'og_image_url'       => $seo->og_image_url ?? '',
-        'twitter_title'      => $seo->twitter_title ?? '',
-        'twitter_description'=> $seo->twitter_description ?? '',
-    ]);
-}
     private function prepareEditData(Video $video): array
     {
         $channels = Channel::all();
@@ -623,73 +627,76 @@ public function regionData(Video $video, Region $region)
     public function update(Request $request, Video $video)
     {
         // Use Validator 
-        $validator = \Validator::make($request->all(), [
-            // Step 1
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'type' => 'required|in:youtube,vimeo',
-            'video_url' => 'nullable|url',
+        $validator = \Validator::make(
+            $request->all(),
+            [
+                // Step 1
+                'title' => 'required|string|max:255',
+                'description' => 'required|string',
+                'type' => 'required|in:youtube,vimeo',
+                'video_url' => 'nullable|url',
 
-            // Step 2
-            'character_id' => 'nullable|exists:characters,id',
-            'channel_id' => 'nullable|exists:channels,id',
-            'category_id' => 'nullable|exists:categories,id',
-            'access_level' => 'required|in:public,premium,early_access',
-            'regions' => 'nullable|array',
-            'regions.*' => 'exists:regions,id',
+                // Step 2
+                'character_id' => 'nullable|exists:characters,id',
+                'channel_id' => 'nullable|exists:channels,id',
+                'category_id' => 'nullable|exists:categories,id',
+                'access_level' => 'required|in:public,premium,early_access',
+                'regions' => 'nullable|array',
+                'regions.*' => 'exists:regions,id',
 
-            // Step 3
-            'affiliate_link' => 'nullable|url',
-            // 'thumbnail_url'    => 'nullable|url|required_without:thumbnail_image', // Required without image
-            'thumbnail_url' => 'nullable|url', // Required without image
-            // 'thumbnail_image'  => 'nullable|image|mimes:jpg,jpeg,png|max:5120|required_without:thumbnail_url', // Required without URL
-            'thumbnail_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+                // Step 3
+                'affiliate_link' => 'nullable|url',
+                // 'thumbnail_url'    => 'nullable|url|required_without:thumbnail_image', // Required without image
+                'thumbnail_url' => 'nullable|url', // Required without image
+                // 'thumbnail_image'  => 'nullable|image|mimes:jpg,jpeg,png|max:5120|required_without:thumbnail_url', // Required without URL
+                'thumbnail_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
 
-            // Other Fields
-            // 'tags' => 'nullable|string',
-            // 'tags.*' => 'string',
-            // 'tag_ids' => ['required', 'string', 'regex:/^\s*$|^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
-            'tag_ids' => ['required', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
-            'rating_type' => 'required|in:rating,review',
-            'public_rating' => 'nullable|numeric|min:1|max:5',
-            'review_details' => 'nullable|string',
-            'sponsorship_type' => 'required|in:sponsored,unsponsored',
-            'highlight_tags' => 'nullable|array',
-            'highlight_tags.*' => 'exists:highlight_tags,id',
+                // Other Fields
+                // 'tags' => 'nullable|string',
+                // 'tags.*' => 'string',
+                // 'tag_ids' => ['required', 'string', 'regex:/^\s*$|^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
+                'tag_ids' => ['required', 'string', 'regex:/^\s*\d+(?:\s*,\s*\d+)*\s*$/'],
+                'rating_type' => 'required|in:rating,review',
+                'public_rating' => 'nullable|numeric|min:1|max:5',
+                'review_details' => 'nullable|string',
+                'sponsorship_type' => 'required|in:sponsored,unsponsored',
+                'highlight_tags' => 'nullable|array',
+                'highlight_tags.*' => 'exists:highlight_tags,id',
 
-            'auto_tags' => 'nullable|string',
-            'video_type' => 'required|in:short,full_review,reel,live,compilation',
-            'video_platforms' => 'nullable|array',
-            'video_platforms.*' => 'string',
+                'auto_tags' => 'nullable|string',
+                'video_type' => 'required|in:short,full_review,reel,live,compilation',
+                'video_platforms' => 'nullable|array',
+                'video_platforms.*' => 'string',
 
-            'raw_video_file' => 'nullable|file|mimes:mp4,mov,avi|max:51200',
-            'caption_file' => 'nullable|file|mimes:vtt,srt,txt|max:1024',
+                'raw_video_file' => 'nullable|file|mimes:mp4,mov,avi|max:51200',
+                'caption_file' => 'nullable|file|mimes:vtt,srt,txt|max:1024',
 
-            'status' => 'required|in:draft,published',
-            'is_ai_generated' => 'boolean',
-            'is_finalized' => 'boolean',
-            'qa_passed' => 'boolean',
-            'post_schedule_at' => 'nullable|date',
+                'status' => 'required|in:draft,published',
+                'is_ai_generated' => 'boolean',
+                'is_finalized' => 'boolean',
+                'qa_passed' => 'boolean',
+                'post_schedule_at' => 'nullable|date',
 
-            'seo_title' => 'nullable|string|max:255',
-            'seo_description' => 'nullable|string|max:500',
-            'hashtags' => 'nullable|string',
-            'cta_text' => 'nullable|string|max:255',
-            'og_image_url' => 'nullable|url',
-            'twitter_title' => 'nullable|string|max:255',
-            'twitter_description' => 'nullable|string|max:500',
+                'seo_title' => 'nullable|string|max:255',
+                'seo_description' => 'nullable|string|max:500',
+                'hashtags' => 'nullable|string',
+                'cta_text' => 'nullable|string|max:255',
+                'og_image_url' => 'nullable|url',
+                'twitter_title' => 'nullable|string|max:255',
+                'twitter_description' => 'nullable|string|max:500',
 
-            'product_name' => 'nullable|string|max:255',
-            'product_asin_sku' => 'nullable|string|max:255',
-            'character_score' => 'nullable|numeric',
-            'editorial_score' => 'nullable|numeric',
-            'final_beastiescore' => 'nullable|string|max:255',
-            'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
-        ],
-    [
-        'tag_ids.required' => 'Tags are required.',
-        'tag_ids.regex'    => 'Tags must be a comma-separated list of IDs.',
-    ]);
+                'product_name' => 'nullable|string|max:255',
+                'product_asin_sku' => 'nullable|string|max:255',
+                'character_score' => 'nullable|numeric',
+                'editorial_score' => 'nullable|numeric',
+                'final_beastiescore' => 'nullable|string|max:255',
+                'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
+            ],
+            [
+                'tag_ids.required' => 'Tags are required.',
+                'tag_ids.regex' => 'Tags must be a comma-separated list of IDs.',
+            ]
+        );
 
         if ($validator->fails()) {
             return redirect()->back()
@@ -850,6 +857,44 @@ public function regionData(Video $video, Region $region)
     {
         $video->delete();
         return back()->with('success', 'Video deleted.');
+    }
+
+    // Show form for managing affiliate links for a video
+    public function manageLinks($videoId)
+    {
+        $video = Video::findOrFail($videoId);
+        $regions = Region::all();  // Get all regions
+        $affiliateLinks = AffiliateLink::where('video_id', $videoId)->get();  // Get all affiliate links for this video
+
+        return view('admin.videos.manage_affiliate_links', compact('video', 'regions', 'affiliateLinks'));
+    }
+
+    // Store a new affiliate link
+    public function storeLink(Request $request, $videoId)
+    {
+        $request->validate([
+            'region_id' => 'required|exists:regions,id',
+            'retailer' => 'required|string',
+            'url' => 'required|url',
+        ]);
+
+        AffiliateLink::create([
+            'video_id' => $videoId,
+            'region_id' => $request->region_id,
+            'retailer' => $request->retailer,
+            'url' => $request->url,
+        ]);
+
+        return redirect()->route('admin.videos.affiliate-links', $videoId)->with('success', 'Affiliate link added successfully.');
+    }
+
+    public function editAffiliateLink($videoId, $affiliateLinkId)
+    {
+        $video = Video::findOrFail($videoId);
+        $affiliateLink = AffiliateLink::findOrFail($affiliateLinkId);
+        $regions = Region::all();  // Assuming you have a Region model
+
+        return view('admin.videos.edit-affiliate-link', compact('video', 'affiliateLink', 'regions'));
     }
 
     // GET /api/videos
@@ -2356,65 +2401,65 @@ public function regionData(Video $video, Region $region)
 
         $data = [
             'video' => [
-            'id' => $video->id,
-            'title' => $video->title,
-            'description' => $video->description,
-            'type' => $video->type,
-            'video_url' => $video->video_url ?? '',
-            //'thumbnail_url' => $video->thumbnail_url,
-            'character_id' => $video->character_id,
-            'channel_id' => $video->channel_id,
-            'category_id' => $video->category_id,
-            'access_level' => $video->access_level,
-            'affiliate_link' => $video->affiliate_link,
-            'tags' => $video->tag_pairs,
-            'rating_type' => $video->rating_type,
-            'sponsorship_type' => $video->sponsorship_type,
-            'highlight_tags' => $video->highlight_tags,
-            'auto_tags' => $video->auto_tags,
-            'product_name' => $video->product_name,
-            'product_asin_sku' => $video->product_asin_sku,
-            'public_rating' => $video->public_rating,
-            'review_details' => $video->review_details,
-            'character_score' => $video->character_score,
-            'editorial_score' => $video->editorial_score,
-            'final_beastie_score' => $video->final_beastie_score,
-            'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
-            'video_type' => $video->video_type,
-            'video_platforms' => $video->video_platforms,
-            'youtube_id' => $video->youtube_id,
-            'wistia_id' => $video->wistia_id,
-            'raw_video_path' => $video->raw_video_path,
-            'caption_file' => $video->caption_file,
-            'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
-            'is_draft' => $video->is_draft,
-            'status' => $video->status,
-            'tag_ids' => $video->tag_ids,
-            'is_ai_generated' => $video->is_ai_generated,
-            'is_finalized' => $video->is_finalized,
-            'qa_passed' => $video->qa_passed,
-            'post_schedule_at' => $video->post_schedule_at,
-            'review_type' => $video->review_type,
-            'sponsored' => $video->sponsored,
-            'seo_title' => $video->seo_title,
-            'seo_description' => $video->seo_description,
-            'hashtags' => $video->hashtags,
-            'cta_text' => $video->cta_text,
-            'og_image_url' => $video->og_image_url,
-            'open_graph_image' => $video->open_graph_image,
-            'twitter_title' => $video->twitter_title,
-            'twitter_description' => $video->twitter_description,
-            'original_price' => $video->original_price,
-            'views' => $video->views,
-            'likes' => $video->likes,
-            'sale_end_date' => $video->sale_end_date,
-            'is_amazon_choice' => $video->is_amazon_choice,
-            'created_at' => $video->created_at?->toDateTimeString(),
-            'updated_at' => $video->updated_at?->toDateTimeString(),
-            'regions' => $video->regions->map(fn($r) => [
-                'id' => $r->id,
-                'region_code' => $r->region_code,
-            ]),
+                'id' => $video->id,
+                'title' => $video->title,
+                'description' => $video->description,
+                'type' => $video->type,
+                'video_url' => $video->video_url ?? '',
+                //'thumbnail_url' => $video->thumbnail_url,
+                'character_id' => $video->character_id,
+                'channel_id' => $video->channel_id,
+                'category_id' => $video->category_id,
+                'access_level' => $video->access_level,
+                'affiliate_link' => $video->affiliate_link,
+                'tags' => $video->tag_pairs,
+                'rating_type' => $video->rating_type,
+                'sponsorship_type' => $video->sponsorship_type,
+                'highlight_tags' => $video->highlight_tags,
+                'auto_tags' => $video->auto_tags,
+                'product_name' => $video->product_name,
+                'product_asin_sku' => $video->product_asin_sku,
+                'public_rating' => $video->public_rating,
+                'review_details' => $video->review_details,
+                'character_score' => $video->character_score,
+                'editorial_score' => $video->editorial_score,
+                'final_beastie_score' => $video->final_beastie_score,
+                'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
+                'video_type' => $video->video_type,
+                'video_platforms' => $video->video_platforms,
+                'youtube_id' => $video->youtube_id,
+                'wistia_id' => $video->wistia_id,
+                'raw_video_path' => $video->raw_video_path,
+                'caption_file' => $video->caption_file,
+                'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+                'is_draft' => $video->is_draft,
+                'status' => $video->status,
+                'tag_ids' => $video->tag_ids,
+                'is_ai_generated' => $video->is_ai_generated,
+                'is_finalized' => $video->is_finalized,
+                'qa_passed' => $video->qa_passed,
+                'post_schedule_at' => $video->post_schedule_at,
+                'review_type' => $video->review_type,
+                'sponsored' => $video->sponsored,
+                'seo_title' => $video->seo_title,
+                'seo_description' => $video->seo_description,
+                'hashtags' => $video->hashtags,
+                'cta_text' => $video->cta_text,
+                'og_image_url' => $video->og_image_url,
+                'open_graph_image' => $video->open_graph_image,
+                'twitter_title' => $video->twitter_title,
+                'twitter_description' => $video->twitter_description,
+                'original_price' => $video->original_price,
+                'views' => $video->views,
+                'likes' => $video->likes,
+                'sale_end_date' => $video->sale_end_date,
+                'is_amazon_choice' => $video->is_amazon_choice,
+                'created_at' => $video->created_at?->toDateTimeString(),
+                'updated_at' => $video->updated_at?->toDateTimeString(),
+                'regions' => $video->regions->map(fn($r) => [
+                    'id' => $r->id,
+                    'region_code' => $r->region_code,
+                ]),
             ],
             'related_products' => $related,
             'character_data' => $character ? $character : null,

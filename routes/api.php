@@ -121,6 +121,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post   ('videos/{video}/watch',    [VideoEngagementController::class, 'recordWatch'])->name('api.videos.watch');
 
     Route::post('/channels/{id}/follow', [ChannelController::class, 'follow'])->name('channels.follow');
+    Route::get('recommended-channels/{region?}', [CategoryController::class, 'recommendedChannels']);
 
     //  Route::delete('/channels/{id}/unfollow', [FollowChannelController::class, 'unfollow'])->name('channels.unfollow');
 

@@ -70,6 +70,11 @@
                                             <a href="{{ route('admin.videos.edit', $video) }}" class="btn btn-warning me-1">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
+                                            <!-- Button to manage affiliate links -->
+                                            <a href="{{ route('admin.videos.affiliate-links', $video->id) }}"
+                                                class="btn btn-info me-1">
+                                                <i class="bi bi-link-45deg"></i> Manage Affiliate Links
+                                            </a>
                                         @endcan
                                         @can('video.delete')
                                             <form action="{{ route('admin.videos.destroy', $video) }}" method="POST"

@@ -92,6 +92,7 @@ curl --location 'http://127.0.0.1:8000/api/categories-people/region/AU' \
 16-09-2025
 php artisan migrate --path=/database/migrations/2025_09_15_064753_add_colors_to_channels_table.php
 php artisan migrate --path=/database/migrations/2025_09_15_064833_create_global_colors_table.php
+php artisan migrate --path=/database/migrations/2025_09_16_080701_create_affiliate_links_table.php
 
 -- Insert Global / Main Landing Page (Core Brand) colors
 INSERT INTO global_colors (name, hex_value, `usage`, created_at, updated_at) VALUES
@@ -266,3 +267,201 @@ SET
     accent_color = '#2C3E50', -- Midnight Blue
     background_color = '#145A32' -- Forest Green
 WHERE name = 'My New Channel2 US';
+
+
+
+-- Insert Affiliate Links for Video 1: '10-Minute Morning Yoga for Beginners'
+
+-- For AU region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 1, 'Amazon_AU', 'https://www.amazon.com.au/dp/YOGA-MAT-001?tag=beastierated-22'),
+(1, 1, 'ASOS_AU', 'https://www.asos.com/product/yoga-mat'),
+(1, 1, 'Sephora_AU', 'https://www.sephora.com.au/product/yoga-mat');
+
+-- For US region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 2, 'Amazon_US', 'https://www.amazon.com/dp/YOGA-MAT-001?tag=beastierated-20'),
+(1, 2, 'ASOS_US', 'https://www.asos.com/product/yoga-mat'),
+(1, 2, 'Sephora_US', 'https://www.sephora.com/product/yoga-mat');
+
+-- For UK region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 3, 'Amazon_UK', 'https://www.amazon.co.uk/dp/YOGA-MAT-001?tag=beastierated-21'),
+(1, 3, 'ASOS_UK', 'https://www.asos.com/product/yoga-mat'),
+(1, 3, 'Sephora_UK', 'https://www.sephora.co.uk/product/yoga-mat');
+
+-- For CA region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 4, 'Amazon_CA', 'https://www.amazon.ca/dp/YOGA-MAT-001?tag=beastierated-20'),
+(1, 4, 'ASOS_CA', 'https://www.asos.ca/product/yoga-mat'),
+(1, 4, 'Sephora_CA', 'https://www.sephora.ca/product/yoga-mat');
+
+-- For GLOBAL region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 5, 'Amazon_GLOBAL', 'https://www.amazon.com/dp/YOGA-MAT-001?tag=beastierated-20'),
+(1, 5, 'ASOS_GLOBAL', 'https://www.asos.com/product/yoga-mat'),
+(1, 5, 'Sephora_GLOBAL', 'https://www.sephora.com/product/yoga-mat');
+
+
+-- Insert Affiliate Links for Video 2: 'Officia in dolores i'
+
+-- For AU region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 1, 'Amazon_AU', 'https://www.amazon.com.au/dp/1225454?tag=beastierated-22'),
+(2, 1, 'ASOS_AU', 'https://www.asos.com/product/product-name'),
+(2, 1, 'Sephora_AU', 'https://www.sephora.com.au/product/product-name');
+
+-- For US region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 2, 'Amazon_US', 'https://www.amazon.com/dp/1225454?tag=beastierated-20'),
+(2, 2, 'ASOS_US', 'https://www.asos.com/product/product-name'),
+(2, 2, 'Sephora_US', 'https://www.sephora.com/product/product-name');
+
+-- For UK region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 3, 'Amazon_UK', 'https://www.amazon.co.uk/dp/1225454?tag=beastierated-21'),
+(2, 3, 'ASOS_UK', 'https://www.asos.com/product/product-name'),
+(2, 3, 'Sephora_UK', 'https://www.sephora.co.uk/product/product-name');
+
+-- For CA region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 4, 'Amazon_CA', 'https://www.amazon.ca/dp/1225454?tag=beastierated-20'),
+(2, 4, 'ASOS_CA', 'https://www.asos.ca/product/product-name'),
+(2, 4, 'Sephora_CA', 'https://www.sephora.ca/product/product-name');
+
+-- For GLOBAL region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 5, 'Amazon_GLOBAL', 'https://www.amazon.com/dp/1225454?tag=beastierated-20'),
+(2, 5, 'ASOS_GLOBAL', 'https://www.asos.com/product/product-name'),
+(2, 5, 'Sephora_GLOBAL', 'https://www.sephora.com/product/product-name');
+
+
+
+-- Insert Affiliate Links for Video 1: '10-Minute Morning Yoga for Beginners'
+
+-- For AU region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 1, 'Amazon_AU', 'https://www.amazon.com.au/dp/YOGA-MAT-001?tag=beastierated-22'),
+(1, 1, 'ASOS_AU', 'https://www.asos.com/product/yoga-mat'),
+(1, 1, 'Sephora_AU', 'https://www.sephora.com.au/product/yoga-mat');
+
+-- For US region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 2, 'Amazon_US', 'https://www.amazon.com/dp/YOGA-MAT-001?tag=beastierated-20'),
+(1, 2, 'ASOS_US', 'https://www.asos.com/product/yoga-mat'),
+(1, 2, 'Sephora_US', 'https://www.sephora.com/product/yoga-mat');
+
+-- For UK region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 3, 'Amazon_UK', 'https://www.amazon.co.uk/dp/YOGA-MAT-001?tag=beastierated-21'),
+(1, 3, 'ASOS_UK', 'https://www.asos.com/product/yoga-mat'),
+(1, 3, 'Sephora_UK', 'https://www.sephora.co.uk/product/yoga-mat');
+
+-- For CA region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 4, 'Amazon_CA', 'https://www.amazon.ca/dp/YOGA-MAT-001?tag=beastierated-20'),
+(1, 4, 'ASOS_CA', 'https://www.asos.ca/product/yoga-mat'),
+(1, 4, 'Sephora_CA', 'https://www.sephora.ca/product/yoga-mat');
+
+-- For GLOBAL region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(1, 5, 'Amazon_GLOBAL', 'https://www.amazon.com/dp/YOGA-MAT-001?tag=beastierated-20'),
+(1, 5, 'ASOS_GLOBAL', 'https://www.asos.com/product/yoga-mat'),
+(1, 5, 'Sephora_GLOBAL', 'https://www.sephora.com/product/yoga-mat');
+
+
+-- Insert Affiliate Links for Video 2: 'Officia in dolores i'
+
+-- For AU region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 1, 'Amazon_AU', 'https://www.amazon.com.au/dp/1225454?tag=beastierated-22'),
+(2, 1, 'ASOS_AU', 'https://www.asos.com/product/product-name'),
+(2, 1, 'Sephora_AU', 'https://www.sephora.com.au/product/product-name');
+
+-- For US region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 2, 'Amazon_US', 'https://www.amazon.com/dp/1225454?tag=beastierated-20'),
+(2, 2, 'ASOS_US', 'https://www.asos.com/product/product-name'),
+(2, 2, 'Sephora_US', 'https://www.sephora.com/product/product-name');
+
+-- For UK region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 3, 'Amazon_UK', 'https://www.amazon.co.uk/dp/1225454?tag=beastierated-21'),
+(2, 3, 'ASOS_UK', 'https://www.asos.com/product/product-name'),
+(2, 3, 'Sephora_UK', 'https://www.sephora.co.uk/product/product-name');
+
+-- For CA region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 4, 'Amazon_CA', 'https://www.amazon.ca/dp/1225454?tag=beastierated-20'),
+(2, 4, 'ASOS_CA', 'https://www.asos.ca/product/product-name'),
+(2, 4, 'Sephora_CA', 'https://www.sephora.ca/product/product-name');
+
+-- For GLOBAL region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(2, 5, 'Amazon_GLOBAL', 'https://www.amazon.com/dp/1225454?tag=beastierated-20'),
+(2, 5, 'ASOS_GLOBAL', 'https://www.asos.com/product/product-name'),
+(2, 5, 'Sephora_GLOBAL', 'https://www.sephora.com/product/product-name');
+
+-- Insert Affiliate Links for Video 8: 'Zig Zag Close Up'
+
+-- For AU region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(8, 1, 'Amazon_AU', 'https://www.amazon.com.au/dp/ZIGZAG-001?tag=beastierated-22'),
+(8, 1, 'ASOS_AU', 'https://www.asos.com/product/zig-zag-close-up'),
+(8, 1, 'Sephora_AU', 'https://www.sephora.com.au/product/zig-zag-close-up');
+
+-- For US region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(8, 2, 'Amazon_US', 'https://www.amazon.com/dp/ZIGZAG-001?tag=beastierated-20'),
+(8, 2, 'ASOS_US', 'https://www.asos.com/product/zig-zag-close-up'),
+(8, 2, 'Sephora_US', 'https://www.sephora.com/product/zig-zag-close-up');
+
+-- For UK region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(8, 3, 'Amazon_UK', 'https://www.amazon.co.uk/dp/ZIGZAG-001?tag=beastierated-21'),
+(8, 3, 'ASOS_UK', 'https://www.asos.com/product/zig-zag-close-up'),
+(8, 3, 'Sephora_UK', 'https://www.sephora.co.uk/product/zig-zag-close-up');
+
+-- For CA region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(8, 4, 'Amazon_CA', 'https://www.amazon.ca/dp/ZIGZAG-001?tag=beastierated-20'),
+(8, 4, 'ASOS_CA', 'https://www.asos.ca/product/zig-zag-close-up'),
+(8, 4, 'Sephora_CA', 'https://www.sephora.ca/product/zig-zag-close-up');
+
+-- For GLOBAL region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(8, 5, 'Amazon_GLOBAL', 'https://www.amazon.com/dp/ZIGZAG-001?tag=beastierated-20'),
+(8, 5, 'ASOS_GLOBAL', 'https://www.asos.com/product/zig-zag-close-up'),
+(8, 5, 'Sephora_GLOBAL', 'https://www.sephora.com/product/zig-zag-close-up');
+
+-- Insert Affiliate Links for Video 3: 'Reiciendis illo nihi'
+
+-- For AU region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(3, 1, 'Amazon_AU', 'https://www.amazon.com.au/dp/NereaArnold?tag=beastierated-22'),
+(3, 1, 'ASOS_AU', 'https://www.asos.com/product/nerea-arnold'),
+(3, 1, 'Sephora_AU', 'https://www.sephora.com.au/product/nerea-arnold');
+
+-- For US region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(3, 2, 'Amazon_US', 'https://www.amazon.com/dp/NereaArnold?tag=beastierated-20'),
+(3, 2, 'ASOS_US', 'https://www.asos.com/product/nerea-arnold'),
+(3, 2, 'Sephora_US', 'https://www.sephora.com/product/nerea-arnold');
+
+-- For UK region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(3, 3, 'Amazon_UK', 'https://www.amazon.co.uk/dp/NereaArnold?tag=beastierated-21'),
+(3, 3, 'ASOS_UK', 'https://www.asos.com/product/nerea-arnold'),
+(3, 3, 'Sephora_UK', 'https://www.sephora.co.uk/product/nerea-arnold');
+
+-- For CA region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(3, 4, 'Amazon_CA', 'https://www.amazon.ca/dp/NereaArnold?tag=beastierated-20'),
+(3, 4, 'ASOS_CA', 'https://www.asos.ca/product/nerea-arnold'),
+(3, 4, 'Sephora_CA', 'https://www.sephora.ca/product/nerea-arnold');
+
+-- For GLOBAL region
+INSERT INTO `affiliate_links` (`video_id`, `region_id`, `retailer`, `url`) VALUES
+(3, 5, 'Amazon_GLOBAL', 'https://www.amazon.com/dp/NereaArnold?tag=beastierated-20'),
+(3, 5, 'ASOS_GLOBAL', 'https://www.asos.com/product/nerea-arnold'),
+(3, 5, 'Sephora_GLOBAL', 'https://www.sephora.com/product/nerea-arnold');
