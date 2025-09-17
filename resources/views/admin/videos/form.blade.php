@@ -225,7 +225,7 @@
                 </div>
             </div>
 
-            <div class="mb-3">
+            {{-- <div class="mb-3">
                 <label for="channel_id">Channel</label>
                 <select name="channel_id" id="channel_id" class="form-select" required>
                     <option value="" disabled selected>-- Select Channel --</option>
@@ -252,7 +252,7 @@
                 </select>
                 <div id="category_error" class="invalid-feedback" style="display:none;">Please select a category.
                 </div>
-            </div>
+            </div> --}}
 
             <div class="mb-3">
                 <label for="access_level">Access Level</label>
@@ -282,12 +282,12 @@
 
         <!-- Step 3 -->
         <div class="form-step">
-            <div class="mb-3">
+            {{-- <div class="mb-3">
                 <label for="affiliate_link">Affiliate Link</label>
                 <input type="url" name="affiliate_link" id="affiliate_link" class="form-control"
                     placeholder="https://example.com/affiliate" data-alwaysOptional="true"
                     value="{{ old('affiliate_link', $video->affiliate_link ?? '') }}">
-            </div>
+            </div> --}}
 
             @php
                 $thumbSource = old('thumbnail_option', !empty($video->thumbnail_image) ? 'image' : 'url');
@@ -738,14 +738,7 @@
                         id: "character_id",
                         err: "character_error"
                     },
-                    {
-                        id: "channel_id",
-                        err: "channel_error"
-                    },
-                    {
-                        id: "category_id",
-                        err: "category_error"
-                    },
+                    
                     {
                         id: "access_level",
                         err: "access_level_error"
@@ -829,12 +822,11 @@
         });
 
         // clear error on change for step 2 controls
-        ["character_id", "channel_id", "category_id", "access_level"].forEach(id => {
+        ["character_id",  "access_level"].forEach(id => {
             const el = document.getElementById(id);
             const map = {
                 character_id: "character_error",
-                channel_id: "channel_error",
-                category_id: "category_error",
+                
                 access_level: "access_level_error",
             };
             const msg = document.getElementById(map[id]);
@@ -876,23 +868,7 @@
             characterSelect.classList.remove('is-invalid');
         }
 
-        let channelSelect = document.getElementById('channel_id');
-        if (!channelSelect.value) {
-            isValid = false;
-            document.getElementById('channel_error').style.display = 'block';
-            channelSelect.classList.add('is-invalid');
-        } else {
-            channelSelect.classList.remove('is-invalid');
-        }
-
-        let categorySelect = document.getElementById('category_id');
-        if (!categorySelect.value) {
-            isValid = false;
-            document.getElementById('category_error').style.display = 'block';
-            categorySelect.classList.add('is-invalid');
-        } else {
-            categorySelect.classList.remove('is-invalid');
-        }
+       
 
         let accessLevelSelect = document.getElementById('access_level');
         if (!accessLevelSelect.value) {
@@ -914,23 +890,7 @@
         }
     });
 
-    document.getElementById('channel_id').addEventListener('change', function() {
-        let channelSelect = this;
-        let channelError = document.getElementById('channel_error');
-        if (channelSelect.value) {
-            channelSelect.classList.remove('is-invalid');
-            channelError.style.display = 'none';
-        }
-    });
-
-    document.getElementById('category_id').addEventListener('change', function() {
-        let categorySelect = this;
-        let categoryError = document.getElementById('category_error');
-        if (categorySelect.value) {
-            categorySelect.classList.remove('is-invalid');
-            categoryError.style.display = 'none';
-        }
-    });
+    
 
     document.getElementById('access_level').addEventListener('change', function() {
         let accessLevelSelect = this;

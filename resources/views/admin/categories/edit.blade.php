@@ -48,7 +48,7 @@
             </div>
 
 
-            {{-- <div class="form-group mt-3">
+            <div class="form-group mt-3">
                 <label>Category Image</label>
                 <input type="file" name="image" class="form-control">
                 @error('image') <span class="text-danger">{{ $message }}</span> @enderror
@@ -62,7 +62,7 @@
                             class="img-thumbnail">
                     </div>
                 @endif
-            </div> --}}
+            </div>
 
             <button class="btn btn-primary mt-3">Update</button>
         </form>

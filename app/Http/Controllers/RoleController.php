@@ -115,10 +115,27 @@ class RoleController extends Controller
 
         return view('admin.roles.permissions', compact('role', 'permissions', 'rolePermissions'));
     }
-    public function updatePermissions(Request $request, Role $role)
-    {
-        $role->permissions()->sync($request->permissions);  // Sync the permissions for the role
+    // public function updatePermissions(Request $request, Role $role)
+    // {
+    //     // dd($request, $role);
+    //     $role->permissions()->sync($request->permissions);  // Sync the permissions for the role
 
-        return redirect()->route('admin.roles.index')->with('success', 'Permissions updated successfully.');
+    //     return redirect()->route('admin.roles.index')->with('success', 'Permissions updated successfully.');
+    // }
+    public function updatePermissions(Request $request, Role $role)
+{
+    
+    $permissions = Permission::find($request->permissions);
+
+    $missingPermissions = array_diff($request->permissions, $permissions->pluck('id')->toArray());
+    foreach ($missingPermissions as $permissionId) {
+        Permission::create(['id' => $permissionId, 'name' => "custom_permission_$permissionId", 'guard_name' => 'web']);
     }
+
+    // Now sync the permissions
+    $role->permissions()->sync($request->permissions);
+
+    return redirect()->route('admin.roles.index')->with('success', 'Permissions updated successfully.');
+}
+
 }

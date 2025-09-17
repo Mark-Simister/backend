@@ -140,14 +140,14 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-        // make sure relations are available
+        
         $category->loadMissing('regions');
 
         $channels = Channel::all();
 
-        // get selected region IDs straight from the relation query
+        
         $selectedRegions = $category->regions()
-            ->pluck('regions.id')    // use table name to avoid ambiguity
+            ->pluck('regions.id')    
             ->toArray();
 
         // show active regions OR ones already selected

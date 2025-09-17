@@ -23,6 +23,7 @@ use App\Http\Middleware\VerifyCsrfToken;
 use App\Http\Controllers\VimeoController;
 use App\Http\Controllers\GlobalColorController;
 use App\Http\Controllers\AffiliateLinkController;
+use App\Http\Controllers\ProductMessageController;
 
 
 // Route::get('/', function () {
@@ -88,18 +89,18 @@ Route::middleware(['auth'])
             ->name('tags.byIds');
 
         // Route for managing affiliate links (View all links for a video)
-Route::get('/videos/{videoId}/affiliate-links', [VideoController::class, 'manageLinks'])->name('videos.affiliate-links');
+        Route::get('/videos/{videoId}/affiliate-links', [VideoController::class, 'manageLinks'])->name('videos.affiliate-links');
 
-// Route for storing a new affiliate link (POST method)
+        // Route for storing a new affiliate link (POST method)
 // Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link');
+    
+        // Route for deleting an affiliate link (DELETE method)
+        Route::delete('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'destroy'])->name('videos.affiliateLinks.destroy');
 
-// Route for deleting an affiliate link (DELETE method)
-Route::delete('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'destroy'])->name('videos.affiliateLinks.destroy');
-
-// Route for updating an existing affiliate link (PATCH method)
+        // Route for updating an existing affiliate link (PATCH method)
 // Route::patch('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
-Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link');
-Route::post('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
+        Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link');
+        Route::post('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
 
 
 
@@ -198,6 +199,11 @@ Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () 
     Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])
         ->name('subscriptions.show')
         ->middleware('permission:subscription.view');
+
+    // Product Messages
+    Route::get('product-messages', [ProductMessageController::class, 'index'])->name('product-messages.index');
+    Route::get('product-messages/{id}', [ProductMessageController::class, 'show'])->name('product-messages.show');
+    Route::delete('product-messages/{id}', [ProductMessageController::class, 'destroy'])->name('product-messages.delete');
 });
 
 

@@ -210,7 +210,6 @@ class UserController extends Controller
     {
         // Sync the roles with the user (assign the roles)
         $user->syncRoles($request->roles);  // Assuming you are using the `Spatie\Permission` package
-
         return redirect()->route('admin.sub_admins.index')->with('success', 'Roles assigned successfully.');
     }
 

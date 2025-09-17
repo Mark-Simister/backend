@@ -24,116 +24,127 @@
             </li>
         @endcan
         @can('channel.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.channels.index') }}">
-                <i class="ti-video-camera menu-icon"></i>
-                <span class="menu-title">Channels</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.channels.index') }}">
+                    <i class="ti-video-camera menu-icon"></i>
+                    <span class="menu-title">Channels</span>
+                </a>
+            </li>
         @endcan
         @can('category.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.categories.index') }}">
-                <i class="icon-layout menu-icon"></i>
-                <span class="menu-title">Categories</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.categories.index') }}">
+                    <i class="icon-layout menu-icon"></i>
+                    <span class="menu-title">Categories</span>
+                </a>
+            </li>
         @endcan
         @can('character_tag.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.character_tags.index') }}">
-                <i class="icon-layout menu-icon"></i>
-                <span class="menu-title">Character Tags</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.character_tags.index') }}">
+                    <i class="icon-layout menu-icon"></i>
+                    <span class="menu-title">Character Tags</span>
+                </a>
+            </li>
         @endcan
         @can('character_role.view')
-        <li class="nav-item {{ request()->routeIs('admin.character_roles.*') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
-                <i class="icon-layout menu-icon"></i>
-                <span class="menu-title">Character Roles</span>
-            </a>
-        </li>
+            <li class="nav-item {{ request()->routeIs('admin.character_roles.*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
+                    <i class="icon-layout menu-icon"></i>
+                    <span class="menu-title">Character Roles</span>
+                </a>
+            </li>
         @endcan
         @can('character.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.characters.index') }}">
-                <i class="ti-user menu-icon"></i>
-                <span class="menu-title">Characters</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.characters.index') }}">
+                    <i class="ti-user menu-icon"></i>
+                    <span class="menu-title">Characters</span>
+                </a>
+            </li>
         @endcan
         @can('highlight_tag.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.highlight_tags.index') }}">
-                <i class="ti-tag menu-icon"></i>
-                <span class="menu-title">Highlight Tags</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.highlight_tags.index') }}">
+                    <i class="ti-tag menu-icon"></i>
+                    <span class="menu-title">Highlight Tags</span>
+                </a>
+            </li>
         @endcan
         @can('video.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.videos.index') }}">
-                <i class="ti-control-play menu-icon"></i>
-                <span class="menu-title">All Videos</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.videos.index') }}">
+                    <i class="ti-control-play menu-icon"></i>
+                    <span class="menu-title">All Videos</span>
+                </a>
+            </li>
         @endcan
         @can('video.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.vimeo.index') }}">
-                <i class="ti-vimeo menu-icon"></i>
-                <span class="menu-title">Assign Vimeo Videos</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.vimeo.index') }}">
+                    <i class="ti-vimeo menu-icon"></i>
+                    <span class="menu-title">Assign Vimeo Videos</span>
+                </a>
+            </li>
         @endcan
         @can('rating_review.view')
-        <li class="nav-item {{ request()->is('admin/reviews*') ? 'active' : '' }}">
-            <a class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}"
-                href="{{ route('admin.reviews.index') }}">
-                <i class="ti-star menu-icon"></i>
-                <span class="menu-title">Ratings &amp; Reviews</span>
-            </a>
-        </li>
+            <li class="nav-item {{ request()->is('admin/reviews*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}"
+                    href="{{ route('admin.reviews.index') }}">
+                    <i class="ti-star menu-icon"></i>
+                    <span class="menu-title">Ratings &amp; Reviews</span>
+                </a>
+            </li>
         @endcan
         @can('users.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.users.index') }}">
-                <i class="icon-head menu-icon"></i>
-                <span class="menu-title">Users</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.users.index') }}">
+                    <i class="icon-head menu-icon"></i>
+                    <span class="menu-title">Users</span>
+                </a>
+            </li>
         @endcan
         @can('subscription_list.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.subscription_listing.index') }}">
-                <i class="ti-package menu-icon"></i>
-                <span class="menu-title">Subscription Listings</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.subscription_listing.index') }}">
+                    <i class="ti-package menu-icon"></i>
+                    <span class="menu-title">Subscription Listings</span>
+                </a>
+            </li>
         @endcan
         @can('subscription.view')
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.subscriptions.index') }}">
-                <i class="ti-credit-card menu-icon"></i>
-                <span class="menu-title">Subscriptions</span>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.subscriptions.index') }}">
+                    <i class="ti-credit-card menu-icon"></i>
+                    <span class="menu-title">Subscriptions</span>
+                </a>
+            </li>
         @endcan
+
         @role('super_admin')
-        <li class="nav-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('admin.roles.index') }}">
-                <i class="ti-lock menu-icon"></i>
-                <span class="menu-title">Role Management</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('admin.sub_admins.index') }}">
-                <i class="ti-user menu-icon"></i>
-                <span class="menu-title">Sub-admin Management</span>
-            </a>
-        </li>
+            <li class="nav-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('admin.roles.index') }}">
+                    <i class="ti-lock menu-icon"></i>
+                    <span class="menu-title">Role Management</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.sub_admins.index') }}">
+                    <i class="ti-user menu-icon"></i>
+                    <span class="menu-title">Sub-admin Management</span>
+                </a>
+            </li>
         @endrole
+        @can('product-message.view')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.product-messages.index') }}">
+                    <!-- Use a more appropriate icon for messages -->
+                    <i class="ti-comments menu-icon"></i> <!-- This is the icon for messages -->
+                    <span class="menu-title">Product Messages</span> <!-- Updated the text -->
+                </a>
+            </li>
+        @endcan
+
         <li class="nav-item">
             <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
                 aria-controls="form-elements">
@@ -149,7 +160,8 @@
             </div>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="collapse" href="#charts" aria-expanded="false" aria-controls="charts">
+            <a class="nav-link" data-bs-toggle="collapse" href="#charts" aria-expanded="false"
+                aria-controls="charts">
                 <i class="icon-bar-graph menu-icon"></i>
                 <span class="menu-title">Charts</span>
                 <i class="menu-arrow"></i>
@@ -161,7 +173,8 @@
             </div>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="collapse" href="#tables" aria-expanded="false" aria-controls="tables">
+            <a class="nav-link" data-bs-toggle="collapse" href="#tables" aria-expanded="false"
+                aria-controls="tables">
                 <i class="icon-grid-2 menu-icon"></i>
                 <span class="menu-title">Tables</span>
                 <i class="menu-arrow"></i>
@@ -173,7 +186,8 @@
             </div>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="collapse" href="#icons" aria-expanded="false" aria-controls="icons">
+            <a class="nav-link" data-bs-toggle="collapse" href="#icons" aria-expanded="false"
+                aria-controls="icons">
                 <i class="icon-contract menu-icon"></i>
                 <span class="menu-title">Icons</span>
                 <i class="menu-arrow"></i>

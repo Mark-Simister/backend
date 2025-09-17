@@ -13,14 +13,19 @@
             @method('PUT')
 
             <div class="form-group">
-                <label for="roles" class="form-label">Assign Roles</label>
-                <select name="roles[]" class="form-control" multiple required>
-                    @foreach($roles as $role)
-                        <option value="{{ $role->name }}">{{ ucfirst($role->name) }}</option>
-                    @endforeach
-                </select>
-                @error('roles') <span class="text-danger">{{ $message }}</span> @enderror
-            </div>
+    <label for="roles" class="form-label">Assign Roles</label>
+    <select name="roles[]" class="form-control"  required>
+        @foreach($roles as $role)
+            <option value="{{ $role->name }}" 
+                @if($user->hasRole($role->name)) selected @endif>
+                {{ ucfirst($role->name) }}
+            </option>
+        @endforeach
+    </select>
+    @error('roles') 
+        <span class="text-danger">{{ $message }}</span> 
+    @enderror
+</div>
 
             <button type="submit" class="btn btn-success mt-3">Assign Role</button>
         </form>

@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
 use App\Models\Tag;
 use App\Models\Region;
 use App\Models\AffiliateLink;
+use Illuminate\Support\Facades\DB;
 
 class VideoController extends Controller
 {
@@ -35,6 +36,33 @@ class VideoController extends Controller
 
         ];
     }
+    private function hasValidSubscription(int $userId): bool
+    {
+        $sub = Subscription::where('user_id', $userId)
+            ->latest('subscription_end_date')
+            ->first();
+
+
+        if (!$sub || $sub->trashed()) {
+            return false;
+        }
+
+        $now = now();
+
+        $statusOkay = in_array($sub->subscription_status, ['active', 'trialing'], true);
+        $notCanceled = $sub->subscription_status !== 'canceled' && is_null($sub->canceled_at);
+
+        $withinPaidPeriod = $sub->subscription_end_date && $now->lte($sub->subscription_end_date);
+        $withinTrial = $sub->trial_end_date && $now->lte($sub->trial_end_date);
+
+        $timeOkay = $withinPaidPeriod || $withinTrial;
+
+        $paymentOkay = ($sub->payment_status === 'succeeded') || ($sub->subscription_status === 'trialing');
+        // dd($sub, $statusOkay, $notCanceled, $withinPaidPeriod, $withinTrial, $paymentOkay);
+
+        return $statusOkay && $notCanceled && $timeOkay && $paymentOkay;
+    }
+
     public function index()
     {
         $videos = Video::latest()->get();
@@ -65,8 +93,8 @@ class VideoController extends Controller
 
                 // Step 2 fields
                 'character_id' => 'required|exists:characters,id',
-                'channel_id' => 'nullable|exists:channels,id',
-                'category_id' => 'nullable|exists:categories,id',
+                //'channel_id' => 'nullable|exists:channels,id',
+                //'category_id' => 'nullable|exists:categories,id',
                 'access_level' => 'required|in:public,premium,early_access',
                 'regions' => 'nullable|array',
                 'regions.*' => 'exists:regions,id',
@@ -137,6 +165,20 @@ class VideoController extends Controller
         }
 
         $validated = $validator->validated();
+
+        $character = Character::find($validated['character_id']);
+
+        if ($character) {
+            // Get category_id from the character
+            $validated['category_id'] = $character->category_id;
+
+            // Get channel_id from the category
+            $category = Category::find($validated['category_id']);
+            if ($category) {
+                $validated['channel_id'] = $category->channel_id;
+            }
+        }
+        // dd($validated['category_id'],$validated['channel_id'] );
 
         if ($validated['rating_type'] === 'rating') {
             // Only store public_rating for 'rating' type
@@ -242,6 +284,7 @@ class VideoController extends Controller
         }
 
         $video = Video::create($validated);
+        // dd($video);
 
         // Attach regions if any
         if ($request->has('regions')) {
@@ -638,8 +681,8 @@ class VideoController extends Controller
 
                 // Step 2
                 'character_id' => 'nullable|exists:characters,id',
-                'channel_id' => 'nullable|exists:channels,id',
-                'category_id' => 'nullable|exists:categories,id',
+                // 'channel_id' => 'nullable|exists:channels,id',
+                // 'category_id' => 'nullable|exists:categories,id',
                 'access_level' => 'required|in:public,premium,early_access',
                 'regions' => 'nullable|array',
                 'regions.*' => 'exists:regions,id',
@@ -705,6 +748,22 @@ class VideoController extends Controller
         }
 
         $validated = $validator->validated();
+
+        if ($validated['character_id']) {
+            $character = Character::find($validated['character_id']);
+            if ($character) {
+                $validated['category_id'] = $character->category_id;
+
+                $category = Category::find($validated['category_id']);
+                if ($category) {
+                    $validated['channel_id'] = $category->channel_id;
+                }
+            }
+        } else {
+            // If character_id is not provided, keep existing category_id and channel_id
+            $validated['category_id'] = $video->category_id;
+            $validated['channel_id'] = $video->channel_id;
+        }
 
         $tagIdsCsv = (string) $request->input('tag_ids', '');
         $tagIds = collect(explode(',', $tagIdsCsv))
@@ -2472,32 +2531,175 @@ class VideoController extends Controller
         ], 200);
     }
 
-    private function hasValidSubscription(int $userId): bool
+    public function recommendedVideos(Request $request, $region = null)
     {
-        $sub = Subscription::where('user_id', $userId)
-            ->latest('subscription_end_date')
-            ->first();
+        try {
+            $input = strtoupper($region ?? $request->input('region', ''));
+            $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
+            $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
+            // Get the authenticated user
+            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
 
-        if (!$sub || $sub->trashed()) {
-            return false;
+            $recommendedVideos = collect();
+
+            // If the user is authenticated, fetch recommended videos based on watch history and region
+            if ($user) {
+                // Base query to fetch recommended videos based on user's watch history and region
+                $q = Video::with([
+                    'reviews:id,video_id,rating',
+                    'regions:id,region_code',
+                ])
+                    ->leftJoin('video_watch_histories as vwh', function ($join) use ($user) {
+                        $join->on('vwh.video_id', '=', 'videos.id')
+                            ->where('vwh.user_id', '=', $user->id);
+                    })
+                    ->leftJoin('channel_region as cr', 'cr.channel_id', '=', 'videos.channel_id')
+                    ->leftJoin('regions as rr', 'rr.id', '=', 'cr.region_id')
+                    ->where(function ($query) use ($regionCode) {
+                        if ($regionCode !== 'GLOBAL') {
+                            $query->where('rr.region_code', '=', $regionCode);
+                        }
+                    })
+                    ->where('videos.status', 'published') // Filter published videos
+                    ->select(
+                        'videos.id',
+                        'videos.title',
+                        'videos.description',
+                        'videos.video_url',
+                        'videos.type',
+                        'videos.thumbnail_image',
+                        'videos.channel_id',
+                        'videos.character_id',
+                        'videos.category_id',
+                        'videos.product_name',
+                        'videos.product_asin_sku',
+                        'videos.public_rating',
+                        'videos.product_thumbnail',
+                        'videos.video_type',
+                        'videos.views',
+                        'videos.likes',
+                        'videos.rating_type',
+                        'videos.sponsorship_type',
+                        'videos.highlight_tags',
+                        'videos.created_at',
+                        'videos.updated_at',
+                        'videos.tag_ids' // Get tag ids directly
+                    )
+                    ->groupBy(
+                        'videos.id',
+                        'videos.title',
+                        'videos.description',
+                        'videos.video_url',
+                        'videos.type',
+                        'videos.thumbnail_image',
+                        'videos.channel_id',
+                        'videos.character_id',
+                        'videos.category_id',
+                        'videos.product_name',
+                        'videos.product_asin_sku',
+                        'videos.public_rating',
+                        'videos.product_thumbnail',
+                        'videos.video_type',
+                        'videos.views',
+                        'videos.likes',
+                        'videos.rating_type',
+                        'videos.sponsorship_type',
+                        'videos.highlight_tags',
+                        'videos.created_at',
+                        'videos.updated_at',
+                        'videos.tag_ids'
+                    )
+                    ->orderByDesc('vwh.created_at')
+                    ->limit(20);
+
+                // Check if the user has a valid subscription
+                if ($this->hasValidSubscription($user->id)) {
+                    // Include both free and paid videos
+                    $q->whereIn('videos.type', ['youtube', 'vimeo']);
+                } else {
+                    // Only include free videos (assuming 'youtube' is for free videos)
+                    $q->where('videos.type', 'youtube');
+                }
+
+                // Execute the query to get recommended videos
+                $recommendedVideos = $q->get();
+            }
+
+            // If there are videos, process the additional fields like tags and images
+            $data = $recommendedVideos->map(function ($video) {
+
+                // Handle video regions (remove pivot relation for simplicity)
+                if ($video->relationLoaded('regions')) {
+                    $video->regions->each->makeHidden(['pivot']);
+                }
+
+                // Handle tags - manually map the tag_ids if necessary
+                $tags = collect(explode(',', (string) $video->tag_ids)) // Assuming tag_ids is a comma-separated string
+                    ->map(fn($s) => trim($s))
+                    ->filter()
+                    ->values();
+
+                return [
+                    'id' => $video->id,
+                    'title' => $video->title,
+                    'description' => $video->description,
+                    'type' => $video->type,
+                    'video_url' => $video->video_url ?? '',
+                    'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+                    'character_id' => $video->character_id,
+                    'channel_id' => $video->channel_id,
+                    'category_id' => $video->category_id,
+                    'product_name' => $video->product_name,
+                    'product_asin_sku' => $video->product_asin_sku,
+                    'public_rating' => $video->public_rating,
+                    'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
+                    'rating_type' => $video->rating_type,
+                    'sponsorship_type' => $video->sponsorship_type,
+                    'highlight_tags' => $video->highlight_tags,
+                    'created_at' => $video->created_at->toDateTimeString(),
+                    'updated_at' => $video->updated_at->toDateTimeString(),
+                    'tags' => $tags, // Add tags directly here
+                    'views' => $video->views,
+                    'likes' => $video->likes,
+                    'regions' => $video->regions->map(fn($r) => [
+                        'id' => $r->id,
+                        'region_code' => $r->region_code,
+                    ]),
+                    'status' => $video->status,
+                    'is_draft' => $video->is_draft,
+                    'is_ai_generated' => $video->is_ai_generated,
+                    'qa_passed' => $video->qa_passed,
+                    'post_schedule_at' => $video->post_schedule_at,
+                    'seo_title' => $video->seo_title,
+                    'seo_description' => $video->seo_description,
+                    'cta_text' => $video->cta_text,
+                    'og_image_url' => $video->og_image_url,
+                    'open_graph_image' => $video->open_graph_image,
+                    'twitter_title' => $video->twitter_title,
+                    'twitter_description' => $video->twitter_description,
+                    'original_price' => $video->original_price,
+                    'sale_end_date' => $video->sale_end_date,
+                    'is_amazon_choice' => $video->is_amazon_choice,
+                ];
+            });
+
+            return response()->json([
+                'status' => true,
+                'message' => $this->hasValidSubscription($user->id)
+                    ? 'Paid and free recommended videos fetched successfully'
+                    : 'Your subscription has ended. Showing free recommended videos only.',
+                'data' => $data,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch recommended videos',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $now = now();
-
-        $statusOkay = in_array($sub->subscription_status, ['active', 'trialing'], true);
-        $notCanceled = $sub->subscription_status !== 'canceled' && is_null($sub->canceled_at);
-
-        $withinPaidPeriod = $sub->subscription_end_date && $now->lte($sub->subscription_end_date);
-        $withinTrial = $sub->trial_end_date && $now->lte($sub->trial_end_date);
-
-        $timeOkay = $withinPaidPeriod || $withinTrial;
-
-        $paymentOkay = ($sub->payment_status === 'succeeded') || ($sub->subscription_status === 'trialing');
-        // dd($sub, $statusOkay, $notCanceled, $withinPaidPeriod,$withinTrial, $paymentOkay);
-
-        return $statusOkay && $notCanceled && $timeOkay && $paymentOkay;
     }
+
 
 
 }

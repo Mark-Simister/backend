@@ -45,11 +45,11 @@
             </div>
 
 
-            {{-- <div class="form-group mt-3">
+            <div class="form-group mt-3">
                 <label>Category Image</label>
                 <input type="file" name="image" class="form-control">
                 @error('image') <span class="text-danger">{{ $message }}</span> @enderror
-            </div> --}}
+            </div>
 
             <button class="btn btn-success mt-3">Save</button>
         </form>

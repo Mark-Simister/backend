@@ -18,6 +18,8 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\VideoEngagementController;
 use App\Http\Controllers\GlobalColorController;
+use App\Http\Controllers\ProductMessageController;
+use App\Http\Controllers\SearchController;
 // use App\Http\Controllers\VimeoController;
 
 use Illuminate\Support\Facades\Http;
@@ -35,7 +37,7 @@ Route::post('otp/verify', [AuthController::class, 'verifyOtp']);
 Route::middleware(['auth:api'])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
-    
+
     // Categories list API
     Route::prefix('categories')->group(function () {
         // Route::get('/', [CategoryController::class, 'index_api']);
@@ -45,7 +47,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::delete('/{category}', [CategoryController::class, 'destroy_api']);
     });
     Route::prefix('regions')->group(function () {
-    // Route::get('/', [RegionController::class, 'index_api']);
+        // Route::get('/', [RegionController::class, 'index_api']);
         Route::post('/', [RegionController::class, 'store_api']);
         Route::get('/{id}', [RegionController::class, 'show_api']);
         Route::put('/{id}', [RegionController::class, 'update_api']);
@@ -58,7 +60,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('channels/{channel}', [ChannelController::class, 'show_api']);
     Route::put('channels/{channel}', [ChannelController::class, 'update_api']);
     Route::delete('channels/{channel}', [ChannelController::class, 'destroy_api']);
-    
+
 
 
     // Character Tags API
@@ -76,11 +78,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::delete('character-roles/{characterRole}', [CharacterRoleController::class, 'destroy_api']);
 
     // Route::get   ('/characters',          [CharacterController::class, 'index_api']);
-    Route::post  ('characters',          [CharacterController::class, 'store_api']);
+    Route::post('characters', [CharacterController::class, 'store_api']);
     // Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
-    Route::post  ('characters/{id}',     [CharacterController::class, 'update_api']); // if you prefer PUT/PATCH:
+    Route::post('characters/{id}', [CharacterController::class, 'update_api']); // if you prefer PUT/PATCH:
     // Route::match(['put','patch'], '/characters/{id}', [CharacterController::class, 'update_api']);
-    Route::delete('characters/{id}',     [CharacterController::class, 'destroy_api']);
+    Route::delete('characters/{id}', [CharacterController::class, 'destroy_api']);
 
     Route::post('/purchase/region/{region}', [BillingController::class, 'purchase']);
 
@@ -91,48 +93,55 @@ Route::middleware(['auth:api'])->group(function () {
     // ->name('stripe.webhook.api');
     Route::post('purchase/confirm', [BillingController::class, 'confirm']);
 
-   Route::get('videos/{region?}', [VideoController::class, 'index_api']);
+    Route::get('videos/{region?}', [VideoController::class, 'index_api']);
     Route::get('paid-videos/{region}', [VideoController::class, 'paidVideos']);
     Route::get('paid-videos-trending/{region}', [VideoController::class, 'paidVideosTrending']);
     Route::get('paid-videos-top-deals/{region}', [VideoController::class, 'paidVideosTopDeals']);
     Route::get('paid-trending-characters/{region}', [VideoController::class, 'charactersFromPaidVideos']);
     Route::get('/paid-videos/{region}/{id}', [VideoController::class, 'paidVideosDetail']);
+    Route::get('recommended-videos/{region?}', [VideoController::class, 'recommendedVideos']);
+
 
 
     Route::post('reviews', [ReviewController::class, 'store_api']);
-    Route::get('my-reviews', [ReviewController::class, 'myReviews']);
+    Route::get('my-reviews', [ReviewController::class, 'myReviews']);    
 
     Route::get('users/{id}', [UserController::class, 'show_api'])->whereNumber('id');
     Route::get('me/profile', [UserController::class, 'me_api']);
     Route::post('/profile/update', [UserController::class, 'update_api']);
 
     // VideoEngagements
-    
+
     // Likes
-    Route::post   ('videos/{video}/like',     [VideoEngagementController::class, 'like'])->name('api.videos.like');
-    Route::delete ('videos/{video}/unlike',     [VideoEngagementController::class, 'unlike'])->name('api.videos.unlike');
+    Route::post('videos/{video}/like', [VideoEngagementController::class, 'like'])->name('api.videos.like');
+    Route::delete('videos/{video}/unlike', [VideoEngagementController::class, 'unlike'])->name('api.videos.unlike');
     Route::get('/videos-check/{video}/likes-count', [VideoEngagementController::class, 'likesCount']);
 
     // Favourites
-    Route::post   ('videos/{video}/favorite', [VideoEngagementController::class, 'favorite'])->name('api.videos.favorite');
-    Route::delete ('videos/{video}/favorite', [VideoEngagementController::class, 'unfavorite'])->name('api.videos.unfavorite');
+    Route::post('videos/{video}/favorite', [VideoEngagementController::class, 'favorite'])->name('api.videos.favorite');
+    Route::delete('videos/{video}/favorite', [VideoEngagementController::class, 'unfavorite'])->name('api.videos.unfavorite');
 
     // Watch history 
-    Route::post   ('videos/{video}/watch',    [VideoEngagementController::class, 'recordWatch'])->name('api.videos.watch');
+    Route::post('videos/{video}/watch', [VideoEngagementController::class, 'recordWatch'])->name('api.videos.watch');
+
+    //categories follow
+    Route::post('/categories/{categoryId}/follow', [VideoEngagementController::class, 'followCategory']);
+    Route::get('/followed-categories', [VideoEngagementController::class, 'listFollowedCategories']);
+
 
     Route::post('/channels/{id}/follow', [ChannelController::class, 'follow'])->name('channels.follow');
     Route::get('recommended-channels/{region?}', [CategoryController::class, 'recommendedChannels']);
 
     //  Route::delete('/channels/{id}/unfollow', [FollowChannelController::class, 'unfollow'])->name('channels.unfollow');
 
-     Route::get('/follows', [ChannelController::class, 'listFollows'])->name('channels.follows');
+    Route::get('/follows', [ChannelController::class, 'listFollows'])->name('channels.follows');
 
     // Lists (paginated)
-    Route::get('me/likes',        [VideoEngagementController::class, 'myLikes'])      ->name('api.me.likes');
-    Route::get('me/favourites',   [VideoEngagementController::class, 'myFavourites']) ->name('api.me.favourites');
+    Route::get('me/likes', [VideoEngagementController::class, 'myLikes'])->name('api.me.likes');
+    Route::get('me/favourites', [VideoEngagementController::class, 'myFavourites'])->name('api.me.favourites');
     Route::get('me/last-watched', [VideoEngagementController::class, 'myLastWatched'])->name('api.me.last_watched');
 
-     // Likes
+    // Likes
     Route::get('/me/likes', [VideoEngagementController::class, 'myLikes'])->name('api.me.likes');
 
     // Favourites
@@ -149,6 +158,7 @@ Route::get('regions', [RegionController::class, 'index_api']);
 Route::get('channels', [ChannelController::class, 'index_api']);
 Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
 Route::get('global-colors', [GlobalColorController::class, 'index_api']);
+Route::post('/product-messages', [ProductMessageController::class, 'store']);
 
 
 Route::get(
@@ -161,11 +171,13 @@ Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api']);
 Route::get('/categories-pet/region/{region?}', [CategoryController::class, 'index_by_region_api_pets']);
 Route::get('/categories-people/region/{region?}', [CategoryController::class, 'index_by_region_api_people']);
-Route::match(['GET','POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
-Route::get   ('characters',          [CharacterController::class, 'index_api']);
-Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
+
+
+Route::match(['GET', 'POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
+Route::get('characters', [CharacterController::class, 'index_api']);
+Route::get('characters/{id}', [CharacterController::class, 'show_api']);
 // Route::get('/characters/{id}/with-videos/{region}', [CharacterController::class, 'showWithVideos']);
-Route::get('/character-detail/{id}/{region}',[CharacterController::class, 'showWithVideos'])->name('characters.withVideos');
+Route::get('/character-detail/{id}/{region}', [CharacterController::class, 'showWithVideos'])->name('characters.withVideos');
 
 Route::get('/characters/region/{region?}', [CharacterController::class, 'index_by_region_api']);
 
@@ -192,8 +204,11 @@ Route::get('/comments/{comment}', [CommentController::class, 'show']);
 Route::get('/comments/{comment}/thread', [CommentController::class, 'thread']);
 Route::patch('/comments/{comment}', [CommentController::class, 'update']);
 Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+// Route::get('advanced-search', [SearchController::class, 'advancedSearch']);
+// In routes/api.php
+Route::get('advanced-search/region/{region}', [SearchController::class, 'advancedSearch']);
 
-    
+
 Route::get('/my-country', function (Request $request) {
     // Try real client IP from common proxy/CDN headers, else fallback to Laravel's IP.
     $ip = $request->header('CF-Connecting-IP')
@@ -207,29 +222,31 @@ Route::get('/my-country', function (Request $request) {
         $j = $r->json();
         if (!empty($j['success']) && !empty($j['country_code'])) {
             return response()->json([
-                'ip'           => $j['ip'] ?? $ip,
+                'ip' => $j['ip'] ?? $ip,
                 'country_code' => strtoupper($j['country_code']),
-                'source'       => 'ipwho.is',
+                'source' => 'ipwho.is',
             ]);
         }
-    } catch (\Throwable $e) {}
+    } catch (\Throwable $e) {
+    }
 
     try {
         $r2 = Http::timeout(5)->retry(2, 200)->get("https://ipapi.co/{$ip}/json/");
         $j2 = $r2->json();
         if (!empty($j2['country'])) {
             return response()->json([
-                'ip'           => $j2['ip'] ?? $ip,
+                'ip' => $j2['ip'] ?? $ip,
                 'country_code' => strtoupper($j2['country']),
-                'source'       => 'ipapi.co',
+                'source' => 'ipapi.co',
             ]);
         }
-    } catch (\Throwable $e) {}
+    } catch (\Throwable $e) {
+    }
 
     return response()->json([
-        'ip'           => $ip,
+        'ip' => $ip,
         'country_code' => 'UNKNOWN',
-        'source'       => 'fallback',
+        'source' => 'fallback',
     ]);
 });
 
@@ -240,7 +257,7 @@ Route::get('/my-country-get', function (Request $request) {
         'AU' => 'https://au.fstg.beastierated.com/',
         'CA' => 'https://ca.fstg.beastierated.com/',
         'UK' => 'https://uk.fstg.beastierated.com/',
-        'US' => 'https://us.fstg.beastierated.com/', 
+        'US' => 'https://us.fstg.beastierated.com/',
     ];
 
     // Global/root URL for ALL non-mapped countries
@@ -257,7 +274,7 @@ Route::get('/my-country-get', function (Request $request) {
         ?? $request->ip();
 
     $country = null;
-    $source  = 'fallback';
+    $source = 'fallback';
 
     // Try ipwho.is
     try {
@@ -265,9 +282,10 @@ Route::get('/my-country-get', function (Request $request) {
         $j = $r->json();
         if (!empty($j['success']) && !empty($j['country_code'])) {
             $country = strtoupper($j['country_code']);
-            $source  = 'ipwho.is';
+            $source = 'ipwho.is';
         }
-    } catch (\Throwable $e) {}
+    } catch (\Throwable $e) {
+    }
 
     // Fallback to ipapi.co
     if (!$country) {
@@ -276,15 +294,17 @@ Route::get('/my-country-get', function (Request $request) {
             $j2 = $r2->json();
             if (!empty($j2['country'])) {
                 $country = strtoupper($j2['country']);
-                $source  = 'ipapi.co';
+                $source = 'ipapi.co';
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
     }
 
     // Normalize GB -> UK for your URLs
-    if ($country === 'GB') $country = 'UK';
+    if ($country === 'GB')
+        $country = 'UK';
 
-    
+
     $url = $map[$country] ?? $globalRoot;
 
     // Extra safety: ensure URL is only one of the allowed ones
@@ -293,11 +313,11 @@ Route::get('/my-country-get', function (Request $request) {
     }
 
     return response()->json([
-        'ip'           => $ip,
+        'ip' => $ip,
         'country_code' => $country ?? 'UNKNOWN',
-        'url'          => $url,
-        'source'       => $source,
-        'region'       => $url === $globalRoot ? 'GLOBAL' : ($country ?? 'UNKNOWN'),
+        'url' => $url,
+        'source' => $source,
+        'region' => $url === $globalRoot ? 'GLOBAL' : ($country ?? 'UNKNOWN'),
     ]);
 });
 
@@ -312,4 +332,3 @@ Route::any('{any}', function () {
         'message' => 'The requested API route could not be found.'
     ], 404);
 })->where('any', '.*');
-    
