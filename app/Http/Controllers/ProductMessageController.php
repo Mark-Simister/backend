@@ -36,39 +36,41 @@ class ProductMessageController extends Controller
     // Store product message
     public function store(Request $request)
 {
-    // Check if the user is authenticated via 'api' or 'sanctum' guard
+
     $user = $request->user('api') ?? $request->user('sanctum') ?? null;
 
     if ($user) {
-        // If logged in, fetch name and email from the Auth token
+        
         $name = $user->name;
         $email = $user->email;
     } else {
-        // If not logged in, request first name, last name, email, and message from the user
+        
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'message' => 'required|string|max:500', // Added message validation
+            'message' => 'required|string|max:500', 
+            'subject' => 'required|string|max:255', 
         ]);
 
-        // Combine first name and last name to create the full name
         $firstName = $request->input('first_name');
         $lastName = $request->input('last_name');
         $name = $firstName . ' ' . $lastName;
 
         $email = $request->input('email');
+        $subject = $request->input('subject'); 
     }
 
-    // Store the product message
     $productMessage = ProductMessage::create([
         'name' => $name,
         'email' => $email,
-        'message' => $request->input('message')
+        'message' => $request->input('message'),
+        'subject' => $subject, 
     ]);
 
     return response()->json(['status' => 'success', 'data' => $productMessage]);
 }
+
 
 
 

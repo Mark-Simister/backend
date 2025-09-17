@@ -181,4 +181,12 @@ public function seos()
     return $this->hasMany(SeoRegion::class);
 }
 
+public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'tags', 'video_id', 'tag_id');
+        
+    }
+
+    
+
 }

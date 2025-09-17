@@ -136,3 +136,8 @@ curl --location 'http://127.0.0.1:8000/api/product-messages' \
         "email": "johndoe@example.com",
         "message": "This is a product message from a guest."
     }'
+
+
+    php artisan migrate --path=/database/migrations/2025_09_17_130255_add_subject_to_product_messages_table.php
+
+   
