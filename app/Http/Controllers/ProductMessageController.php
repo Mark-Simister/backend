@@ -34,23 +34,25 @@ class ProductMessageController extends Controller
     
     // APi
     // Store product message
-    public function store(Request $request)
+   public function store(Request $request)
 {
-
     $user = $request->user('api') ?? $request->user('sanctum') ?? null;
 
     if ($user) {
-        
+        // If the user is authenticated, use their name and email
         $name = $user->name;
         $email = $user->email;
-    } else {
         
+        // Set $subject to null or any default value if it's not provided by the authenticated user
+        $subject = null;
+    } else {
+        // Validate input if the user is not authenticated
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'message' => 'required|string|max:500', 
-            'subject' => 'required|string|max:255', 
+            'message' => 'required|string|max:500',
+            'subject' => 'required|string|max:255',
         ]);
 
         $firstName = $request->input('first_name');
@@ -58,9 +60,10 @@ class ProductMessageController extends Controller
         $name = $firstName . ' ' . $lastName;
 
         $email = $request->input('email');
-        $subject = $request->input('subject'); 
+        $subject = $request->input('subject');
     }
 
+    // Create the product message
     $productMessage = ProductMessage::create([
         'name' => $name,
         'email' => $email,
@@ -70,6 +73,7 @@ class ProductMessageController extends Controller
 
     return response()->json(['status' => 'success', 'data' => $productMessage]);
 }
+
 
 
 
