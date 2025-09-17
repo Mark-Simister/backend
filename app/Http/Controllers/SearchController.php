@@ -172,7 +172,6 @@ class SearchController extends Controller
             // Search in Videos
             $videos = Video::with('regions')
                 ->where(function ($query) use ($searchTerm) {
-                    // Case-insensitive search using LOWER() for each relevant field
                     $query->whereRaw('LOWER(title) LIKE ?', ['%' . strtolower($searchTerm) . '%'])
                         ->orWhereRaw('LOWER(description) LIKE ?', ['%' . strtolower($searchTerm) . '%'])
                         ->orWhereRaw('LOWER(type) LIKE ?', ['%' . strtolower($searchTerm) . '%'])
@@ -226,16 +225,19 @@ class SearchController extends Controller
                 });
             }
 
-            // Search for matching highlight tag labels (highlight_tags table)
+            // Fetch highlight tags by label
             $highlightTags = HighlightTag::whereRaw('LOWER(label) LIKE ?', ['%' . strtolower($searchTerm) . '%'])->get();
+
             if ($highlightTags->isNotEmpty()) {
                 $highlightTagIds = $highlightTags->pluck('id')->toArray();
+
                 $videos->orWhere(function ($query) use ($highlightTagIds) {
                     foreach ($highlightTagIds as $highlightTagId) {
-                        $query->orWhereRaw('LOWER(highlight_tags) LIKE ?', ['%' . strtolower($highlightTagId) . '%']);
+                        $query->orWhereRaw('FIND_IN_SET(?, videos.highlight_tags)', [$highlightTagId]);
                     }
                 });
             }
+
 
             if (!$hasValidSubscription) {
                 $videos->where('type', 'youtube');
