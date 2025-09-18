@@ -83,6 +83,12 @@ Route::middleware(['auth'])
         // Videos
         Route::resource('videos', VideoController::class)
             ->middleware('permission:video.view|video.create|video.edit|video.delete');
+        Route::get('/videos/{id}/comments', [VideoController::class, 'showCommentsPage'])->name('videos.comments');
+        Route::delete('/comments/{comment}', [VideoController::class, 'destroy_comment'])->name('comments.delete');
+        Route::put('/comments/{comment}', [VideoController::class, 'update_comment'])->name('comments.update');
+        Route::delete('/replies/{reply}', [VideoController::class, 'deleteReply'])->name('replies.delete');
+
+
         Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
         Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
         Route::get('/tags/by-ids', [TagController::class, 'byIds'])

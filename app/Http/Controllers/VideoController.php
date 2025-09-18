@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
 use App\Models\Tag;
 use App\Models\Region;
 use App\Models\AffiliateLink;
+use App\Models\Comment;
 use Illuminate\Support\Facades\DB;
 
 class VideoController extends Controller
@@ -917,6 +918,100 @@ class VideoController extends Controller
         $video->delete();
         return back()->with('success', 'Video deleted.');
     }
+
+    public function showCommentsPage($id)
+{
+    $video = Video::with(['comments.user', 'comments.replies.user'])
+        ->where('id', $id)
+        ->first();
+
+    if (!$video) {
+        return redirect()->route('admin.videos.index')->with('error', 'Video not found.');
+    }
+
+    // Paginate comments if the data is large
+    $comments = $video->comments()->with(['user', 'replies.user'])->paginate(10); // Pagination added
+
+    // Alternatively, if not using pagination, load the comments as before
+    // $comments = $video->comments->map(function ($comment) {
+    //     return [
+    //         'id' => $comment->id,
+    //         'name' => $comment->user->name ?? 'Unknown',
+    //         'body' => $comment->body,
+    //         'created_at' => $comment->created_at->toDateTimeString(),
+    //         'replies' => $comment->replies->map(function ($reply) {
+    //             return [
+    //                 'name' => $reply->user->name ?? 'Unknown',
+    //                 'body' => $reply->body,
+    //             ];
+    //         }),
+    //     ];
+    // });
+
+    return view('admin.videos.comments', [
+        'video' => $video,
+        'comments' => $comments, // Pass paginated comments
+    ]);
+}
+
+
+    public function destroy_comment($commentId)
+    {
+        $comment = Comment::find($commentId);
+
+        if (!$comment) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Comment not found.',
+                'data' => []
+            ], 404);
+        }
+
+        $comment->replies()->delete();
+
+        $comment->delete();
+
+        return redirect()->back()->with('success', 'Comment and its replies deleted successfully.');
+    }
+    public function update_comment(Request $request, $commentId)
+    {
+        $comment = Comment::find($commentId);
+
+        if (!$comment) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Comment not found.',
+                'data' => []
+            ], 404);
+        }
+
+        $data = $request->validate([
+            'body' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $comment->update(['body' => $data['body']]);
+
+        return redirect()->back()->with('success', 'Comment updated successfully.');
+    }
+
+    public function deleteReply($id)
+{
+    $reply = Comment::find($id);
+
+    if (!$reply) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Reply not found.',
+            'data' => []
+        ], 404);
+    }
+
+    $reply->delete();
+
+    return redirect()->back()->with('success', 'Reply deleted successfully.');
+}
+
+
 
     // Show form for managing affiliate links for a video
     public function manageLinks($videoId)

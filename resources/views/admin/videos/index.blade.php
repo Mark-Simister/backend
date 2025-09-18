@@ -86,6 +86,12 @@
                                                 </button>
                                             </form>
                                         @endcan
+                                        @can('video.edit')
+                                            <a href="{{ route('admin.videos.comments', $video->id) }}"
+                                                class="btn btn-info show-comments-btn">
+                                                <i class="bi bi-chat-left-dots"></i>
+                                            </a>
+                                        @endcan
                                     </td>
                                 </tr>
                             @endforeach

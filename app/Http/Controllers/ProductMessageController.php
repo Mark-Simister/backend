@@ -36,43 +36,39 @@ class ProductMessageController extends Controller
     // Store product message
    public function store(Request $request)
 {
-    $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+    $user = $request->user('api') ?? $request->user('sanctum');
 
-    if ($user) {
-        // If the user is authenticated, use their name and email
-        $name = $user->name;
-        $email = $user->email;
-        
-        // Set $subject to null or any default value if it's not provided by the authenticated user
-        $subject = null;
-    } else {
-        // Validate input if the user is not authenticated
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'message' => 'required|string|max:500',
-            'subject' => 'required|string|max:255',
-        ]);
+    // Validate input (validation applies regardless of authentication)
+    $request->validate([
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'message' => 'required|string|max:500',
+        'subject' => 'required|string|max:255',
+    ]);
 
-        $firstName = $request->input('first_name');
-        $lastName = $request->input('last_name');
-        $name = $firstName . ' ' . $lastName;
+    $firstName = $request->input('first_name');
+    $lastName = $request->input('last_name');
+    $name = $firstName . ' ' . $lastName;
 
-        $email = $request->input('email');
-        $subject = $request->input('subject');
-    }
+    $email = $request->input('email');
+    $subject = $request->input('subject');
+    $message = $request->input('message');
 
     // Create the product message
     $productMessage = ProductMessage::create([
         'name' => $name,
         'email' => $email,
-        'message' => $request->input('message'),
-        'subject' => $subject, 
+        'message' => $message,
+        'subject' => $subject,
     ]);
 
-    return response()->json(['status' => 'success', 'data' => $productMessage]);
+    return response()->json([
+        'status' => 'success',
+        'data' => $productMessage
+    ]);
 }
+
 
 
 
