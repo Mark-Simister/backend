@@ -24,6 +24,7 @@ use App\Http\Controllers\VimeoController;
 use App\Http\Controllers\GlobalColorController;
 use App\Http\Controllers\AffiliateLinkController;
 use App\Http\Controllers\ProductMessageController;
+use App\Http\Controllers\NewsletterController;
 
 
 // Route::get('/', function () {
@@ -109,10 +110,9 @@ Route::middleware(['auth'])
         Route::post('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
 
 
-
-
         Route::resource('affiliate-links', AffiliateLinkController::class);
 
+        Route::get('/newsletter', [NewsletterController::class, 'index'])->name('newsletter');
 
 
         Route::get('videos/{video}/edit-seo', [VideoController::class, 'editSeo'])

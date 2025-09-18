@@ -144,6 +144,15 @@
                 </a>
             </li>
         @endcan
+        {{-- @can('newsletter-subscription.view') --}}
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('admin.newsletter') }}">
+            <i class="ti-email menu-icon"></i> <!-- Icon for newsletter -->
+            <span class="menu-title">Newsletter Subscriptions</span>
+        </a>
+    </li>
+{{-- @endcan --}}
+
 
         <li class="nav-item">
             <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"

@@ -996,6 +996,8 @@ class VideoController extends Controller
 
     public function deleteReply($id)
 {
+    // dd($id);
+    // Find the reply by ID
     $reply = Comment::find($id);
 
     if (!$reply) {

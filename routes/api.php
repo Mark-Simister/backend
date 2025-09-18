@@ -20,6 +20,7 @@ use App\Http\Controllers\VideoEngagementController;
 use App\Http\Controllers\GlobalColorController;
 use App\Http\Controllers\ProductMessageController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\NewsletterController;
 // use App\Http\Controllers\VimeoController;
 
 use Illuminate\Support\Facades\Http;
@@ -174,7 +175,7 @@ Route::get('categories', [CategoryController::class, 'index_api']);
 Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api'])->name('categories.byRegion');
 Route::get('/categories-pet/region/{region?}', [CategoryController::class, 'index_by_region_api_pets']);
 Route::get('/categories-people/region/{region?}', [CategoryController::class, 'index_by_region_api_people']);
-
+Route::get('/categories-detail/region/{region?}/{category_id}', [CategoryController::class, 'index_by_region_api_categories_detail']);
 
 Route::match(['GET', 'POST'], '/channels/by-region', [ChannelController::class, 'index_by_region_api']);
 Route::get('characters', [CharacterController::class, 'index_api']);
@@ -211,6 +212,8 @@ Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
 // In routes/api.php
 Route::get('advanced-search/region/{region}', [SearchController::class, 'advancedSearch']);
 
+Route::post('/subscribe', [NewsletterController::class, 'subscribe_api']);
+Route::get('/newsletter-subscriptions', [NewsletterController::class, 'index_api']);
 
 Route::get('/my-country', function (Request $request) {
     // Try real client IP from common proxy/CDN headers, else fallback to Laravel's IP.

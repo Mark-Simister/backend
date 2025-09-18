@@ -14,6 +14,7 @@ use App\Models\CategoryRegion;
 use App\Models\Region;
 use App\Models\Subscription;
 use App\Models\Channel;
+use App\Models\CategoryFollow;
 
 use Illuminate\Support\Facades\Auth;
 use App\HasSubscriptionSections;
@@ -140,14 +141,14 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-        
+
         $category->loadMissing('regions');
 
         $channels = Channel::all();
 
-        
+
         $selectedRegions = $category->regions()
-            ->pluck('regions.id')    
+            ->pluck('regions.id')
             ->toArray();
 
         // show active regions OR ones already selected
@@ -324,66 +325,7 @@ class CategoryController extends Controller
             ], 500);
         }
     }
-    // public function index_by_region_api_pets(Request $request, $region = null)
-    // {
-    //     try {
-    //         // 1) Resolve region code
-    //         $input = strtoupper($region ?? $request->input('region', ''));
-    //         $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL']; // include GLOBAL if you use it
-    //         $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
-
-    //         $query = Category::select('id', 'name', 'slug', 'channel_id', 'created_at', 'updated_at')
-    //             ->where('slug', 'pets') 
-    //             ->whereHas('regions', function ($q) use ($regionCode) {
-    //                 $q->where('region_code', $regionCode);
-    //             })
-    //             ->with([
-    //                 'channel:id,name',
-    //                 'regions:id,region_code'
-    //             ])
-    //             ->latest();
-
-    //         if ($request->filled('channel_id')) {
-    //             $query->where('channel_id', (int) $request->input('channel_id'));
-    //         }
-
-    //         $categories = $query->get();
-
-    //         $data = $categories->map(function ($category) {
-    //             // remove pivot keys
-    //             if ($category->relationLoaded('regions')) {
-    //                 $category->regions->each->makeHidden(['pivot']);
-    //             }
-
-    //             return [
-    //                 'id' => $category->id,
-    //                 'name' => $category->name,
-    //                 'slug' => $category->slug,
-    //                 'channel' => $category->channel,            
-    //                 'regions' => $category->regions->map(fn($r) => [
-    //                     'id' => $r->id,
-    //                     'region_code' => $r->region_code,
-    //                 ]),
-    //                 'category_image' => $category->category_image
-    //                     ? asset($category->category_image)
-    //                     : null,
-    //                 'created_at' => $category->created_at->toDateTimeString(),
-    //             ];
-    //         });
-
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Categories fetched successfully',
-    //             'data' => $data,
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Failed to fetch categories',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
+    
     public function index_by_region_api_pets(Request $request, $region = null)
     {
         try {
@@ -407,7 +349,7 @@ class CategoryController extends Controller
             }
 
             $categories = $query->get();
-
+            
             $data = $categories->map(function ($category) {
                 if ($category->relationLoaded('regions')) {
                     $category->regions->each->makeHidden(['pivot']);
@@ -632,6 +574,135 @@ class CategoryController extends Controller
             ], 500);
         }
     }
+
+    public function index_by_region_api_categories_detail(Request $request, $region = null, $category_id)
+    {
+        try {
+            // 1) Resolve region code
+            $input = strtoupper($region ?? $request->input('region', ''));
+            $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL']; // Allowable regions
+            $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
+
+            // 2) Fetch the category based on the provided category_id and region
+            $query = Category::select('id', 'name', 'slug', 'channel_id', 'created_at', 'updated_at')
+                ->where('id', $category_id) // Filter by category_id
+                ->whereHas('regions', function ($q) use ($regionCode) {
+                    $q->where('region_code', $regionCode); // Filter by region code
+                })
+                ->with([
+                    'channel:id,name,image,created_at,updated_at',
+                    'regions:id,region_code',
+                ])
+                ->latest();
+
+            // Optional: Filter by channel_id if provided
+            if ($request->filled('channel_id')) {
+                $query->where('channel_id', (int) $request->input('channel_id'));
+            }
+
+            // Execute the query to get the category
+            $category = $query->first(); // Get only the specific category
+
+            if (!$category) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Category not found for the provided region.',
+                ], 404);
+            }
+            // Fetch recommended channels if the user is authenticated
+            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            $followed = 0;
+            if ($user) {
+                $followed = CategoryFollow::where('user_id', $user->id)
+                    ->where('category_id', $category->id)
+                    ->exists() ? 1 : 0;
+            }
+
+            // Prepare the category data
+            $data = [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'channel' => $category->channel,
+                'regions' => $category->regions->map(fn($r) => [
+                    'id' => $r->id,
+                    'region_code' => $r->region_code,
+                ]),
+                'category_image' => $category->category_image ? asset($category->category_image) : null,
+                'created_at' => $category->created_at->toDateTimeString(),
+                'followed' => $followed,
+            ];
+
+
+            $recommended = collect();
+
+            if ($user) {
+                $recommended = Channel::query()
+                    ->leftJoin('videos', 'videos.channel_id', '=', 'channels.id')
+                    ->leftJoin('video_watch_histories as vwh', function ($join) use ($user) {
+                        $join->on('vwh.video_id', '=', 'videos.id')
+                            ->where('vwh.user_id', '=', $user->id);
+                    })
+                    ->leftJoin('channel_region as cr', 'cr.channel_id', '=', 'channels.id')
+                    ->leftJoin('regions as rr', 'rr.id', '=', 'cr.region_id')
+                    ->when($regionCode !== 'GLOBAL', fn($q) => $q->where('rr.region_code', $regionCode))
+                    ->whereNotNull('channels.id')
+                    ->groupBy(
+                        'channels.id',
+                        'channels.name',
+                        'channels.image',
+                        'channels.primary_color',
+                        'channels.secondary_color',
+                        'channels.accent_color',
+                        'channels.background_color',
+                        'channels.created_at',
+                        'channels.updated_at'
+                    )
+                    ->select(
+                        'channels.*',
+                        DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
+                        DB::raw('MAX(vwh.created_at) as last_watched_at')
+                    )
+                    ->orderByDesc('watch_count')
+                    ->orderByDesc('last_watched_at')
+                    ->limit(20)
+                    ->get()
+                    ->map(function ($ch) {
+                        return [
+                            'id' => $ch->id,
+                            'name' => $ch->name,
+                            'image_url' => $ch->image_url,
+                            'created_at' => optional($ch->created_at)?->toDateTimeString(),
+                            'updated_at' => optional($ch->updated_at)?->toDateTimeString(),
+                            'watch_count' => (int) $ch->watch_count,
+                        ];
+                    });
+            }
+
+            // Get subscription sections and channels for the region
+            $sections = $this->getSubscriptionSections($request, $region ?? $request->input('region', ''));
+            $channelsByRegion = $this->getChannelsForRegion($request, $region ?? $request->input('region', ''));
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Category details fetched successfully',
+                'data' => $data,
+                'recommended_channels' => $recommended,
+                'top_deals' => $sections['top_deals'],
+                'trending_products' => $sections['trending_products'],
+                'is_paid_user' => $sections['is_paid_user'],
+                'channels' => $channelsByRegion,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch category details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function recommendedChannels(Request $request, $region = null)
     {
