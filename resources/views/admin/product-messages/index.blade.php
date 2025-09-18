@@ -35,7 +35,6 @@
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $productMessage->name }}</td>
                                     <td>{{ $productMessage->email }}</td>
-                                    <td>{{ $productMessage->email }}</td>
                                     <td>{{ Str::limit($productMessage->subject, 50) }}</td>
                                     <td>{{ Str::limit($productMessage->message, 50) }}</td>
                                     <td>

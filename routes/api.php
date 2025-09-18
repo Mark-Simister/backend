@@ -200,7 +200,7 @@ Route::get('/subscription-listings/region/{region}', [SubscriptionListingControl
 
 Route::prefix('videos/{video}')->group(function () {
     Route::get('/comments', [CommentController::class, 'index']);
-    Route::post('/comments', [CommentController::class, 'store']);
+    Route::middleware('auth:api')->post('/comments', [CommentController::class, 'store']);
 });
 
 Route::get('/comments/{comment}', [CommentController::class, 'show']);

@@ -1715,6 +1715,38 @@ class VideoController extends Controller
                 ];
             })
             ->values();
+        $comments = $video->comments()  // Assuming you have a 'comments' relationship defined in the Video model
+            ->with(['user', 'replies.user']) // Load the user for each comment and replies
+            ->withCount('replies') // Count replies for each comment
+            ->get()
+            ->map(function ($comment) {
+                return [
+                    'id' => $comment->id,
+                    'video_id' => $comment->video_id,
+                    'user_id' => $comment->user_id,
+                    'name' => $comment->user->name ?? null,
+                    'email' => $comment->user->email ?? null,
+                    'profile_image' => $comment->user->profile_image ?? null,
+                    'parent_id' => $comment->parent_id,
+                    'body' => $comment->body,
+                    'replies_count' => $comment->replies_count,
+                    'created_at' => $comment->created_at->toISOString(),
+                    'updated_at' => $comment->updated_at->toISOString(),
+                    'replies' => $comment->replies->isEmpty() ? [] : $comment->replies->map(function ($reply) {
+                        return [
+                            'id' => $reply->id,
+                            'user_id' => $reply->user_id,
+                            'name' => $reply->user->name ?? null,
+                            'email' => $reply->user->email ?? null,
+                            'profile_image' => $reply->user->profile_image ?? null,
+                            'parent_id' => $reply->parent_id,
+                            'body' => $reply->body,
+                            'created_at' => $reply->created_at->toISOString(),
+                            'updated_at' => $reply->updated_at->toISOString(),
+                        ];
+                    }),
+                ];
+            });
 
         $data = [
             'video' => [
@@ -1777,6 +1809,7 @@ class VideoController extends Controller
                     'id' => $r->id,
                     'region_code' => $r->region_code,
                 ]),
+                'comments' => $comments,
             ],
             'related_products' => $related,
             'character_data' => $character ? $character : null,
@@ -2458,6 +2491,39 @@ class VideoController extends Controller
             })
             ->values();
 
+        $comments = $video->comments()  // Assuming you have a 'comments' relationship defined in the Video model
+            ->with(['user', 'replies.user']) // Load the user for each comment and replies
+            ->withCount('replies') // Count replies for each comment
+            ->get()
+            ->map(function ($comment) {
+                return [
+                    'id' => $comment->id,
+                    'video_id' => $comment->video_id,
+                    'user_id' => $comment->user_id,
+                    'name' => $comment->user->name ?? null,
+                    'email' => $comment->user->email ?? null,
+                    'profile_image' => $comment->user->profile_image ?? null,
+                    'parent_id' => $comment->parent_id,
+                    'body' => $comment->body,
+                    'replies_count' => $comment->replies_count,
+                    'created_at' => $comment->created_at->toISOString(),
+                    'updated_at' => $comment->updated_at->toISOString(),
+                    'replies' => $comment->replies->isEmpty() ? [] : $comment->replies->map(function ($reply) {
+                        return [
+                            'id' => $reply->id,
+                            'user_id' => $reply->user_id,
+                            'name' => $reply->user->name ?? null,
+                            'email' => $reply->user->email ?? null,
+                            'profile_image' => $reply->user->profile_image ?? null,
+                            'parent_id' => $reply->parent_id,
+                            'body' => $reply->body,
+                            'created_at' => $reply->created_at->toISOString(),
+                            'updated_at' => $reply->updated_at->toISOString(),
+                        ];
+                    }),
+                ];
+            });
+
         $data = [
             'video' => [
                 'id' => $video->id,
@@ -2519,6 +2585,7 @@ class VideoController extends Controller
                     'id' => $r->id,
                     'region_code' => $r->region_code,
                 ]),
+                'comments' => $comments,
             ],
             'related_products' => $related,
             'character_data' => $character ? $character : null,

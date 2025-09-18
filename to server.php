@@ -134,10 +134,51 @@ curl --location 'http://127.0.0.1:8000/api/product-messages' \
         "first_name": "John Doe",
         "last_name": "Last",
         "email": "johndoe@example.com",
+        "subject": "subject",
         "message": "This is a product message from a guest."
     }'
 
 
     php artisan migrate --path=/database/migrations/2025_09_17_130255_add_subject_to_product_messages_table.php
 
-   
+18-09-2025
+
+Advance Search
+ 
+curl --location 'https://bstg.beastierated.com/api/advanced-search/region/US?search_term=chan' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer YOUR_API_TOKEN'
+
+List comments for a video
+
+curl --location 'https://bstg.beastierated.com/api/videos/3/comments' \
+--header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2JzdGcuYmVhc3RpZXJhdGVkLmNvbS9hcGkvbG9naW4iLCJpYXQiOjE3NTc1Nzg2OTgsImV4cCI6MTc1NzU4MjI5OCwibmJmIjoxNzU3NTc4Njk4LCJqdGkiOiJkYjdKSUtDT0JpOXppdk5iIiwic3ViIjoiMTQiLCJwcnYiOiIwYmY2YzcxZjdjMzliODFhMmMxYjc1MTYwYzlkYTJlNTdjMmZlZDY2In0.DBc3Z4ElOh49UCxgqEjo3FdBv6g5njlZyBE2bXdh-oM'
+
+Create a new top-level comment
+
+curl --location 'https://bstg.beastierated.com/api/videos/3/comments' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2xvZ2luIiwiaWF0IjoxNzU4MTcwMjcyLCJleHAiOjE3NTgyNTY2NzIsIm5iZiI6MTc1ODE3MDI3MiwianRpIjoiT1VFd2FuZ3RmNFpkUkVKSCIsInN1YiI6IjE0IiwicHJ2IjoiMGJmNmM3MWY3YzM5YjgxYTJjMWI3NTE2MGM5ZGEyZTU3YzJmZWQ2NiJ9.RMWXU-013u4K2vta3M2TUG4b5r1iLaAVVZxq8QYdnk0' \
+--data '{"body": "This is my first comment"}'
+
+Reply to a comment
+
+curl --location 'https://bstg.beastierated.com/api/videos/3/comments' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2xvZ2luIiwiaWF0IjoxNzU4MTcwMjcyLCJleHAiOjE3NTgyNTY2NzIsIm5iZiI6MTc1ODE3MDI3MiwianRpIjoiT1VFd2FuZ3RmNFpkUkVKSCIsInN1YiI6IjE0IiwicHJ2IjoiMGJmNmM3MWY3YzM5YjgxYTJjMWI3NTE2MGM5ZGEyZTU3YzJmZWQ2NiJ9.RMWXU-013u4K2vta3M2TUG4b5r1iLaAVVZxq8QYdnk0' \
+--data '{"body": "This is a second reply to first comment", "parent_id": 9}'
+
+Update a comment
+
+curl --location --request PATCH 'https://bstg.beastierated.com/api/comments/6' \
+--header 'Content-Type: application/json' \
+--data '{"body": "Updated comment text"}'
+
+Delete a comment
+
+curl --location --request DELETE 'https://bstg.beastierated.com/api/comments/6'
+
+Also
+
+Paid Video Detail api comments and replies added,
+Free Video Detail api comments and replies added,
