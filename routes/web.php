@@ -25,6 +25,7 @@ use App\Http\Controllers\GlobalColorController;
 use App\Http\Controllers\AffiliateLinkController;
 use App\Http\Controllers\ProductMessageController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\ProductReviewController;
 
 
 // Route::get('/', function () {
@@ -141,6 +142,12 @@ Route::middleware(['auth'])
         Route::post('/admin/vimeo/assign', [VimeoController::class, 'assign'])
             ->middleware('can:video.update')
             ->name('admin.vimeo.assign');
+        
+
+        Route::get('product-reviews', [ProductReviewController::class, 'index'])->name('product-reviews.index');
+        Route::get('product-reviews/{category}/character', [ProductReviewController::class, 'product_review_character'])->name('product_review.character');
+        Route::post('product-reviews/store', [ProductReviewController::class, 'store'])->name('product_review.store');
+        Route::get('videos/fetch/{character_id}', [ProductReviewController::class, 'fetchVideos'])->name('fetch_videos');
 
 
 

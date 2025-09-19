@@ -8,6 +8,7 @@ use Spatie\Permission\Models\Permission;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role as SpatieRole;
 
+
 class RoleController extends Controller
 {
    // Ensure that only admin can access
@@ -17,20 +18,17 @@ class RoleController extends Controller
         // $this->middleware('auth'); 
         // $this->middleware('role:super_admin'); 
     }
-    // Display the list of roles
     public function index()
     {
         $roles = Role::whereNotIn('name', ['user', 'super_admin'])->get(); // Excluding 'user' and 'super_admin'
         return view('admin.roles.index', compact('roles'));
     }
 
-    // Show the form to create a new role
     public function create()
     {
         return view('admin.roles.create');
     }
 
-    // Store a newly created role in storage
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -45,13 +43,12 @@ class RoleController extends Controller
         return redirect()->route('admin.roles.index')->with('success', 'Role created successfully.');
     }
 
-    // Show the form for editing a role
+
     public function edit(Role $role)
     {
         return view('admin.roles.edit', compact('role'));
     }
 
-    // Update the specified role in storage
     public function update(Request $request, Role $role)
     {
         $validated = $request->validate([
@@ -66,21 +63,9 @@ class RoleController extends Controller
         return redirect()->route('admin.roles.index')->with('success', 'Role updated successfully.');
     }
 
-    // Remove the specified role from storage
-    // public function destroy(Role $role)
-    // {
-    //     // You can prevent deleting roles that are required like 'super_admin' or 'user'
-    //     if (in_array($role->name, ['user', 'super_admin'])) {
-    //         return redirect()->route('admin.roles.index')->with('error', 'You cannot delete this role.');
-    //     }
-
-    //     $role->delete();
-
-    //     return redirect()->route('admin.roles.index')->with('success', 'Role deleted successfully.');
-    // }
     public function destroy(Role $role)
     {
-        // Prevent deleting critical roles
+
         if (in_array($role->name, ['user', 'super_admin'])) {
             return redirect()
                 ->route('admin.roles.index')
@@ -109,33 +94,68 @@ class RoleController extends Controller
 
     public function editPermissions(Role $role)
     {
-        // Here, fetch the available permissions and the current ones assigned to the role
-        $permissions = Permission::all();  // Assuming you have a Permission model
-        $rolePermissions = $role->permissions->pluck('id')->toArray(); // Assuming a many-to-many relationship
+     
+        $permissions = Permission::all();  
+        $rolePermissions = $role->permissions->pluck('id')->toArray(); 
 
         return view('admin.roles.permissions', compact('role', 'permissions', 'rolePermissions'));
     }
-    // public function updatePermissions(Request $request, Role $role)
-    // {
-    //     // dd($request, $role);
-    //     $role->permissions()->sync($request->permissions);  // Sync the permissions for the role
-
-    //     return redirect()->route('admin.roles.index')->with('success', 'Permissions updated successfully.');
-    // }
-    public function updatePermissions(Request $request, Role $role)
-{
+  
+//     public function updatePermissions(Request $request, Role $role)
+// {
     
-    $permissions = Permission::find($request->permissions);
+//     $role->load('permissions');  
 
-    $missingPermissions = array_diff($request->permissions, $permissions->pluck('id')->toArray());
-    foreach ($missingPermissions as $permissionId) {
-        Permission::create(['id' => $permissionId, 'name' => "custom_permission_$permissionId", 'guard_name' => 'web']);
+//     if ($role->permissions->isEmpty()) {
+//         \Log::info('No permissions found for this role');
+//     } else {
+//         \Log::info('Permissions for the role: ', $role->permissions->toArray());
+//     }
+
+//     $permissions = Permission::find($request->permissions);
+//     $role->syncPermissions($permissions);
+//     // dd($permissions);
+
+//     return redirect()->route('admin.roles.index')->with('success', 'Permissions updated successfully.');
+// }
+public function updatePermissions(Request $request, Role $role)
+{
+    // Load the role's permissions
+    $role->load('permissions');  
+
+    // Log the current permissions for debugging
+    if ($role->permissions->isEmpty()) {
+       // \Log::info('No permissions found for this role');
+    } else {
+       // \Log::info('Permissions for the role: ', $role->permissions->toArray());
     }
 
-    // Now sync the permissions
-    $role->permissions()->sync($request->permissions);
+    // Validate the incoming permissions (assuming they are being passed by ID)
+    $permissions = Permission::find($request->permissions);
+    
+
+    // Sync the role's permissions
+    $role->syncPermissions($permissions);
+
+    // Now sync the permissions with users who have this role
+    $usersWithRole = $role->users; 
+
+    // Ensure users are available before looping
+    if ($usersWithRole->isEmpty()) {
+       // \Log::info('No users found for this role.');
+    } else {
+        // Loop through each user and sync their permissions
+        foreach ($usersWithRole as $user) {
+            $user->syncPermissions($permissions);  // Sync the updated permissions to the user
+        }
+      //  \Log::info('Permissions synced with users.');
+    }
 
     return redirect()->route('admin.roles.index')->with('success', 'Permissions updated successfully.');
 }
+
+
+
+
 
 }

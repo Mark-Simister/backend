@@ -1,4 +1,3 @@
-<!-- partial:partials/_sidebar.html -->
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
     <ul class="nav">
         <li class="nav-item">
@@ -138,20 +137,28 @@
         @can('product-message.view')
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('admin.product-messages.index') }}">
-                    <!-- Use a more appropriate icon for messages -->
-                    <i class="ti-comments menu-icon"></i> <!-- This is the icon for messages -->
-                    <span class="menu-title">Product Messages</span> <!-- Updated the text -->
+
+                    <i class="ti-comments menu-icon"></i>
+                    <span class="menu-title">Product Messages</span>
                 </a>
             </li>
         @endcan
-        {{-- @can('newsletter-subscription.view') --}}
-    <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.newsletter') }}">
-            <i class="ti-email menu-icon"></i> <!-- Icon for newsletter -->
-            <span class="menu-title">Newsletter Subscriptions</span>
-        </a>
-    </li>
-{{-- @endcan --}}
+        @can('newsletter-subscription.view')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.newsletter') }}">
+                    <i class="ti-email menu-icon"></i>
+                    <span class="menu-title">Newsletter Subscriptions</span>
+                </a>
+            </li>
+        @endcan
+        @can('product-reviews.view')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.product-reviews.index') }}">
+                    <i class="ti-pencil menu-icon"></i>
+                    <span class="menu-title">Product Review</span>
+                </a>
+            </li>
+        @endcan
 
 
         <li class="nav-item">
@@ -188,11 +195,13 @@
                 <span class="menu-title">Tables</span>
                 <i class="menu-arrow"></i>
             </a>
-            <div class="collapse" id="tables">
-                <ul class="nav flex-column sub-menu">
-                    <li class="nav-item"> <a class="nav-link" href="{{ route('pm.maker') }}">PM Maker</a></li>
-                </ul>
-            </div>
+            @role('super_admin')
+                <div class="collapse" id="tables">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item"> <a class="nav-link" href="{{ route('pm.maker') }}">PM Maker</a></li>
+                    </ul>
+                </div>
+            @endrole
         </li>
         <li class="nav-item">
             <a class="nav-link" data-bs-toggle="collapse" href="#icons" aria-expanded="false"
