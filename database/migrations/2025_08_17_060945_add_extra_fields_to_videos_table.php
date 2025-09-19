@@ -35,7 +35,7 @@ return new class extends Migration
             // SEO & SM
             $table->string('seo_title')->nullable()->after('post_schedule_at');
             $table->text('seo_description')->nullable()->after('seo_title');
-            $table->json('hashtags')->nullable()->after('seo_description');
+            $table->longText('hashtags')->nullable()->after('seo_description');
             $table->string('cta_text')->nullable()->after('hashtags');
             $table->string('og_image_url')->nullable()->after('cta_text');
             $table->string('twitter_title')->nullable()->after('og_image_url');

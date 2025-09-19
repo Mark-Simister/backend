@@ -42,13 +42,13 @@ return new class extends Migration
             $table->boolean('sponsored')->default(false);
 
             // SEO & Social Sharing
-            $table->string('seo_title')->nullable();
-            $table->text('seo_description')->nullable();
-            $table->json('hashtags')->nullable();
-            $table->string('cta_text')->nullable();
-            $table->string('open_graph_image')->nullable();
-            $table->string('twitter_title')->nullable();
-            $table->text('twitter_description')->nullable();
+            // $table->string('seo_title')->nullable();
+            // $table->text('seo_description')->nullable();
+            // $table->longText('hashtags')->nullable();
+            // $table->string('cta_text')->nullable();
+            // $table->string('open_graph_image')->nullable();
+            // $table->string('twitter_title')->nullable();
+            // $table->text('twitter_description')->nullable();
         });
     }
 

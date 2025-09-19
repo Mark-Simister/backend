@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('region_id')->nullable();
             $table->string('seo_title')->nullable();
             $table->text('seo_description')->nullable();
-            $table->json('hashtags')->nullable();
+            $table->longText('hashtags')->nullable();
             $table->string('cta_text')->nullable();
             $table->string('og_image_url')->nullable();
             $table->string('twitter_title')->nullable();

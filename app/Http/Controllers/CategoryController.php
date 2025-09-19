@@ -274,7 +274,7 @@ class CategoryController extends Controller
             $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
             // 2) Build query
-            $query = Category::select('id', 'name', 'slug', 'channel_id', 'created_at', 'updated_at')
+            $query = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 })
@@ -305,8 +305,8 @@ class CategoryController extends Controller
                         'id' => $r->id,
                         'region_code' => $r->region_code,
                     ]),
-                    'category_image' => $category->category_image
-                        ? asset($category->category_image)
+                    'category_image' => $category->image
+                        ? asset($category->image)
                         : null,
                     'created_at' => $category->created_at->toDateTimeString(),
                 ];
@@ -333,7 +333,7 @@ class CategoryController extends Controller
             $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
             $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
-            $query = Category::select('id', 'name', 'slug', 'channel_id', 'created_at', 'updated_at')
+            $query = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
                 ->where('slug', 'pets')
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
@@ -370,7 +370,7 @@ class CategoryController extends Controller
                         'id' => $r->id,
                         'region_code' => $r->region_code,
                     ]),
-                    'category_image' => $category->category_image ? asset($category->category_image) : null,
+                    'category_image' => $category->image ? asset($category->image) : null,
                     'created_at' => $category->created_at->toDateTimeString(),
                 ];
             });
@@ -457,7 +457,7 @@ class CategoryController extends Controller
             $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
             $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
-            $query = Category::select('id', 'name', 'slug', 'channel_id', 'created_at', 'updated_at')
+            $query = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
                 ->where('slug', 'people')
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
@@ -494,7 +494,7 @@ class CategoryController extends Controller
                         'id' => $r->id,
                         'region_code' => $r->region_code,
                     ]),
-                    'category_image' => $category->category_image ? asset($category->category_image) : null,
+                    'category_image' => $category->image ? asset($category->image) : null,
                     'created_at' => $category->created_at->toDateTimeString(),
                 ];
             });
@@ -584,7 +584,7 @@ class CategoryController extends Controller
             $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
             // 2) Fetch the category based on the provided category_id and region
-            $query = Category::select('id', 'name', 'slug', 'channel_id', 'created_at', 'updated_at')
+            $query = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
                 ->where('id', $category_id) // Filter by category_id
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode); // Filter by region code
@@ -628,7 +628,7 @@ class CategoryController extends Controller
                     'id' => $r->id,
                     'region_code' => $r->region_code,
                 ]),
-                'category_image' => $category->category_image ? asset($category->category_image) : null,
+                'category_image' => $category->image ? asset($category->image) : null,
                 'created_at' => $category->created_at->toDateTimeString(),
                 'followed' => $followed,
             ];

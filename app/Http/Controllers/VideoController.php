@@ -11,6 +11,7 @@ use App\Models\Character;
 use App\Models\Channel;
 use App\Models\Category;
 use App\Models\HighlightTag;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -62,6 +63,38 @@ class VideoController extends Controller
         // dd($sub, $statusOkay, $notCanceled, $withinPaidPeriod, $withinTrial, $paymentOkay);
 
         return $statusOkay && $notCanceled && $timeOkay && $paymentOkay;
+    }
+    private function getSeoData(Video $video, $regionCode)
+    {
+
+        $seo = \DB::table('seo_region')
+            ->where('video_id', $video->id)
+            ->where('region_id', $regionCode === 'GLOBAL' ? 0 : $regionCode)
+            ->first();
+
+        if ($seo) {
+            return [
+                'seo_title' => $seo->seo_title ?? $video->seo_title,
+                'seo_description' => $seo->seo_description ?? $video->seo_description,
+                'hashtags' => $seo->hashtags ?? $video->hashtags,
+                'cta_text' => $seo->cta_text ?? $video->cta_text,
+                'og_image_url' => $seo->og_image_url ?? $video->og_image_url,
+                'open_graph_image' => $seo->open_graph_image ?? $video->open_graph_image,
+                'twitter_title' => $seo->twitter_title ?? $video->twitter_title,
+                'twitter_description' => $seo->twitter_description ?? $video->twitter_description,
+            ];
+        }
+
+        return [
+            'seo_title' => $video->seo_title,
+            'seo_description' => $video->seo_description,
+            'hashtags' => $video->hashtags,
+            'cta_text' => $video->cta_text,
+            'og_image_url' => $video->og_image_url,
+            'open_graph_image' => $video->open_graph_image,
+            'twitter_title' => $video->twitter_title,
+            'twitter_description' => $video->twitter_description,
+        ];
     }
 
     public function index()
@@ -485,12 +518,17 @@ class VideoController extends Controller
         $validated = $request->validate([
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:1000'],
-            'hashtags' => ['nullable', 'string'],
+            'hashtags' => ['nullable', 'string', 'max:255'],  // Ensure max length is appropriate
             'cta_text' => ['nullable', 'string', 'max:255'],
             'og_image_url' => ['nullable', 'string', 'max:255'],
             'twitter_title' => ['nullable', 'string', 'max:255'],
             'twitter_description' => ['nullable', 'string', 'max:280'],
         ]);
+
+        // If hashtags is null, set it to an empty string to avoid issues with DB constraints
+        if ($validated['hashtags'] === null) {
+            $validated['hashtags'] = '';
+        }
 
         if ($regionId == 0) {
             // Update global
@@ -507,6 +545,7 @@ class VideoController extends Controller
             ->route('admin.videos.edit.seo', $video)
             ->with('success', 'SEO fields updated.');
     }
+
     public function getSeoByRegion(Video $video, $regionId)
     {
         if ($regionId == 0) {
@@ -920,39 +959,39 @@ class VideoController extends Controller
     }
 
     public function showCommentsPage($id)
-{
-    $video = Video::with(['comments.user', 'comments.replies.user'])
-        ->where('id', $id)
-        ->first();
+    {
+        $video = Video::with(['comments.user', 'comments.replies.user'])
+            ->where('id', $id)
+            ->first();
 
-    if (!$video) {
-        return redirect()->route('admin.videos.index')->with('error', 'Video not found.');
+        if (!$video) {
+            return redirect()->route('admin.videos.index')->with('error', 'Video not found.');
+        }
+
+        // Paginate comments if the data is large
+        $comments = $video->comments()->with(['user', 'replies.user'])->paginate(10); // Pagination added
+
+        // Alternatively, if not using pagination, load the comments as before
+        // $comments = $video->comments->map(function ($comment) {
+        //     return [
+        //         'id' => $comment->id,
+        //         'name' => $comment->user->name ?? 'Unknown',
+        //         'body' => $comment->body,
+        //         'created_at' => $comment->created_at->toDateTimeString(),
+        //         'replies' => $comment->replies->map(function ($reply) {
+        //             return [
+        //                 'name' => $reply->user->name ?? 'Unknown',
+        //                 'body' => $reply->body,
+        //             ];
+        //         }),
+        //     ];
+        // });
+
+        return view('admin.videos.comments', [
+            'video' => $video,
+            'comments' => $comments, // Pass paginated comments
+        ]);
     }
-
-    // Paginate comments if the data is large
-    $comments = $video->comments()->with(['user', 'replies.user'])->paginate(10); // Pagination added
-
-    // Alternatively, if not using pagination, load the comments as before
-    // $comments = $video->comments->map(function ($comment) {
-    //     return [
-    //         'id' => $comment->id,
-    //         'name' => $comment->user->name ?? 'Unknown',
-    //         'body' => $comment->body,
-    //         'created_at' => $comment->created_at->toDateTimeString(),
-    //         'replies' => $comment->replies->map(function ($reply) {
-    //             return [
-    //                 'name' => $reply->user->name ?? 'Unknown',
-    //                 'body' => $reply->body,
-    //             ];
-    //         }),
-    //     ];
-    // });
-
-    return view('admin.videos.comments', [
-        'video' => $video,
-        'comments' => $comments, // Pass paginated comments
-    ]);
-}
 
 
     public function destroy_comment($commentId)
@@ -995,23 +1034,23 @@ class VideoController extends Controller
     }
 
     public function deleteReply($id)
-{
-    // dd($id);
-    // Find the reply by ID
-    $reply = Comment::find($id);
+    {
+        // dd($id);
+        // Find the reply by ID
+        $reply = Comment::find($id);
 
-    if (!$reply) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Reply not found.',
-            'data' => []
-        ], 404);
+        if (!$reply) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Reply not found.',
+                'data' => []
+            ], 404);
+        }
+
+        $reply->delete();
+
+        return redirect()->back()->with('success', 'Reply deleted successfully.');
     }
-
-    $reply->delete();
-
-    return redirect()->back()->with('success', 'Reply deleted successfully.');
-}
 
 
 
@@ -1747,6 +1786,7 @@ class VideoController extends Controller
     public function freeVideosDetail(Request $request, $region, $id)
     {
         $regionCode = strtoupper($region);
+
         $allowedRegions = ['AU', 'CA', 'UK', 'US'];
         if (!in_array($regionCode, $allowedRegions)) {
             $regionCode = 'GLOBAL';
@@ -1769,6 +1809,13 @@ class VideoController extends Controller
             ], 404);
         }
         $character = Character::find($video->character_id);
+
+        // Find the region ID based on the regionCode
+        $regionModel = Region::where('region_code', $regionCode)->first();
+        $regionId = $regionModel ? $regionModel->id : 0;
+
+        // Fetch SEO data using the regionId
+        $seoData = $this->getSeoData($video, $regionId);
 
 
         $tagMap = collect();
@@ -1802,7 +1849,6 @@ class VideoController extends Controller
                 return [
                     'id' => $v->id,
                     'name' => $v->title,
-                    // keeping your exact key "thumnail_image" (misspelling preserved intentionally)
                     'thumnail_image' => $v->thumbnail_image ? asset($v->thumbnail_image) : null,
                     'description' => $v->description,
                     'product_name' => $v->product_name,
@@ -1812,9 +1858,9 @@ class VideoController extends Controller
                 ];
             })
             ->values();
-        $comments = $video->comments()  // Assuming you have a 'comments' relationship defined in the Video model
-            ->with(['user', 'replies.user']) // Load the user for each comment and replies
-            ->withCount('replies') // Count replies for each comment
+        $comments = $video->comments()
+            ->with(['user', 'replies.user'])
+            ->withCount('replies')
             ->get()
             ->map(function ($comment) {
                 return [
@@ -1844,6 +1890,7 @@ class VideoController extends Controller
                     }),
                 ];
             });
+
 
         $data = [
             'video' => [
@@ -1887,14 +1934,22 @@ class VideoController extends Controller
                 'post_schedule_at' => $video->post_schedule_at,
                 'review_type' => $video->review_type,
                 'sponsored' => $video->sponsored,
-                'seo_title' => $video->seo_title,
-                'seo_description' => $video->seo_description,
-                'hashtags' => $video->hashtags,
-                'cta_text' => $video->cta_text,
-                'og_image_url' => $video->og_image_url,
-                'open_graph_image' => $video->open_graph_image,
-                'twitter_title' => $video->twitter_title,
-                'twitter_description' => $video->twitter_description,
+                // 'seo_title' => $video->seo_title,
+                // 'seo_description' => $video->seo_description,
+                // 'hashtags' => $video->hashtags,
+                // 'cta_text' => $video->cta_text,
+                // 'og_image_url' => $video->og_image_url,
+                // 'open_graph_image' => $video->open_graph_image,
+                // 'twitter_title' => $video->twitter_title,
+                // 'twitter_description' => $video->twitter_description,
+                'seo_title' => $seoData['seo_title'],
+                'seo_description' => $seoData['seo_description'],
+                'hashtags' => $seoData['hashtags'],
+                'cta_text' => $seoData['cta_text'],
+                'og_image_url' => $seoData['og_image_url'],
+                'open_graph_image' => $seoData['open_graph_image'],
+                'twitter_title' => $seoData['twitter_title'],
+                'twitter_description' => $seoData['twitter_description'],
                 'original_price' => $video->original_price,
                 'views' => $video->views,
                 'likes' => $video->likes,
@@ -1910,6 +1965,7 @@ class VideoController extends Controller
             ],
             'related_products' => $related,
             'character_data' => $character ? $character : null,
+
         ];
 
         return response()->json([
@@ -2542,6 +2598,12 @@ class VideoController extends Controller
 
         $character = Character::find($video->character_id);
 
+        // Find the region ID based on the regionCode
+        $regionModel = Region::where('region_code', $regionCode)->first();
+        $regionId = $regionModel ? $regionModel->id : 0;
+
+        // Fetch SEO data using the regionId
+        $seoData = $this->getSeoData($video, $regionId);
 
         $tagMap = collect();
         $idsForMap = collect($video->tag_ids_array ?? [])->filter()->unique();
@@ -2663,14 +2725,14 @@ class VideoController extends Controller
                 'post_schedule_at' => $video->post_schedule_at,
                 'review_type' => $video->review_type,
                 'sponsored' => $video->sponsored,
-                'seo_title' => $video->seo_title,
-                'seo_description' => $video->seo_description,
-                'hashtags' => $video->hashtags,
-                'cta_text' => $video->cta_text,
-                'og_image_url' => $video->og_image_url,
-                'open_graph_image' => $video->open_graph_image,
-                'twitter_title' => $video->twitter_title,
-                'twitter_description' => $video->twitter_description,
+                'seo_title' => $seoData['seo_title'],
+                'seo_description' => $seoData['seo_description'],
+                'hashtags' => $seoData['hashtags'],
+                'cta_text' => $seoData['cta_text'],
+                'og_image_url' => $seoData['og_image_url'],
+                'open_graph_image' => $seoData['open_graph_image'],
+                'twitter_title' => $seoData['twitter_title'],
+                'twitter_description' => $seoData['twitter_description'],
                 'original_price' => $video->original_price,
                 'views' => $video->views,
                 'likes' => $video->likes,
