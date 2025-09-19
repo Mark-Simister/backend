@@ -74,8 +74,8 @@
                         @enderror
                     </div>
                     <div class="form-group mt-3">
-                        <label>Character Video <span class="text-danger">*</span></label>
-                        <input type="file" name="video" accept="video/*" required>
+                        <label>Character Video></label>
+                        <input type="file" name="video" accept="video/*" >
                         @error('video')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror

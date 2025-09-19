@@ -193,8 +193,14 @@ Route::get('free-videos/{region}', [VideoController::class, 'freeVideos']);
 Route::get('free-videos-trending/{region}', [VideoController::class, 'freeVideosTrending']);
 Route::get('free-videos-top-deals/{region}', [VideoController::class, 'freeVideosTopDeals']);
 Route::get('free-trending-characters/{region}', [VideoController::class, 'charactersFromVideos']);
-
 Route::get('/free-videos/{region}/{id}', [VideoController::class, 'freeVideosDetail']);
+
+
+// All in one
+Route::get('/trending-videos/{region}', [VideoController::class, 'trendingVideos']);
+Route::get('/top-deals/{region}', [VideoController::class, 'topDeals']);
+Route::get('/trending-characters/{region}', [VideoController::class, 'charactersFromVideosAndPaid']);
+
 
 // Route::get('/subscription-listings/by-region/{region?}', [SubscriptionListingController::class, 'index_region_api']);
 Route::get('/subscription-listings/region/{region}', [SubscriptionListingController::class, 'index_region_api']);

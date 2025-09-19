@@ -77,6 +77,30 @@ trait HasSubscriptionSections
 
         return $q->latest();
     }
+
+    protected function buildVideosQueryWithoutSubscription(Request $request, string $regionCode, int $highlightTag): Builder
+{
+    $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+        ->where('status', 'published');
+
+    // Optional filters (channel, character, category)
+    foreach (['channel_id', 'character_id', 'category_id'] as $f) {
+        if ($request->filled($f)) {
+            $q->where($f, $request->get($f));
+        }
+    }
+
+    // Highlight tag (2 = top deals, 3 = trending)
+    $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+
+    // Region filter
+    $q->whereHas('regions', function ($query) use ($regionCode) {
+        $query->where('region_code', $regionCode);
+    });
+
+    return $q->latest();
+}
+
     
 
     /** Map one video row to output shape */
