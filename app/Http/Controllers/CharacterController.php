@@ -881,6 +881,7 @@ class CharacterController extends Controller
             'persona' => $character->persona,
             'details' => $character->details,
             'image' => $character->image ? asset($character->image) : null,
+            'character_video_url' => $character->video ? asset($character->video) : null,
             'created_at' => optional($character->created_at)->toJSON(),
             'updated_at' => optional($character->updated_at)->toJSON(),
             'location' => $character->location,
