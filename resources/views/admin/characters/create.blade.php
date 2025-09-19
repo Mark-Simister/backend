@@ -2,12 +2,17 @@
 
 @section('title', 'Add Character')
 @push('styles')
-<style>
-    textarea.form-control, textarea.typeahead, textarea.tt-query, textarea.tt-hint, .select2-container--default .select2-selection--single textarea.select2-search__field, .select2-container--default textarea.select2-selection--single {
-    height: 56px !important;
-    min-height: 40px !important;
-}
-</style>
+    <style>
+        textarea.form-control,
+        textarea.typeahead,
+        textarea.tt-query,
+        textarea.tt-hint,
+        .select2-container--default .select2-selection--single textarea.select2-search__field,
+        .select2-container--default textarea.select2-selection--single {
+            height: 56px !important;
+            min-height: 40px !important;
+        }
+    </style>
 @endpush
 @section('content')
     <div class="card">
@@ -53,10 +58,9 @@
 
                     <div class="form-group region-flex">
                         <label>Select Regions:</label><br>
-                        @foreach($regions as $region)
+                        @foreach ($regions as $region)
                             <div class="form-check form-check-inline">
-                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" 
-                                    class="form-check-input">
+                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input">
                                 <label class="form-check-label">{{ $region->region_name }}</label>
                             </div>
                         @endforeach
@@ -69,6 +73,14 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+                    <div class="form-group mt-3">
+                        <label>Character Video <span class="text-danger">*</span></label>
+                        <input type="file" name="video" accept="video/*" required>
+                        @error('video')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
 
                     <div class="form-group mt-3">
                         <label>Character Image</label>
@@ -499,18 +511,18 @@
                             @endforeach
                         </select> --}}
                         <select name="character_tag[]" id="character_tag" class="form-control" multiple>
-    @php
-        $oldTags = old('character_tag', $character->character_tag ?? '');
-        $selectedTags = is_array($oldTags) ? $oldTags : explode(',', $oldTags);
-    @endphp
+                            @php
+                                $oldTags = old('character_tag', $character->character_tag ?? '');
+                                $selectedTags = is_array($oldTags) ? $oldTags : explode(',', $oldTags);
+                            @endphp
 
-    @foreach ($character_tag as $tag_option)
-        <option value="{{ $tag_option->name }}"
-            {{ in_array($tag_option->name, $selectedTags) ? 'selected' : '' }}>
-            {{ $tag_option->name }}
-        </option>
-    @endforeach
-</select>
+                            @foreach ($character_tag as $tag_option)
+                                <option value="{{ $tag_option->name }}"
+                                    {{ in_array($tag_option->name, $selectedTags) ? 'selected' : '' }}>
+                                    {{ $tag_option->name }}
+                                </option>
+                            @endforeach
+                        </select>
                         @error('character_tag')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -529,18 +541,18 @@
                             @endforeach
                         </select> --}}
                         <select name="character_role[]" id="character_role" class="form-control" multiple>
-    @php
-        $oldRoles = old('character_role', $character->character_role ?? '');
-        $selectedRoles = is_array($oldRoles) ? $oldRoles : explode(',', $oldRoles);
-    @endphp
+                            @php
+                                $oldRoles = old('character_role', $character->character_role ?? '');
+                                $selectedRoles = is_array($oldRoles) ? $oldRoles : explode(',', $oldRoles);
+                            @endphp
 
-    @foreach ($character_role as $role_option)
-        <option value="{{ $role_option->name }}"
-            {{ in_array($role_option->name, $selectedRoles) ? 'selected' : '' }}>
-            {{ $role_option->name }}
-        </option>
-    @endforeach
-</select>
+                            @foreach ($character_role as $role_option)
+                                <option value="{{ $role_option->name }}"
+                                    {{ in_array($role_option->name, $selectedRoles) ? 'selected' : '' }}>
+                                    {{ $role_option->name }}
+                                </option>
+                            @endforeach
+                        </select>
                         @error('character_role')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror

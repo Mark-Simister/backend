@@ -1817,6 +1817,21 @@ class VideoController extends Controller
         // Fetch SEO data using the regionId
         $seoData = $this->getSeoData($video, $regionId);
 
+        $affiliateLinks = AffiliateLink::where('video_id', $video->id)
+            ->where('region_id', $regionId)
+            ->get();
+        
+        $affiliateLinksData = $affiliateLinks->map(function ($link) {
+            // Extract the retailer name by splitting the string at the first underscore
+            $retailerName = explode('_', $link->retailer)[0];
+
+            return [
+                'region_id' => $link->region_id,
+                'retailer' => $retailerName,  
+                'url' => $link->url,
+            ];
+        });
+
 
         $tagMap = collect();
         $idsForMap = collect($video->tag_ids_array ?? [])->filter()->unique();
@@ -1962,6 +1977,7 @@ class VideoController extends Controller
                     'region_code' => $r->region_code,
                 ]),
                 'comments' => $comments,
+                'affiliate_links' => $affiliateLinksData,
             ],
             'related_products' => $related,
             'character_data' => $character ? $character : null,
@@ -2604,6 +2620,21 @@ class VideoController extends Controller
 
         // Fetch SEO data using the regionId
         $seoData = $this->getSeoData($video, $regionId);
+        $affiliateLinks = AffiliateLink::where('video_id', $video->id)
+            ->where('region_id', $regionId)
+            ->get();
+       
+        
+        $affiliateLinksData = $affiliateLinks->map(function ($link) {
+            // Extract the retailer name by splitting the string at the first underscore
+            $retailerName = explode('_', $link->retailer)[0];
+
+            return [
+                'region_id' => $link->region_id,
+                'retailer' => $retailerName,  
+                'url' => $link->url,
+            ];
+        });
 
         $tagMap = collect();
         $idsForMap = collect($video->tag_ids_array ?? [])->filter()->unique();
@@ -2745,6 +2776,7 @@ class VideoController extends Controller
                     'region_code' => $r->region_code,
                 ]),
                 'comments' => $comments,
+                'affiliate_links' => $affiliateLinksData,
             ],
             'related_products' => $related,
             'character_data' => $character ? $character : null,

@@ -57,6 +57,7 @@ class Character extends Model
         'editor_notes_content_guidelines',
         'character_role',
         'character_tag',
+        'video',
     ];
     public function channel()
     {

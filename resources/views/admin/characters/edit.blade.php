@@ -4,12 +4,17 @@
         .form-check .form-check-input {
             margin-left: 0em !important;
         }
-    
-    textarea.form-control, textarea.typeahead, textarea.tt-query, textarea.tt-hint, .select2-container--default .select2-selection--single textarea.select2-search__field, .select2-container--default textarea.select2-selection--single {
-    height: 56px !important;
-    min-height: 40px !important;
-}
-</style>
+
+        textarea.form-control,
+        textarea.typeahead,
+        textarea.tt-query,
+        textarea.tt-hint,
+        .select2-container--default .select2-selection--single textarea.select2-search__field,
+        .select2-container--default textarea.select2-selection--single {
+            height: 56px !important;
+            min-height: 40px !important;
+        }
+    </style>
 @endpush
 @section('title', 'Edit Character')
 
@@ -45,14 +50,13 @@
 
                     <div class="form-group region-flex">
                         <label>Select Regions:</label><br>
-                        @foreach($regions as $region)
+                        @foreach ($regions as $region)
                             <div class="form-check form-check-inline">
-                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" 
-                                    class="form-check-input"
+                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"
                                     {{ in_array($region->id, $selectedRegions ?? []) ? 'checked' : '' }}>
                                 <label class="form-check-label">
                                     {{ $region->region_name }}
-                                    @if($region->is_active != 1)
+                                    @if ($region->is_active != 1)
                                         <span class="badge bg-danger ms-1">Inactive</span>
                                     @endif
                                 </label>
@@ -74,6 +78,25 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+                    
+                    <div class="form-group mt-3">
+                        <label>Character Video</label>
+                        <input type="file" name="video" accept="video/*" class="form-control">
+
+                        @if ($character->video)
+                            <div class="mt-2">
+                                <video width="320" height="240" controls>
+                                    <source src="{{ asset($character->video) }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                        @endif
+
+                        @error('video')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
 
                     <div class="form-group mt-3">
                         <label>Character Image</label>

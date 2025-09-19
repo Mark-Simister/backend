@@ -4,58 +4,7 @@
 
 @push('styles')
 <style>
-  /* ====== AESTHETIC ====== */
-  .seo-hero{
-    background: radial-gradient(1200px 600px at 20% -10%, #dbeafe 0%, rgba(219,234,254,0) 50%),
-                radial-gradient(900px 500px at 120% 20%, #fce7f3 0%, rgba(252,231,243,0) 50%),
-                linear-gradient(135deg,#f8fafc 0%, #eef2ff 100%);
-    border-radius: 1.25rem; padding: 1.25rem 1.25rem;
-    border: 1px solid rgba(0,0,0,.045); position: relative; overflow: hidden;
-  }
-  .seo-hero .badge{backdrop-filter: blur(3px)}
-  .hglow{background: linear-gradient(90deg,#3b82f6,#a855f7); -webkit-background-clip:text; background-clip:text; color: transparent;}
-
-  .card-soft{
-    border: 0; border-radius: 1rem;
-    box-shadow: 0 18px 40px rgba(2,6,23,.08);
-    overflow: hidden; background: rgba(255,255,255,.9); backdrop-filter: blur(4px);
-  }
-  .card-section-title{
-    font-size:.85rem; letter-spacing:.12em; text-transform:uppercase;
-    color:#64748b; font-weight:700; margin-bottom:.5rem;
-  }
-  .divider{height:1px; background:linear-gradient(90deg,#eef2ff,transparent); margin:1rem 0;}
-
-  /* ====== INPUTS ====== */
-  .form-floating>.form-control, .form-floating>.form-control-plaintext{padding: 1.05rem .75rem;}
-  .form-floating>.form-control:focus{box-shadow: 0 0 0 .25rem rgba(59,130,246,.15)}
-  .form-floating>label{color:#64748b}
-
-  .counter-wrap{display:flex;align-items:center;gap:.5rem}
-  .counter{font-variant-numeric: tabular-nums; min-width: 3ch}
-  .progress.len{height: .4rem; background: #eef2ff}
-  .progress-bar.safe{background: linear-gradient(90deg,#22c55e,#16a34a)}
-  .progress-bar.warn{background: linear-gradient(90deg,#f59e0b,#d97706)}
-  .progress-bar.danger{background: linear-gradient(90deg,#ef4444,#dc2626)}
-
-  /* ====== CHIPS ====== */
-  .chip{
-    display:inline-flex; align-items:center; gap:.35rem;
-    padding:.35rem .6rem; border-radius:999px; font-size:.8rem;
-    background:#f1f5f9; color:#334155; border:1px solid #e2e8f0;
-  }
-  .chip .bi{font-size:.9rem}
-
-  /* ====== PREVIEWS ====== */
-  .serp-card{border:1px solid #e5e7eb; border-radius:.8rem; padding:1rem; background:#fff}
-  .serp-title{color:#1a0dab; font-size:1.05rem; line-height:1.3; margin-bottom:.25rem}
-  .serp-url{color:#0b8043; font-size:.85rem}
-  .serp-desc{color:#4d5156; font-size:.92rem}
-  .ratio>img{width:100%; height:100%; object-fit:cover; border-radius:.5rem}
-
-  /* ====== LAYOUT ====== */
-  .sticky-side{position: sticky; top:1rem}
-  @media (max-width: 991.98px){ .sticky-side{position: static} }
+  /*  */
 </style>
 @endpush
 
@@ -106,7 +55,6 @@
   <div class="col-12 col-lg-8">
     <div class="card card-soft">
       <div class="card-body p-4">
-        <div class="card-section-title">Meta</div>
         <div class="">
                 <label for="regions">Select Regions</label>
                 <select name="regions" id="regions" class="form-control">
@@ -115,6 +63,7 @@
                     @endforeach
                 </select>
             </div>
+        <div class="card-section-title">Meta</div>
 
         {{-- Title + Counter --}}
         <div class="mb-3">
@@ -129,7 +78,7 @@
             <input type="text" name="seo_title" id="seo_title" class="form-control form-control-lg"
                    placeholder="Compelling, keyword-rich title…"
                    value="{{ old('seo_title', $video->seo_title) }}">
-            <label for="seo_title">Compelling, keyword-rich title…</label>
+            
           </div>
           <div class="progress len mt-2">
             <div id="titleBar" class="progress-bar" role="progressbar" style="width:0%"></div>
@@ -148,7 +97,7 @@
           <div class="form-floating">
             <textarea name="seo_description" id="seo_description" class="form-control" style="height:120px"
                       placeholder="Persuasive summary that drives clicks…">{{ old('seo_description', $video->seo_description) }}</textarea>
-            <label for="seo_description">Persuasive summary that drives clicks…</label>
+            
           </div>
           <div class="progress len mt-2">
             <div id="descBar" class="progress-bar" role="progressbar" style="width:0%"></div>
