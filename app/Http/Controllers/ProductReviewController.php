@@ -111,11 +111,18 @@ class ProductReviewController extends Controller
             ->latest()
             ->get();
 
-        return view('admin.product_review.character', compact('characters', 'category'));
+        $reviews = ProductReview::with(['character:id,name', 'video:id,title'])
+            ->whereHas('character', function ($q) use ($category) {
+                $q->where('category_id', $category->id);
+            })
+            ->latest()
+            ->get();
+
+        return view('admin.product_review.character', compact('characters', 'category', 'reviews'));
+
     }
     public function fetchVideos($character_id)
     {
-        // Fetch videos where the character_id matches
         $videos = Video::where('character_id', $character_id)->get();
 
         return response()->json(data: $videos);
@@ -130,24 +137,61 @@ class ProductReviewController extends Controller
         ]);
 
         $file = $request->file('file');
-        $filePath = $file->getPathname();
+        $reviewType = $request->review_type;
 
-        $videoUrl = $this->uploadToVimeo($filePath);
+        $ext = strtolower($file->getClientOriginalExtension());
+        if ($reviewType === 'mp3' && $ext !== 'mp3') {
+            return redirect()->back()->withErrors(['file' => 'Please upload an MP3 file for the MP3 review type.'])->withInput();
+        }
+        if (in_array($reviewType, ['full_video', 'short_video']) && $ext !== 'mp4') {
+            return redirect()->back()->withErrors(['file' => 'Please upload an MP4 file for video review types.'])->withInput();
+        }
 
-        $video = $request->video_id ? Video::findOrFail($request->video_id) : Video::create([
-            'character_id' => $request->character_id,
-            'video_url' => $videoUrl,
-            'type' => $request->review_type,
-        ]);
+        $video = Video::findOrFail($request->video_id);
+
+        if ($reviewType === 'mp3') {
+            $destination = public_path('product_review');
+            if (!is_dir($destination)) {
+                @mkdir($destination, 0755, true);
+            }
+
+            // Unique filename and move
+            $filename = 'review_' . uniqid() . '.mp3';
+            $file->move($destination, $filename);
+
+            $reviewUrl = url('product_review/' . $filename);
+        } else {
+            $filePath = $file->getPathname();
+            $reviewUrl = $this->uploadToVimeo($filePath);
+        }
 
         ProductReview::create([
             'character_id' => $request->character_id,
-            'review_url' => $videoUrl,
+            'review_url' => $reviewUrl,
             'video_id' => $video->id,
+            'type' => $reviewType,
         ]);
 
         return redirect()->back()->with('success', 'Product review submitted successfully!');
     }
+
+    public function updateFeatured(ProductReview $review, Request $request)
+    {
+        $validated = $request->validate([
+            'is_featured' => 'required|boolean',
+        ]);
+
+        $review->is_featured = (bool) $validated['is_featured'];
+        $review->save();
+
+        return response()->json([
+            'ok' => true,
+            'is_featured' => (bool) $review->is_featured,
+            'message' => $review->is_featured ? 'Marked as featured.' : 'Removed from featured.'
+        ]);
+    }
+
+
 
 
     // Vimeo Upload Helper Method

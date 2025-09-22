@@ -2,10 +2,6 @@
 
 @push('styles')
     <style>
-        /* Custom styles (optional) */
-        .status-badge {
-            font-size: 0.85rem;
-        }
     </style>
 @endpush
 

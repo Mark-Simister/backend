@@ -2,18 +2,7 @@
 
 @push('styles')
     <style>
-        .dataTables_wrapper .dataTables_filter input {
-            border-radius: 8px;
-            padding: 6px 10px;
-            border: 1px solid #ddd;
-        }
-
-        .channel-img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
+        /*  */
     </style>
 @endpush
 
@@ -120,9 +109,7 @@
         });
     </script>
 
-    <!-- SweetAlert2 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+ 
     <!-- SweetAlert Delete Confirmation -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {

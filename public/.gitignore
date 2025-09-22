@@ -1,0 +1,13 @@
+# Ignore uploaded folders inside public
+
+/public/category/
+/public/channel/
+/public/character_videos/
+/public/characters/
+/public/emojie/
+/public/product_review/
+/public/thumbnails/
+/public/users/
+
+# But keep the .gitignore file itself
+!.gitignore

@@ -1,4 +1,3 @@
-{{-- resources/views/admin/users/show.blade.php --}}
 @extends('layouts.admin.master')
 
 @section('title', 'User Details')

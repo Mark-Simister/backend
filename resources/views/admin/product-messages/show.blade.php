@@ -63,9 +63,7 @@
 @endsection
 
 @push('scripts')
-    <!-- SweetAlert2 CDN for deletion confirmation -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+ 
     <!-- SweetAlert Delete Confirmation -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {

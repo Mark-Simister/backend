@@ -200,7 +200,7 @@ Route::get('/free-videos/{region}/{id}', [VideoController::class, 'freeVideosDet
 Route::get('/trending-videos/{region}', [VideoController::class, 'trendingVideos']);
 Route::get('/top-deals/{region}', [VideoController::class, 'topDeals']);
 Route::get('/trending-characters/{region}', [VideoController::class, 'charactersFromVideosAndPaid']);
-
+Route::get('/videos-detail/{region}/{id}', [VideoController::class, 'allVideosDetail']);
 
 // Route::get('/subscription-listings/by-region/{region?}', [SubscriptionListingController::class, 'index_region_api']);
 Route::get('/subscription-listings/region/{region}', [SubscriptionListingController::class, 'index_region_api']);

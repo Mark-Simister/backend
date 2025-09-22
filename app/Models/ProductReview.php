@@ -29,4 +29,5 @@ class ProductReview extends Model
     {
         return $this->belongsTo(Video::class);
     }
+    
 }

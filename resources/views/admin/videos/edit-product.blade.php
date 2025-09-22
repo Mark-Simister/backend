@@ -4,16 +4,7 @@
 
 @push('styles')
 <style>
-  .card-soft { border:0; border-radius:1rem; box-shadow:0 10px 25px rgba(0,0,0,.06); overflow:hidden; }
-  .product-hero { background:linear-gradient(135deg,#f8f9ff 0%,#f1f5ff 100%); border-radius:1rem; padding:1.25rem; }
-  .thumb-frame { border:1px dashed #ced4da; border-radius:.75rem; background:#f8f9fa; padding:.5rem; }
-  .thumb-img { width:100%; height:100%; object-fit:contain; }
-  .form-section-title { font-size:.9rem; letter-spacing:.08em; text-transform:uppercase; color:#6c757d; margin-bottom:.5rem; }
-  .divider { height:1px; background:#e9ecef; margin:1rem 0; }
-  .sticky-side { position: sticky; top:1rem; }
-  @media (max-width: 991.98px) {
-    .sticky-side { position: static; }
-  }
+ /*  */
 </style>
 @endpush
 

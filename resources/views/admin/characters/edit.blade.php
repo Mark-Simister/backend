@@ -1,19 +1,7 @@
 @extends('layouts.admin.master')
 @push('styles')
     <style>
-        .form-check .form-check-input {
-            margin-left: 0em !important;
-        }
-
-        textarea.form-control,
-        textarea.typeahead,
-        textarea.tt-query,
-        textarea.tt-hint,
-        .select2-container--default .select2-selection--single textarea.select2-search__field,
-        .select2-container--default textarea.select2-selection--single {
-            height: 56px !important;
-            min-height: 40px !important;
-        }
+        /*  */
     </style>
 @endpush
 @section('title', 'Edit Character')

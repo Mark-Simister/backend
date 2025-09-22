@@ -2,18 +2,7 @@
 
 @push('styles')
     <style>
-        /* custom styles (optional) */
-        .badge-status {
-            font-size: 0.85rem;
-        }
-
-        .nav-tabs .nav-link {
-            font-weight: 600;
-        }
-
-        .tab-pane .table {
-            margin-top: 12px;
-        }
+       /*  */
     </style>
 @endpush
 
@@ -435,7 +424,6 @@
 @endsection
 
 @push('scripts')
-    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
             const dtOptions = {

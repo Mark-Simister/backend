@@ -4,16 +4,7 @@
 
 @push('style')
 <style>
-    .card { border-radius: 16px; }
-    .card-header { border-top-left-radius: 16px; border-top-right-radius: 16px; }
-    .card-shadow { box-shadow: 0 8px 22px rgba(0,0,0,.06); }
-    .toolbar .btn { min-width: 140px; }
-    .group-title { letter-spacing: .3px; font-weight: 600; text-transform: capitalize; }
-    .selected-pill { font-size: .85rem; }
-    .form-check-input { width: 1.2rem; height: 1.2rem; }
-    .permission-group .form-check { padding: .4rem .6rem; border-radius: 8px; background: #fff; }
-    .permission-group .form-check:hover { background: #f8f9fa; }
-    .sticky-toolbar { position: sticky; top: .5rem; z-index: 1030; }
+   /*  */
 </style>
 @endpush
 
