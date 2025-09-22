@@ -126,6 +126,8 @@ Route::middleware(['auth:api'])->group(function () {
 
     // Watch history 
     Route::post('videos/{video}/watch', [VideoEngagementController::class, 'recordWatch'])->name('api.videos.watch');
+    Route::post('video/{videoId}/update-watch-history', [VideoEngagementController::class, 'updateWatchHistory']); 
+
 
     //categories follow
     Route::post('/categories/{categoryId}/follow', [VideoEngagementController::class, 'followCategory']);
@@ -151,7 +153,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/me/favourites', [VideoEngagementController::class, 'myFavourites'])->name('api.me.favourites');
 
     // Last watched videos
-    Route::get('/me/last-watched', [VideoEngagementController::class, 'myLastWatched'])->name('api.me.last_watched');
     Route::get('/my-watch-histories', [VideoEngagementController::class, 'myWatchHistories'])->name('videos.watch_histories');
 
 });

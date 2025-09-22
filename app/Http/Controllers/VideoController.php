@@ -21,6 +21,7 @@ use App\Models\Tag;
 use App\Models\Region;
 use App\Models\AffiliateLink;
 use App\Models\Comment;
+use App\Models\VideoWatchHistory;
 use Illuminate\Support\Facades\DB;
 use App\HasSubscriptionSections;
 
@@ -1589,29 +1590,26 @@ class VideoController extends Controller
     public function trendingVideos(Request $request, $region)
     {
         try {
-            // Check if the user is logged in
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
             $userId = $user?->id;
-
-            // Validate optional filters
+            
             $request->validate([
                 'channel_id' => 'sometimes|integer',
                 'character_id' => 'sometimes|integer',
                 'category_id' => 'sometimes|integer',
             ]);
 
-            // Resolve the region
             $regionCode = strtoupper($region);
             $allowedRegions = ['AU', 'CA', 'UK', 'US'];
             if (!in_array($regionCode, $allowedRegions)) {
                 $regionCode = 'GLOBAL';
             }
-
+            
             // Build the base query using the helper method from the trait
             $q = $this->buildVideosQueryWithoutSubscription($request, $regionCode, 3);
-
-            $videos = $q->get(); // Fetch videos
-
+            
+            $videos = $q->get(); 
+            
             if ($videos->isEmpty()) {
                 return response()->json([
                     'status' => false,
@@ -1619,34 +1617,22 @@ class VideoController extends Controller
                     'data' => [],
                 ], 404);
             }
-
-            // Add tag pairs for the videos
+            
             $this->attachTagPairs($videos);
-
-            // Check if the user is logged in and has a valid subscription
+            
             $isPaidUser = $user && $this->hasValidSubscription($userId);
-
-            // Map the video data with the 'paid' flag and 'is_subscribed' flag
+            
             $data = $videos->map(function ($video) use ($isPaidUser) {
                 if ($video->relationLoaded('regions')) {
                     $video->regions->each->makeHidden(['pivot']);
                 }
 
-                // Determine if the video is paid (for example, vimeo type videos)
-                $isPaidVideo = in_array($video->type, ['vimeo']);  // Adjust this condition as per your paid videos
+                $isPaidVideo = in_array($video->type, ['vimeo']);  
 
-                // For non-logged-in users, set the 'paid' flag to false for paid videos
-                $paidFlag = null;
-                if ($isPaidVideo) {
-                    // If logged-in and has a valid subscription, set 'paid' to true, else false
-                    $paidFlag = $isPaidUser ? true : false;
-                } else {
-                    // For non-paid videos, we can set 'paid' as false or null
-                    $paidFlag = false;
-                }
+                $paidFlag = $isPaidVideo;
+                
 
-                // Determine if the user is subscribed
-                $isSubscribed = $isPaidUser;  // This will be true if the user has a valid subscription, false otherwise
+                $isSubscribed = $isPaidUser; 
 
                 return [
                     'id' => $video->id,
@@ -1669,8 +1655,8 @@ class VideoController extends Controller
                         'id' => $r->id,
                         'region_code' => $r->region_code,
                     ]),
-                    'paid' => $paidFlag,  // Set the 'paid' flag based on the logic
-                    'is_subscribed' => $isSubscribed,  // Add the 'is_subscribed' field indicating whether the user has a valid subscription
+                    'paid' => $paidFlag,  // Set the 'paid' flag 
+                    'is_subscribed' => $isSubscribed,  // 'is_subscribed' indicating whether the user has a valid subscription
                 ];
             });
 
@@ -1817,11 +1803,9 @@ class VideoController extends Controller
     public function topDeals(Request $request, $region)
     {
         try {
-            // Check if the user is logged in
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
             $userId = $user?->id;
 
-            // Validate optional filters
             $request->validate([
                 'channel_id' => 'sometimes|integer',
                 'character_id' => 'sometimes|integer',
@@ -1835,12 +1819,10 @@ class VideoController extends Controller
                 $regionCode = 'GLOBAL';
             }
 
-            // Build the base query for top deals (highlight_tag = 2)
             $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
                 ->where('status', 'published')
                 ->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]); // Highlight tag for "Top Deals"
 
-            // Apply filters for channel, character, and category if provided
             foreach (['channel_id', 'character_id', 'category_id'] as $filter) {
                 if ($request->filled($filter)) {
                     $q->where($filter, $request->get($filter));
@@ -1889,15 +1871,11 @@ class VideoController extends Controller
 
                 $isPaidVideo = in_array($video->type, ['vimeo']);
                 $isPaidUser = $userId && $this->hasValidSubscription($userId);
+            // dd($isPaidVideo);
 
 
-                $paidFlag = null;
-                if ($isPaidVideo) {
 
-                    $paidFlag = $isPaidUser ? true : false;
-                } else {
-                    $paidFlag = false;
-                }
+                $paidFlag = $isPaidVideo;
 
                 $isSubscribed = $isPaidUser;
 
@@ -2025,24 +2003,20 @@ class VideoController extends Controller
     public function charactersFromVideosAndPaid(Request $request, $region)
     {
         try {
-            // Check if the user is logged in
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
             $userId = $user?->id;
 
-            // Validate optional filters
             $request->validate([
                 'channel_id' => 'sometimes|integer',
                 'category_id' => 'sometimes|integer',
             ]);
 
-            // Resolve the region
             $regionCode = strtoupper($region);
             $allowedRegions = ['AU', 'CA', 'UK', 'US'];
             if (!in_array($regionCode, $allowedRegions)) {
                 $regionCode = 'GLOBAL';
             }
 
-            // Fetch video character IDs (free and paid videos)
             $videoCharacterIds = Video::query()
                 ->select('character_id')
                 ->whereNotNull('character_id')
@@ -2054,8 +2028,7 @@ class VideoController extends Controller
                     $q->where('region_code', $regionCode);
                 })
                 ->distinct();
-
-            // Fetch characters that are referenced by those videos and match region
+                
             $characters = Character::query()
                 ->whereIn('id', $videoCharacterIds)
                 ->whereHas('regions', function ($q) use ($regionCode) {
@@ -2079,7 +2052,6 @@ class VideoController extends Controller
                     ];
                 });
 
-            // If no characters found, return an appropriate response
             if ($characters->isEmpty()) {
                 return response()->json([
                     'status' => false,
@@ -2088,20 +2060,17 @@ class VideoController extends Controller
                 ], 404);
             }
 
-            // Determine if the user is subscribed (has an active subscription)
             $isSubscribed = $user && $this->hasValidSubscription($userId);
 
-            // Add the 'paid' and 'is_subscribed' flags to the response data
             $data = $characters->map(function ($character) use ($userId, $isSubscribed) {
-                // Check if the video is paid (vimeo or other paid categories)
                 $isPaidVideo = in_array($character['category_id'], [/* Paid category IDs or checks */]);
+                    // dd($character);
 
-                // Set the 'paid' flag: true for paid content (vimeo), false for free content (youtube)
                 $paidFlag = $isPaidVideo ? ($isSubscribed ? true : false) : false;
 
                 return array_merge($character, [
-                    'paid' => $paidFlag,  // Set the 'paid' flag based on the video type
-                    'is_subscribed' => $isSubscribed,  // Indicate whether the user has a valid subscription
+                    'paid' => $paidFlag,  
+                    'is_subscribed' => $isSubscribed,  
                 ]);
             });
 
@@ -2381,11 +2350,28 @@ class VideoController extends Controller
             $isSubscribed = $isPaidUser;
 
             $character = Character::find($video->character_id);
+       $characterData = $character ? $character->toArray() : null;
+       if ($characterData) {
+    // Apply asset() to image and video fields
+    $characterData['image'] = $character->image ? asset($character->image) : null;
+    $characterData['video'] = $character->video ? asset($character->video) : null;
+}
 
             $liked = false;
             if ($user) {
                 $liked = $user->likedVideos()->where('video_id', $video->id)->exists();
             }
+
+            $isAuthenticated = $user !== null;
+            $userId = $isAuthenticated ? $user->id : null;
+
+
+            $watchHistory = $isAuthenticated ? VideoWatchHistory::where('user_id', $userId)
+                ->where('video_id', $video->id)
+                ->first() : null;
+            $lastPositionSeconds = $watchHistory ? $watchHistory->last_position_seconds : 0;
+            $isCompleted = $watchHistory ? $watchHistory->is_completed : false;
+            $watchedAt = $watchHistory ? $watchHistory->watched_at : null;
 
             $regionModel = Region::where('region_code', $regionCode)->first();
             $regionId = $regionModel ? $regionModel->id : 0;
@@ -2547,9 +2533,15 @@ class VideoController extends Controller
                     // NEW FLAGS
                     'paid' => $paidFlag,       // true only if (video is paid) AND (user subscribed)
                     'is_subscribed' => $isSubscribed,   // user subscription flag
+
+                    // Watch History
+                    'last_position_seconds' => $lastPositionSeconds,
+                    'is_completed' => $isCompleted,
+                    'watched_at' => $watchedAt,
                 ],
                 'related_products' => $related,
-                'character_data' => $character ? $character : null,
+                'character_data' => $characterData,
+
             ];
 
             return response()->json([

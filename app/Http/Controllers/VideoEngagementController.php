@@ -37,7 +37,6 @@ class VideoEngagementController extends Controller
         ], 200);
     }
 
-    // DELETE /videos/{video}/unlike
     public function unlike(Video $video)
     {
         $user = Auth::user();
@@ -57,15 +56,14 @@ class VideoEngagementController extends Controller
             'data' => [
                 'video_id' => $video->id,
                 'liked' => false,
-                'likes_count' => $video->likes, // latest likes count
+                'likes_count' => $video->likes,
             ],
         ], 200);
     }
 
-    // likes/video/count
     public function likesCount(Video $video)
     {
-        $count = $video->likes()->count(); // using hasMany VideoLike relation
+        $count = $video->likes()->count();
 
         return response()->json([
             'status' => 'ok',
@@ -74,7 +72,6 @@ class VideoEngagementController extends Controller
         ]);
     }
 
-    // POST /videos/{video}/favorite
     public function favorite(Video $video)
     {
         $user = Auth::user();
@@ -87,7 +84,6 @@ class VideoEngagementController extends Controller
         ], 200);
     }
 
-    // DELETE /videos/{video}/favorite
     public function unfavorite(Video $video)
     {
         $user = Auth::user();
@@ -97,50 +93,126 @@ class VideoEngagementController extends Controller
     }
 
     public function recordWatch(Request $request, $videoId)
-{
-    // Find the video, or return a custom error if not found
-    $video = Video::find($videoId);
-    
-    if (!$video) {
+    {
+
+        $video = Video::find($videoId);
+
+        if (!$video) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Video not found',
+            ], 404);
+        }
+
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+        }
+
+        $alreadyWatched = VideoWatchHistory::where('user_id', $user->id)
+            ->where('video_id', $video->id)
+            ->exists();
+
+        if (!$alreadyWatched) {
+            VideoWatchHistory::create([
+                'user_id' => $user->id,
+                'video_id' => $video->id,
+            ]);
+
+            $video->increment('views');
+        }
+
         return response()->json([
-            'status' => 'error',
-            'message' => 'Video not found',
-        ], 404); // Return 404 if video is not found
+            'status' => 'ok',
+            'message' => 'Watch recorded',
+            'data' => [
+                'video_id' => $video->id,
+                'views' => $video->views,
+            ]
+        ], 200);
     }
 
-    $user = Auth::user();
+    public function updateWatchHistory(Request $request, $videoId)
+    {
+        $video = Video::find($videoId);
 
-    if (!$user) {
-        return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
-    }
+        if (!$video) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Video not found',
+            ], 404);
+        }
 
-    $alreadyWatched = VideoWatchHistory::where('user_id', $user->id)
-        ->where('video_id', $video->id)
-        ->exists();
+        $user = Auth::user();
 
-    if (!$alreadyWatched) {
-        VideoWatchHistory::create([
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+        }
+
+        // Check if the user has already watched the video
+        $watchHistory = VideoWatchHistory::where('user_id', $user->id)
+            ->where('video_id', $video->id)
+            ->first();
+
+        if ($watchHistory) {
+            // update the watch time, position, and completion status
+            $watchHistory->update([
+                'last_position_seconds' => $request->last_position_seconds,
+                'is_completed' => $request->is_completed,
+                'watched_at' => now(),
+            ]);
+
+            // If video is completed, reset last_position_seconds to 0
+            if ($request->is_completed) {
+                $watchHistory->update([
+                    'last_position_seconds' => 0,
+                ]);
+            }
+
+            $updatedWatchHistory = VideoWatchHistory::where('user_id', $user->id)
+                ->where('video_id', $video->id)
+                ->first();
+
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Watch history updated',
+                'data' => [
+                    'video_id' => $updatedWatchHistory->video_id,
+                    'last_position_seconds' => $updatedWatchHistory->last_position_seconds,
+                    'is_completed' => $updatedWatchHistory->is_completed,
+                    'watched_at' => $updatedWatchHistory->watched_at,
+                ]
+            ], 200);
+        }
+
+        // If the user has not watched this video before, create a new record
+        $newWatchHistory = VideoWatchHistory::create([
             'user_id' => $user->id,
             'video_id' => $video->id,
+            'last_position_seconds' => $request->last_position_seconds,
+            'is_completed' => $request->is_completed,
+            'watched_at' => now(),
         ]);
 
-        // Increment video views
-        $video->increment('views');
+        $newWatchHistory = VideoWatchHistory::where('user_id', $user->id)
+            ->where('video_id', $video->id)
+            ->first();
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Watch history created',
+            'data' => [
+                'video_id' => $newWatchHistory->video_id,
+                'last_position_seconds' => $newWatchHistory->last_position_seconds,
+                'is_completed' => $newWatchHistory->is_completed,
+                'watched_at' => $newWatchHistory->watched_at,
+            ]
+        ], 200);
     }
 
-    return response()->json([
-        'status' => 'ok',
-        'message' => 'Watch recorded',
-        'data' => [
-            'video_id' => $video->id,
-            'views' => $video->views,
-        ]
-    ], 200);
-}
 
 
-
-    // GET /me/last-watched?per_page=20
     public function myLastWatched(Request $request)
     {
         $perPage = min((int) $request->query('per_page', 20), 100);
@@ -184,86 +256,86 @@ class VideoEngagementController extends Controller
     }
 
     public function myWatchHistories()
-{
-    $user = Auth::user();
+    {
+        $user = Auth::user();
 
-    $data = VideoWatchHistory::with('video')
-        ->where('user_id', $user->id)
-        ->get();
+        $data = VideoWatchHistory::with('video')
+            ->where('user_id', $user->id)
+            ->get();
 
-    if ($data->isEmpty()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'No watch history found for this user',
-        ], 404);
-    }
+        if ($data->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No watch history found for this user',
+            ], 404);
+        }
 
-    // Modify the response to include full URLs using asset() helper
-    $data->each(function ($history) {
-        $history->video->product_thumbnail = $history->video->product_thumbnail ? asset($history->video->product_thumbnail) : null;
-        $history->video->thumbnail_image = $history->video->thumbnail_image ? asset($history->video->thumbnail_image) : null;
-    });
-
-    return response()->json([
-        'status' => 'ok',
-        'user_id' => $user->id,
-        'watch_history' => $data,
-    ]);
-}
-
-public function followCategory($categoryId)
-{
-    $user = Auth::user();
-    
-    $alreadyFollowed = CategoryFollow::where('user_id', $user->id)
-        ->where('category_id', $categoryId)
-        ->exists();
-
-    if ($alreadyFollowed) {
-        return response()->json([
-            'status'  => 'error',
-            'message' => 'You are already following this category.',
-        ], 400);
-    }
-
-    CategoryFollow::create([
-        'user_id'     => $user->id,
-        'category_id' => $categoryId,
-    ]);
-
-    return response()->json([
-        'status'  => 'ok',
-        'message' => 'Category followed successfully.',
-    ]);
-}
-
-public function listFollowedCategories()
-{
-    $user = Auth::user();
-
-    $followedCategories = CategoryFollow::with('category')
-        ->where('user_id', $user->id) 
-        ->get()
-        ->map(function ($follow) {
-            return [
-                'category_id'   => $follow->category->id,
-                'category_name' => $follow->category->name,
-                'image' => asset($follow->category->image),
-            ];
+        // Modify the response to include full URLs using asset() helper
+        $data->each(function ($history) {
+            $history->video->product_thumbnail = $history->video->product_thumbnail ? asset($history->video->product_thumbnail) : null;
+            $history->video->thumbnail_image = $history->video->thumbnail_image ? asset($history->video->thumbnail_image) : null;
         });
 
-    if ($followedCategories->isEmpty()) {
         return response()->json([
-            'status'  => 'error',
-            'message' => 'You have not followed any categories yet.',
-        ], 404);
+            'status' => 'ok',
+            'user_id' => $user->id,
+            'watch_history' => $data,
+        ]);
     }
 
-    return response()->json([
-        'status' => 'ok',
-        'data'   => $followedCategories,
-    ]);
-}
+    public function followCategory($categoryId)
+    {
+        $user = Auth::user();
+
+        $alreadyFollowed = CategoryFollow::where('user_id', $user->id)
+            ->where('category_id', $categoryId)
+            ->exists();
+
+        if ($alreadyFollowed) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'You are already following this category.',
+            ], 400);
+        }
+
+        CategoryFollow::create([
+            'user_id' => $user->id,
+            'category_id' => $categoryId,
+        ]);
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Category followed successfully.',
+        ]);
+    }
+
+    public function listFollowedCategories()
+    {
+        $user = Auth::user();
+
+        $followedCategories = CategoryFollow::with('category')
+            ->where('user_id', $user->id)
+            ->get()
+            ->map(function ($follow) {
+                return [
+                    'category_id' => $follow->category->id,
+                    'category_name' => $follow->category->name,
+                    'image' => asset($follow->category->image),
+                ];
+            });
+
+        if ($followedCategories->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'You have not followed any categories yet.',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $followedCategories,
+        ]);
+    }
 
 
 

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class VideoWatchHistory extends Model
 {
-    protected $fillable = ['video_id', 'user_id', 'last_position_seconds', 'watched_at'];
+    protected $fillable = ['video_id', 'user_id', 'last_position_seconds', 'watched_at','is_completed'];
     protected $casts = ['watched_at' => 'datetime'];
     public function video()
     {

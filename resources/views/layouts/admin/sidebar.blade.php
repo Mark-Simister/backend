@@ -7,7 +7,7 @@
             </a>
         </li>
         @can('region.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/regions*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.regions.index') }}">
                     <i class="ti-map-alt menu-icon"></i>
                     <span class="menu-title">Regions</span>
@@ -15,7 +15,7 @@
             </li>
         @endcan
         @can('global_color.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/global-colors*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.global-colors.index') }}">
                     <i class="ti-paint-bucket menu-icon"></i>
                     <span class="menu-title">Global Colors</span>
@@ -23,7 +23,7 @@
             </li>
         @endcan
         @can('channel.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/channels*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.channels.index') }}">
                     <i class="ti-video-camera menu-icon"></i>
                     <span class="menu-title">Channels</span>
@@ -31,7 +31,7 @@
             </li>
         @endcan
         @can('category.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/categories*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.categories.index') }}">
                     <i class="icon-layout menu-icon"></i>
                     <span class="menu-title">Categories</span>
@@ -39,7 +39,7 @@
             </li>
         @endcan
         @can('character_tag.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/character_tags*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.character_tags.index') }}">
                     <i class="icon-layout menu-icon"></i>
                     <span class="menu-title">Character Tags</span>
@@ -47,15 +47,17 @@
             </li>
         @endcan
         @can('character_role.view')
-            <li class="nav-item {{ request()->routeIs('admin.character_roles.*') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
-                    <i class="icon-layout menu-icon"></i>
-                    <span class="menu-title">Character Roles</span>
-                </a>
-            </li>
+            <li class="nav-item {{ request()->is('admin/character_roles') || request()->is('admin/character_roles/create') || request()->is('admin/character_roles/*/edit') ? 'active' : '' }}">
+    <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
+        <i class="icon-layout menu-icon"></i>
+        <span class="menu-title">Character Roles</span>
+    </a>
+</li>
+
+
         @endcan
         @can('character.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/characters*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.characters.index') }}">
                     <i class="ti-user menu-icon"></i>
                     <span class="menu-title">Characters</span>
@@ -63,7 +65,7 @@
             </li>
         @endcan
         @can('highlight_tag.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/highlight_tags*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.highlight_tags.index') }}">
                     <i class="ti-tag menu-icon"></i>
                     <span class="menu-title">Highlight Tags</span>
@@ -71,7 +73,7 @@
             </li>
         @endcan
         @can('video.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/videos*') && !request()->has('type') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.videos.index') }}">
                     <i class="ti-control-play menu-icon"></i>
                     <span class="menu-title">All Videos</span>
@@ -79,7 +81,8 @@
             </li>
         @endcan
         @can('video.view')
-            <li class="nav-item">
+            <li
+                class="nav-item {{ (request()->is('admin/videos/create') && request()->get('type') === 'vimeo') || (request()->is('admin/videos/*/edit') && request()->get('type') === 'vimeo') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.vimeo.index') }}">
                     <i class="ti-vimeo menu-icon"></i>
                     <span class="menu-title">Assign Vimeo Videos</span>
@@ -96,7 +99,7 @@
             </li>
         @endcan
         @can('users.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.users.index') }}">
                     <i class="icon-head menu-icon"></i>
                     <span class="menu-title">Users</span>
@@ -104,7 +107,7 @@
             </li>
         @endcan
         @can('subscription_list.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/subscription_listing*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.subscription_listing.index') }}">
                     <i class="ti-package menu-icon"></i>
                     <span class="menu-title">Subscription Listings</span>
@@ -112,7 +115,7 @@
             </li>
         @endcan
         @can('subscription.view')
-            <li class="nav-item">
+            <li class="nav-item  {{ request()->is('admin/subscriptions*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.subscriptions.index') }}">
                     <i class="ti-credit-card menu-icon"></i>
                     <span class="menu-title">Subscriptions</span>
@@ -121,13 +124,15 @@
         @endcan
 
         @role('super_admin')
-            <li class="nav-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+            <li
+                class="nav-item {{ request()->routeIs('admin.roles.*') && !request()->routeIs('admin.character_roles.*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.roles.index') }}">
                     <i class="ti-lock menu-icon"></i>
                     <span class="menu-title">Role Management</span>
                 </a>
             </li>
-            <li class="nav-item">
+
+            <li class="nav-item  {{ request()->is('admin/sub-admins*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.sub_admins.index') }}">
                     <i class="ti-user menu-icon"></i>
                     <span class="menu-title">Sub-admin Management</span>
@@ -135,7 +140,7 @@
             </li>
         @endrole
         @can('product-message.view')
-            <li class="nav-item">
+            <li class="nav-item  {{ request()->is('admin/product-messages*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.product-messages.index') }}">
 
                     <i class="ti-comments menu-icon"></i>
@@ -144,7 +149,7 @@
             </li>
         @endcan
         @can('newsletter-subscription.view')
-            <li class="nav-item">
+            <li class="nav-item {{ request()->is('admin/newsletter*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.newsletter') }}">
                     <i class="ti-email menu-icon"></i>
                     <span class="menu-title">Newsletter Subscriptions</span>

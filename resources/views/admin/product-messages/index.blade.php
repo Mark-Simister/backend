@@ -38,11 +38,11 @@
                                     <td>{{ Str::limit($productMessage->subject, 50) }}</td>
                                     <td>{{ Str::limit($productMessage->message, 50) }}</td>
                                     <td>
-                                        {{-- @can('product_message.view')
+                                        @can('product_message.view')
                                             <a href="{{ route('admin.product-messages.show', $productMessage) }}" class="btn btn-info me-1">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                        @endcan --}}
+                                        @endcan
                                         @can('product_message.delete')
                                             <form action="{{ route('admin.product-messages.delete', $productMessage) }}" method="POST" class="d-inline delete-product-message-form">
                                                 @csrf
