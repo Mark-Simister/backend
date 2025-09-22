@@ -2001,95 +2001,119 @@ class VideoController extends Controller
     }
 
     public function charactersFromVideosAndPaid(Request $request, $region)
-    {
-        try {
-            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
-            $userId = $user?->id;
+{
+    try {
+        // Get the logged-in user (if available)
+        $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+        $userId = $user?->id;
 
-            $request->validate([
-                'channel_id' => 'sometimes|integer',
-                'category_id' => 'sometimes|integer',
-            ]);
+        // Validate the request parameters
+        $request->validate([
+            'channel_id' => 'sometimes|integer',
+            'category_id' => 'sometimes|integer',
+        ]);
 
-            $regionCode = strtoupper($region);
-            $allowedRegions = ['AU', 'CA', 'UK', 'US'];
-            if (!in_array($regionCode, $allowedRegions)) {
-                $regionCode = 'GLOBAL';
-            }
+        // Normalize region code
+        $regionCode = strtoupper($region);
+        $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+        if (!in_array($regionCode, $allowedRegions)) {
+            $regionCode = 'GLOBAL';
+        }
 
-            $videoCharacterIds = Video::query()
-                ->select('character_id')
-                ->whereNotNull('character_id')
-                ->where('status', 'published')
-                ->when($request->filled('channel_id'), fn($q) => $q->where('channel_id', $request->channel_id))
-                ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
-                ->whereRaw('FIND_IN_SET(?, highlight_tags)', [3])  // Trending flag
-                ->whereHas('regions', function ($q) use ($regionCode) {
-                    $q->where('region_code', $regionCode);
-                })
-                ->distinct();
-                
-            $characters = Character::query()
-                ->whereIn('id', $videoCharacterIds)
-                ->whereHas('regions', function ($q) use ($regionCode) {
-                    $q->where('region_code', $regionCode);
-                })
-                ->orderBy('name')
-                ->get([
-                    'id',
-                    'name',
-                    'image',
-                    'character_page_url_slug',
-                    'category_id',
-                ])
-                ->map(function ($character) {
-                    return [
-                        'id' => $character->id,
-                        'name' => $character->name,
-                        'image' => $character->image ? asset($character->image) : null,  // Full URL
-                        'character_page_url_slug' => $character->character_page_url_slug,
-                        'category_id' => $character->category_id,
-                    ];
-                });
+        // Get the IDs of characters associated with videos
+        $videoCharacterIds = Video::query()
+            ->select('character_id')
+            ->whereNotNull('character_id')
+            ->where('status', 'published')
+            ->when($request->filled('channel_id'), fn($q) => $q->where('channel_id', $request->channel_id))
+            ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
+            ->whereRaw('FIND_IN_SET(?, highlight_tags)', [3])  // Trending flag
+            ->whereHas('regions', function ($q) use ($regionCode) {
+                $q->where('region_code', $regionCode);
+            })
+            ->distinct();
 
-            if ($characters->isEmpty()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'No characters found for the selected region and filters.',
-                    'data' => [],
-                ], 404);
-            }
-
-            $isSubscribed = $user && $this->hasValidSubscription($userId);
-
-            $data = $characters->map(function ($character) use ($userId, $isSubscribed) {
-                $isPaidVideo = in_array($character['category_id'], [/* Paid category IDs or checks */]);
-                    // dd($character);
-
-                $paidFlag = $isPaidVideo ? ($isSubscribed ? true : false) : false;
-
-                return array_merge($character, [
-                    'paid' => $paidFlag,  
-                    'is_subscribed' => $isSubscribed,  
-                ]);
+        // Fetch the characters associated with the video character IDs
+        $characters = Character::query()
+            ->whereIn('id', $videoCharacterIds)
+            ->whereHas('regions', function ($q) use ($regionCode) {
+                $q->where('region_code', $regionCode);
+            })
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'image',
+                'character_page_url_slug',
+                'category_id',
+            ])
+            ->map(function ($character) {
+                return [
+                    'id' => $character->id,
+                    'name' => $character->name,
+                    'image' => $character->image ? asset($character->image) : null,  // Full URL
+                    'character_page_url_slug' => $character->character_page_url_slug,
+                    'category_id' => $character->category_id,
+                ];
             });
 
-            return response()->json([
-                'status' => true,
-                'message' => $isSubscribed
-                    ? 'Paid & free characters fetched successfully'
-                    : 'Your subscription has ended. Showing free characters only.',
-                'data' => $data,
-            ], 200);
-
-        } catch (\Exception $e) {
+        // If no characters are found, return a response
+        if ($characters->isEmpty()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to fetch characters',
-                'error' => $e->getMessage(),
-            ], 500);
+                'message' => 'No characters found for the selected region and filters.',
+                'data' => [],
+            ], 404);
         }
+
+        $isSubscribed = $user && $this->hasValidSubscription($userId);
+
+        
+        $charactersWithVideos = $characters->map(function ($character) use ($regionCode, $isSubscribed) {
+            // Get videos associated with the character
+            $videos = Video::query()
+                ->where('character_id', $character['id'])
+                ->where('status', 'published')
+                ->whereHas('regions', function ($q) use ($regionCode) {
+                    $q->where('region_code', $regionCode);
+                })
+                ->get([
+                    'id',
+                    'title',
+                    'type',
+                    'video_url',
+                    'category_id',
+                ]);
+                
+            $paidFlag = $videos->contains(function ($video) {
+                return $video->type === 'vimeo';  
+            });
+
+            return array_merge($character, [
+                // 'videos' => $videos, 
+                'paid' => $paidFlag,  
+                'is_subscribed' => $isSubscribed, 
+            ]);
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => $isSubscribed
+                ? 'Paid & free characters fetched successfully'
+                : 'Your subscription has ended. Showing free characters only.',
+            'data' => $charactersWithVideos,
+        ]);
+
+    } catch (\Exception $e) {
+        // Return an error response if an exception occurs
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to fetch characters',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
+
 
 
 
