@@ -145,7 +145,7 @@ Route::middleware(['auth'])
         
 
         Route::get('product-reviews', [ProductReviewController::class, 'index'])->name('product-reviews.index');
-        Route::get('product-reviews/{category}/character', [ProductReviewController::class, 'product_review_character'])->name('product_review.character');
+        Route::get('product-reviews/{category}/characters', [ProductReviewController::class, 'product_review_character'])->name('product_review.character');
         Route::post('product-reviews/store', [ProductReviewController::class, 'store'])->name('product_review.store');
         Route::get('videos/fetch/{character_id}', [ProductReviewController::class, 'fetchVideos'])->name('fetch_videos');
         // routes/web.php

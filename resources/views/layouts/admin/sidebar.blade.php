@@ -39,7 +39,8 @@
             </li>
         @endcan
         @can('character_tag.view')
-            <li class="nav-item {{ request()->is('admin/character_tags*') ? 'active' : '' }}">
+            <li
+                class="nav-item {{ request()->is('admin/character_tags*') && !request()->is('admin/product-reviews*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.character_tags.index') }}">
                     <i class="icon-layout menu-icon"></i>
                     <span class="menu-title">Character Tags</span>
@@ -47,17 +48,17 @@
             </li>
         @endcan
         @can('character_role.view')
-            <li class="nav-item {{ request()->is('admin/character_roles') || request()->is('admin/character_roles/create') || request()->is('admin/character_roles/*/edit') ? 'active' : '' }}">
-    <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
-        <i class="icon-layout menu-icon"></i>
-        <span class="menu-title">Character Roles</span>
-    </a>
-</li>
-
-
+            <li
+                class="nav-item {{ (request()->is('admin/character_roles') || request()->is('admin/character_roles/create') || request()->is('admin/character_roles/*/edit')) && !request()->is('admin/product-reviews*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
+                    <i class="icon-layout menu-icon"></i>
+                    <span class="menu-title">Character Roles</span>
+                </a>
+            </li>
         @endcan
         @can('character.view')
-            <li class="nav-item {{ request()->is('admin/characters*') ? 'active' : '' }}">
+            <li
+                class="nav-item {{ request()->is('admin/characters*') && !request()->is('admin/product-reviews/*/characters*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.characters.index') }}">
                     <i class="ti-user menu-icon"></i>
                     <span class="menu-title">Characters</span>
@@ -142,7 +143,6 @@
         @can('product-message.view')
             <li class="nav-item  {{ request()->is('admin/product-messages*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.product-messages.index') }}">
-
                     <i class="ti-comments menu-icon"></i>
                     <span class="menu-title">Product Messages</span>
                 </a>
@@ -157,7 +157,8 @@
             </li>
         @endcan
         @can('product-reviews.view')
-            <li class="nav-item">
+            <li
+                class="nav-item {{ request()->is('admin/product-reviews*') && request()->is('admin/product-reviews/*/characters') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.product-reviews.index') }}">
                     <i class="ti-pencil menu-icon"></i>
                     <span class="menu-title">Product Review</span>

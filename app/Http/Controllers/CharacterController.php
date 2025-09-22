@@ -304,22 +304,22 @@ class CharacterController extends Controller
         }
 
         if ($request->hasFile('video')) {
-        // Delete old video if exists
-        if ($character->video && File::exists(public_path($character->video))) {
-            File::delete(public_path($character->video));
+            // Delete old video if exists
+            if ($character->video && File::exists(public_path($character->video))) {
+                File::delete(public_path($character->video));
+            }
+
+            $video = $request->file('video');
+            $videoName = time() . '_' . Str::random(6) . '.' . $video->getClientOriginalExtension();
+
+            $destinationPath = public_path('/character_videos');
+            if (!File::isDirectory($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true, true);
+            }
+
+            $video->move($destinationPath, $videoName);
+            $validated['video'] = 'character_videos/' . $videoName;
         }
-
-        $video = $request->file('video');
-        $videoName = time() . '_' . Str::random(6) . '.' . $video->getClientOriginalExtension();
-
-        $destinationPath = public_path('/character_videos');
-        if (!File::isDirectory($destinationPath)) {
-            File::makeDirectory($destinationPath, 0755, true, true);
-        }
-
-        $video->move($destinationPath, $videoName);
-        $validated['video'] = 'character_videos/' . $videoName;
-    }
 
 
         // Generate character_page_url_slug
@@ -927,6 +927,304 @@ class CharacterController extends Controller
             'character_role' => $character->character_role,
             'category_id' => $character->category_id,
             'image_url' => $character->image_url ?? null,
+            'category' => $character->relationLoaded('category') && $character->category ? [
+                'id' => $character->category->id,
+                'name' => $character->category->name,
+            ] : null,
+            'regions' => $character->regions
+                ? $character->regions->map(fn($r) => ['id' => $r->id, 'region_code' => $r->region_code])
+                : [],
+            'videos' => $videoData,
+            // NEW: character-level reviews + aggregates
+            'character_reviews' => $characterReviews,
+            'character_rating_avg' => $characterRatingAvg ? round((float) $characterRatingAvg, 2) : null,
+            'character_rating_count' => $characterRatingCount,
+        ];
+
+        return response()->json([
+            'status' => true,
+            'message' => ($user && $this->hasValidSubscription($user->id))
+                ? 'Character and paid videos (including free) fetched successfully'
+                : 'Character and free videos fetched successfully (subscription required for more).',
+            'data' => $characterPayload,
+        ], 200);
+    }
+    public function showWithVideosNew(Request $request, $id, $region)
+    {
+        $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+        $isSubscribed = $user && $this->hasValidSubscription($user->id);
+
+        // dd($user);
+
+        $request->validate([
+            'channel_id' => 'sometimes|integer',
+            'category_id' => 'sometimes|integer',
+        ]);
+
+        $character = Character::with([
+            'category:id,name',
+            'regions:id,region_code',
+        ])->find($id);
+
+        if (!$character) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Character not found.',
+                'data' => [],
+            ], 404);
+        }
+
+        $regionCode = strtoupper($region);
+        $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+        if (!in_array($regionCode, $allowedRegions)) {
+            $regionCode = 'GLOBAL';
+        }
+
+        $q = Video::with([
+            'regions:id,region_code',
+
+            'reviews' => function ($q) {
+                $q->select('id', 'video_id', 'user_id', 'rating', 'review', 'status', 'created_at')   // trim columns
+                    ->where('status', 'approved')
+                    ->latest();
+            },
+            'reviews.user_api:id,name,profile_image',
+        ])
+            ->withCount([
+                'reviews as rating_count' => function ($q) {
+                    $q->where('status', 'approved');
+                }
+            ])
+            ->withAvg([
+                'reviews as rating_avg' => function ($q) {
+                    $q->where('status', 'approved');
+                }
+            ], 'rating')
+            ->where('status', 'published')
+            ->where('character_id', $character->id);
+
+        // dd($user);
+        // if ($user && $this->hasValidSubscription($user->id)) {
+        //     $q->whereIn('type', ['youtube', 'vimeo']); // Paid + free
+        // } else {
+        //     $q->where('type', 'youtube'); // Free only
+        // }
+
+
+        foreach (['channel_id', 'category_id'] as $f) {
+            if ($request->filled($f)) {
+                $q->where($f, $request->get($f));
+            }
+        }
+
+        $q->whereHas('regions', function ($query) use ($regionCode) {
+            $query->where('region_code', $regionCode);
+        });
+
+        $videos = $q->latest()->get();
+        // dd($isSubscribed);
+
+        $allTagIds = $videos->flatMap(fn($v) => $v->tag_ids_array ?? [])
+            ->filter()
+            ->unique();
+
+        $tagMap = $allTagIds->isNotEmpty()
+            ? Tag::whereIn('id', $allTagIds)->pluck('name', 'id')
+            : collect();
+
+        $videos->each(function ($v) use ($tagMap) {
+            $ids = collect($v->tag_ids_array ?? []);
+            $v->tag_pairs = $ids->map(function ($id) use ($tagMap) {
+                $name = $tagMap->get($id);
+                return $name ? ['id' => $id, 'name' => $name] : null;
+            })->filter()->values()->all();
+        });
+
+        // $videoData = $videos->map(function ($video) {
+        $videoData = $videos->map(function ($video) use ($isSubscribed) {
+            if ($video->relationLoaded('regions')) {
+                $video->regions->each->makeHidden(['pivot']);
+            }
+
+            $isPaidVideo = in_array($video->type, ['vimeo']);
+
+            $paidFlag = $isPaidVideo;
+
+
+            $reviews = ($video->reviews ?? collect())->map(function ($rev) {
+                $reviewerName = optional($rev->user_api)->name;
+                $reviewerImage = optional($rev->user_api)->profile_image
+                    ? asset(optional($rev->user_api)->profile_image)
+                    : null;
+
+                return [
+                    'id' => $rev->id,
+                    'rating' => (int) $rev->rating, // stars
+                    'review' => $rev->review,
+                    'status' => $rev->status,
+                    'created_at' => optional($rev->created_at)->toDateTimeString(),
+                    'reviewer_name' => $reviewerName,
+                    'reviewer_profile_image' => $reviewerImage,
+                ];
+            })->values();
+
+            return [
+                'id' => $video->id,
+                'title' => $video->title,
+                'description' => $video->description,
+                'type' => $video->type,
+                'video_url' => $video->video_url,
+                'thumbnail_url' => $video->thumbnail_url,
+                'character_id' => $video->character_id,
+                'channel_id' => $video->channel_id,
+                'category_id' => $video->category_id,
+                'access_level' => $video->access_level,
+                'affiliate_link' => $video->affiliate_link,
+                'tags' => $video->tag_pairs,
+                'rating_type' => $video->rating_type,
+                'sponsorship_type' => $video->sponsorship_type,
+                'highlight_tags' => $video->highlight_tags,
+                'auto_tags' => $video->auto_tags,
+                'created_at' => optional($video->created_at)->toDateTimeString(),
+                'updated_at' => optional($video->updated_at)->toDateTimeString(),
+                'product_name' => $video->product_name,
+                'product_asin_sku' => $video->product_asin_sku,
+                'public_rating' => $video->public_rating,
+                'review_details' => $video->review_details,
+                'character_score' => $video->character_score,
+                'editorial_score' => $video->editorial_score,
+                'final_beastie_score' => $video->final_beastie_score,
+                'product_thumbnail' => $video->product_thumbnail ? asset($video->product_thumbnail) : null,
+                'video_type' => $video->video_type,
+                'video_platforms' => $video->video_platforms,
+                'youtube_id' => $video->youtube_id,
+                'wistia_id' => $video->wistia_id,
+                'raw_video_path' => $video->raw_video_path,
+                'caption_file' => $video->caption_file,
+                'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+                'is_draft' => $video->is_draft,
+                'status' => $video->status,
+                'tag_ids' => $video->tag_ids,
+                'is_ai_generated' => $video->is_ai_generated,
+                'is_finalized' => $video->is_finalized,
+                'qa_passed' => $video->qa_passed,
+                'post_schedule_at' => $video->post_schedule_at,
+                'review_type' => $video->review_type,
+                'sponsored' => $video->sponsored,
+                'seo_title' => $video->seo_title,
+                'seo_description' => $video->seo_description,
+                'hashtags' => $video->hashtags,
+                'cta_text' => $video->cta_text,
+                'og_image_url' => $video->og_image_url,
+                'open_graph_image' => $video->open_graph_image,
+                'twitter_title' => $video->twitter_title,
+                'twitter_description' => $video->twitter_description,
+                'original_price' => $video->original_price,
+                'views' => $video->views,
+                'likes' => $video->likes,
+                'sale_end_date' => $video->sale_end_date,
+                'is_amazon_choice' => $video->is_amazon_choice,
+                'regions' => $video->regions->map(fn($r) => [
+                    'id' => $r->id,
+                    'region_code' => $r->region_code,
+                ]),
+
+                'reviews' => $reviews,
+                'rating_avg' => $video->rating_avg ? round((float) $video->rating_avg, 2) : null,
+                'rating_count' => (int) ($video->rating_count ?? 0),
+                'paid' => $paidFlag,
+                'is_subscribed' => $isSubscribed,
+            ];
+        });
+
+        // dd($videoData);
+        
+
+        $characterReviewRows = \App\Models\Review::with(['user:id,name,profile_image'])
+            ->whereIn('video_id', $videos->pluck('id'))
+            ->where('status', 'approved')
+            ->latest()
+            ->get();
+
+        $characterReviews = $characterReviewRows->map(function ($rev) {
+            return [
+                'id' => $rev->id,
+                'video_id' => $rev->video_id,
+                'rating' => (int) $rev->rating,
+                'review' => $rev->review,
+                'created_at' => optional($rev->created_at)->toDateTimeString(),
+                'reviewer_name' => optional($rev->user)->name,
+                'reviewer_profile_image' => optional($rev->user)->profile_image
+                    ? asset(optional($rev->user)->profile_image)
+                    : null,
+            ];
+        })->values();
+
+        $characterRatingAvg = $characterReviewRows->avg('rating');
+        $characterRatingCount = $characterReviewRows->count();
+
+
+        // Check if any video has 'paid' flag set to true
+        $paidFlagNew = $videoData->contains(function ($video) {
+            return $video['paid'] === true;
+        });
+
+        
+
+        $characterPayload = [
+            'id' => $character->id,
+            'name' => $character->name,
+            'persona' => $character->persona,
+            'details' => $character->details,
+            'image' => $character->image ? asset($character->image) : null,
+            'character_video_url' => $character->video ? asset($character->video) : null,
+            'created_at' => optional($character->created_at)->toJSON(),
+            'updated_at' => optional($character->updated_at)->toJSON(),
+            'location' => $character->location,
+            'age' => $character->age,
+            'species' => $character->species,
+            'style_vibe' => $character->style_vibe,
+            'durability_score' => $character->durability_score,
+            'durability_notes' => $character->durability_notes,
+            'comfort_score' => $character->comfort_score,
+            'comfort_notes' => $character->comfort_notes,
+            'style_score' => $character->style_score,
+            'style_notes' => $character->style_notes,
+            'affordability_score' => $character->affordability_score,
+            'affordability_notes' => $character->affordability_notes,
+            'tech_feature_score' => $character->tech_feature_score,
+            'tech_feature_notes' => $character->tech_feature_notes,
+            'eco_friendliness_score' => $character->eco_friendliness_score,
+            'eco_friendliness_notes' => $character->eco_friendliness_notes,
+            'engagement_score' => $character->engagement_score,
+            'engagement_notes' => $character->engagement_notes,
+            'ease_of_use_score' => $character->ease_of_use_score,
+            'ease_of_use_notes' => $character->ease_of_use_notes,
+            'performance_score' => $character->performance_score,
+            'performance_notes' => $character->performance_notes,
+            'brand_reputation_score' => $character->brand_reputation_score,
+            'brand_reputation_notes' => $character->brand_reputation_notes,
+            'sex' => $character->sex,
+            'page_heading' => $character->page_heading,
+            'page_sub_heading' => $character->page_sub_heading,
+            'preferences' => $character->preferences,
+            'loved_pet1' => $character->loved_pet1,
+            'loved_pet2' => $character->loved_pet2,
+            'loved_pet3' => $character->loved_pet3,
+            'hated_pet1' => $character->hated_pet1,
+            'hated_pet2' => $character->hated_pet2,
+            'hated_pet3' => $character->hated_pet3,
+            'character_page_url_slug' => $character->character_page_url_slug,
+            'public_private_toggle' => $character->public_private_toggle,
+            'character_launch_date' => $character->character_launch_date,
+            'character_popularity_score' => $character->character_popularity_score,
+            'editor_notes_content_guidelines' => $character->editor_notes_content_guidelines,
+            'character_tag' => $character->character_tag,
+            'character_role' => $character->character_role,
+            'category_id' => $character->category_id,
+            'image_url' => $character->image_url ?? null,
+            'paid' => $paidFlagNew,
+            'is_subscribed' => $isSubscribed,
             'category' => $character->relationLoaded('category') && $character->category ? [
                 'id' => $character->category->id,
                 'name' => $character->category->name,

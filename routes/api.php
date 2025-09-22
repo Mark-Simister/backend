@@ -183,6 +183,7 @@ Route::get('characters', [CharacterController::class, 'index_api']);
 Route::get('characters/{id}', [CharacterController::class, 'show_api']);
 // Route::get('/characters/{id}/with-videos/{region}', [CharacterController::class, 'showWithVideos']);
 Route::get('/character-detail/{id}/{region}', [CharacterController::class, 'showWithVideos'])->name('characters.withVideos');
+Route::get('/character-details/{id}/{region}', [CharacterController::class, 'showWithVideosNew'])->name('characters.withVideosNew');
 
 Route::get('/characters/region/{region?}', [CharacterController::class, 'index_by_region_api']);
 
