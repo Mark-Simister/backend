@@ -199,14 +199,31 @@ class ProductReviewController extends Controller
 
 
     // Vimeo Upload Helper Method
-    private function uploadToVimeo($filePath)
-    {
-        try {
-            $uri = $this->vimeo->upload($filePath);
+    // private function uploadToVimeo($filePath)
+    // {
+    //     try {
+    //         $uri = $this->vimeo->upload($filePath);
 
-            return 'https://vimeo.com' . $uri;
-        } catch (\Exception $e) {
-            return null;
-        }
+    //         return 'https://vimeo.com' . $uri;
+    //     } catch (\Exception $e) {
+    //         return null;
+    //     }
+    // }
+    private function uploadToVimeo($filePath)
+{
+    try {
+        $uri = $this->vimeo->upload($filePath); 
+        // Example response: "/videos/1121145795"
+
+        // Extract numeric ID from URI
+        $videoId = (int) str_replace('/videos/', '', $uri);
+
+        // Return clean short URL
+        return 'https://vimeo.com/' . $videoId;
+    } catch (\Exception $e) {
+        return null;
     }
+}
+
+
 }
