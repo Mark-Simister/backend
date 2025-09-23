@@ -60,12 +60,12 @@ class VimeoController extends Controller
 
     // Videos you can assign TO (filter to things not yet linked to any provider URL)
     $assignableVideos = Video::query()
-        ->whereNull('video_url')                // no URL yet
-        ->orWhere('type', '!=', 'vimeo')       // or currently a different source
+        ->whereNull('video_url')                
+        ->orWhere('type', '!=', 'vimeo')      
         ->orderByDesc('id')
-        ->get(['id', 'title']);                // lightweight
+        ->get(['id', 'title']);                
 
-    // if you want to show already assigned, useful for badges
+    
     $assignedVideos = Video::where('type', 'vimeo')
         ->with('character')
         ->latest()->get();
@@ -122,7 +122,7 @@ public function assign(Request $request)
         $video->title = $data['title'];
     }
     if (isset($data['duration'])) {
-        $video->duration_seconds = $data['duration']; // adapt to your schema
+        $video->duration_seconds = $data['duration'];
     }
     if (!empty($data['thumb']) && property_exists($video, 'thumbnail_url')) {
         $video->thumbnail_url = $data['thumb'];

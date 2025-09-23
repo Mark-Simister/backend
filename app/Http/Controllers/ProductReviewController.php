@@ -35,68 +35,6 @@ class ProductReviewController extends Controller
         $this->vimeo = new Vimeo($client, $secret, $access);
     }
 
-    //    public function index()
-// {
-//     $user = Auth::user(); // Get the authenticated user
-
-    //     // Get all roles associated with the user
-//     $roles = $user->getRoleNames(); 
-
-    //     // Get all permissions assigned to the user (both via direct assignment and through roles)
-//     $permissions = $user->getAllPermissions(); 
-
-    //     // Check if you want to load the permissions for a specific role (e.g., 'sub_admin')
-//     // Assuming $roleId is passed as a parameter, or replace it with a valid role ID
-//     $roleId = 2;  // For example, replace with your desired role ID
-//     $role = Role::with('permissions')->find($roleId);  // Load the role with permissions
-
-    //     // Load permissions after the role is retrieved
-//     if ($role) {
-//         $role->load('permissions');
-//     }
-// $role = Role::with('permissions')->where('name', 'sub_admin')->first();
-// dd($role->permissions);
-//     // Dump the permissions related to the role
-//     dd($roles, $user, $permissions, $role ? $role->permissions : 'Role not found');
-
-    //     // Fetch the latest categories (assuming you need this for your view)
-//     $categories = Category::latest()->get();
-
-    //     // Return the view with categories
-//     return view('admin.product_review.index', compact('categories'));
-// }
-// public function index()
-//     {
-
-    //     // Get the authenticated user
-//     $user = Auth::user(); 
-
-    //     // Get all roles of the logged-in user
-//     $roles = $user->getRoleNames(); // This will return an array of role names the user has
-//     // Check if the user has any role assigned
-//     if ($roles->isEmpty()) {
-//         dd('User has no roles assigned.');
-//     }
-
-    //     // Get the role model dynamically based on the first role the user has
-//     $roleName = $roles->first();  // Get the first role assigned to the user (you can also loop through all roles if needed)
-
-    //     // Fetch the role with its permissions dynamically
-//     $role = Role::with('permissions')->where('name', $roleName)->first();
-//     // Check if role exists
-//     if (!$role) {
-//         dd('Role not found.');
-//     }
-
-    //     // Get the permissions for the role
-//     $permissions = $role->permissions;
-
-    //     // Show the role and permissions of the logged-in user
-//     return response()->json([
-//         'role' => $roleName,  // The role name
-//         'permissions' => $permissions->pluck('name')  // List of permission names for the role
-//     ]);
-//     }
     public function index()
     {
         $categories = Category::latest()->get();
@@ -209,18 +147,43 @@ class ProductReviewController extends Controller
     //         return null;
     //     }
     // }
-    private function uploadToVimeo($filePath)
+    // public function uploadToVimeo($filePath)
+    // {
+    //     try {
+    //         $uri = $this->vimeo->upload($filePath); 
+    //         // Example response: "/videos/1121145795"
+
+    //         // Extract numeric ID from URI
+    //         $videoId = (int) str_replace('/videos/', '', $uri);
+
+    //         // Return clean short URL
+    //         return 'https://vimeo.com/' . $videoId;
+    //     } catch (\Exception $e) {
+    //         // Optional: log the error
+    //         \Log::error('Vimeo upload failed: ' . $e->getMessage());
+    //         return null;
+    //     }
+    // }
+    public function uploadToVimeo($filePath)
 {
     try {
+        // Upload the video
         $uri = $this->vimeo->upload($filePath); 
-        // Example response: "/videos/1121145795"
+        // $uri is like "/videos/1121145795"
 
-        // Extract numeric ID from URI
+        // Make video public
+        $this->vimeo->request($uri, [
+            'privacy' => [
+                'view' => 'anybody'   // this makes it public
+            ]
+        ], 'PATCH');
+
+        // Extract numeric ID and return short URL
         $videoId = (int) str_replace('/videos/', '', $uri);
-
-        // Return clean short URL
         return 'https://vimeo.com/' . $videoId;
+
     } catch (\Exception $e) {
+        \Log::error('Vimeo upload failed: ' . $e->getMessage());
         return null;
     }
 }
