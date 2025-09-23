@@ -228,6 +228,8 @@ Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () 
 Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])
     ->name('stripe.webhook');
 
+
+
 Route::get('/pm-maker', function () {
     return view('pm-maker', [
         'stripeKey' => config('services.stripe.key'),

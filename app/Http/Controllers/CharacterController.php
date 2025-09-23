@@ -9,6 +9,7 @@ use App\Models\Tag;
 use App\Models\CharacterRole;
 use App\Models\Subscription;
 use App\Models\CharacterTag;
+use App\Models\ProductReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -973,6 +974,65 @@ class CharacterController extends Controller
                 'data' => [],
             ], 404);
         }
+        $featured_product_reviews = ProductReview::where('character_id', $character->id)
+            ->where('is_featured', 1)
+            ->with('video')
+            ->get()
+            ->map(function ($review) {
+                $video = $review->video;
+
+                return [
+                    "id" => $review->id,
+                    "character_id" => $review->character_id,
+                    "video_id" => $review->video_id,
+                    "review_url" => $review->review_url,
+                    "is_featured" => $review->is_featured,
+                    "is_active" => $review->is_active,
+                    "thumbnail_image" => optional($video->thumbnail_image)
+                        ? asset($video->thumbnail_image)
+                        : null,
+                    "title" => optional($video)->title,
+                    "description" => optional($video)->description,
+                    "type" => optional($video)->type,
+                    "video_url" => optional($video)->video_url,
+                    "created_at" => $review->created_at,
+                    "updated_at" => $review->updated_at,
+                ];
+            });
+            if ($featured_product_reviews->isEmpty()) {
+    $featured_product_reviews = 'No featured product reviews found for this character';
+}
+        $product_reviews = ProductReview::where('character_id', $character->id)
+            ->where('is_featured', 0)
+            ->with('video')
+            ->get()
+            ->map(function ($review) {
+                $video = $review->video;
+
+                return [
+                    "id" => $review->id,
+                    "character_id" => $review->character_id,
+                    "video_id" => $review->video_id,
+                    "review_url" => $review->review_url,
+                    "is_featured" => $review->is_featured,
+                    "is_active" => $review->is_active,
+                    "thumbnail_image" => optional($video->thumbnail_image)
+                        ? asset($video->thumbnail_image)
+                        : null,
+                    "title" => optional($video)->title,
+                    "description" => optional($video)->description,
+                    "type" => optional($video)->type,
+                    "video_url" => optional($video)->video_url,
+                    "created_at" => $review->created_at,
+                    "updated_at" => $review->updated_at,
+                ];
+            });
+            if ($product_reviews->isEmpty()) {
+    $product_reviews = 'No product reviews found for this character';
+}
+
+        // dd($featured_product_reviews,$product_reviews);
+
 
         $regionCode = strtoupper($region);
         $allowedRegions = ['AU', 'CA', 'UK', 'US'];
@@ -1138,7 +1198,7 @@ class CharacterController extends Controller
         });
 
         // dd($videoData);
-        
+
 
         $characterReviewRows = \App\Models\Review::with(['user:id,name,profile_image'])
             ->whereIn('video_id', $videos->pluck('id'))
@@ -1169,7 +1229,7 @@ class CharacterController extends Controller
             return $video['paid'] === true;
         });
 
-        
+
 
         $characterPayload = [
             'id' => $character->id,
@@ -1237,6 +1297,8 @@ class CharacterController extends Controller
             'character_reviews' => $characterReviews,
             'character_rating_avg' => $characterRatingAvg ? round((float) $characterRatingAvg, 2) : null,
             'character_rating_count' => $characterRatingCount,
+            'featured_product_reviews' => $featured_product_reviews,
+            'product_reviews' => $product_reviews,
         ];
 
         return response()->json([
