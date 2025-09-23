@@ -14,6 +14,7 @@ class Character extends Model
         'persona',
         'details',
         'image',
+        'thumbnail_image',
         'category_id',
         'location',
         'age',
