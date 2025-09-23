@@ -66,7 +66,7 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
-                    
+
                     <div class="form-group mt-3">
                         <label>Character Video</label>
                         <input type="file" name="video" accept="video/*" class="form-control">
@@ -107,6 +107,24 @@
                                 Remove current image
                             </label>
                         </div> --}}
+                        @endif
+                    </div>
+                    
+                    {{-- Thumbnail Image --}}
+                    <div class="form-group mt-3">
+                        <label>Character Thumbnail Image</label>
+                        <input type="file" name="thumbnail_image" class="form-control">
+                        @error('thumbnail_image')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+
+                        {{-- Display current thumbnail if it exists --}}
+                        @if ($character->thumbnail_image)
+                            <div class="mt-2">
+                                <label>Current Thumbnail:</label><br>
+                                <img src="{{ asset($character->thumbnail_image) }}" alt="Current Thumbnail"
+                                    style="max-width: 150px; height: auto;">
+                            </div>
                         @endif
                     </div>
 

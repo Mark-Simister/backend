@@ -69,6 +69,7 @@ class CharacterController extends Controller
             'category_id' => 'required|exists:categories,id',
 
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10048',
+            'thumbnail_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10048',
             'video' => 'nullable|mimetypes:video/mp4,video/quicktime,video/x-matroska,video/webm,video/x-msvideo|max:20480', // 20 MB
 
             'location' => 'nullable|string|max:255',
@@ -143,6 +144,20 @@ class CharacterController extends Controller
             $image->move($destinationPath, $imageName);
             $validated['image'] = 'characters/' . $imageName;
         }
+
+        if ($request->hasFile('thumbnail_image')) {
+            $thumbnail = $request->file('thumbnail_image');
+            $thumbnailName = time() . '_thumb.' . $thumbnail->getClientOriginalExtension();
+
+            $destinationPath = public_path('/characters'); // same folder as main image
+            if (!File::isDirectory($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true, true);
+            }
+
+            $thumbnail->move($destinationPath, $thumbnailName);
+            $validated['thumbnail_image'] = 'characters/' . $thumbnailName;
+        }
+
         if ($request->hasFile('video')) {
             $video = $request->file('video');
             $videoName = time() . '_' . Str::random(6) . '.' . $video->getClientOriginalExtension();
@@ -225,6 +240,7 @@ class CharacterController extends Controller
             'category_id' => 'required|exists:categories,id',
 
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10048',
+            'thumbnail_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10048',
             'video' => 'nullable|mimetypes:video/mp4,video/quicktime,video/x-matroska,video/webm,video/x-msvideo|max:20480',
 
             'location' => 'nullable|string|max:255',
@@ -304,6 +320,28 @@ class CharacterController extends Controller
             $validated['image'] = $character->image;
         }
 
+        // Handle thumbnail image update
+        if ($request->hasFile('thumbnail_image')) {
+            // Delete old thumbnail if exists
+            if ($character->thumbnail_image && File::exists(public_path($character->thumbnail_image))) {
+                File::delete(public_path($character->thumbnail_image));
+            }
+
+            $thumbnail = $request->file('thumbnail_image');
+            $thumbnailName = time() . '_thumb.' . $thumbnail->getClientOriginalExtension();
+            $destinationPath = public_path('/characters');
+
+            if (!File::isDirectory($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true, true);
+            }
+
+            $thumbnail->move($destinationPath, $thumbnailName);
+            $validated['thumbnail_image'] = 'characters/' . $thumbnailName;
+        } else {
+            $validated['thumbnail_image'] = $character->thumbnail_image;
+        }
+
+
         if ($request->hasFile('video')) {
             // Delete old video if exists
             if ($character->video && File::exists(public_path($character->video))) {
@@ -372,6 +410,7 @@ class CharacterController extends Controller
                 'id',
                 'name',
                 'image',
+                'thumbnail_image',
                 'category_id',
                 'character_page_url_slug',
                 'public_private_toggle',
@@ -441,6 +480,7 @@ class CharacterController extends Controller
                 'id',
                 'name',
                 'image',
+                'thumbnail_image',
                 'category_id',
                 'character_page_url_slug',
                 'persona',
@@ -882,6 +922,7 @@ class CharacterController extends Controller
             'persona' => $character->persona,
             'details' => $character->details,
             'image' => $character->image ? asset($character->image) : null,
+            'thumbnail_image' => $character->thumbnail_image ? asset($character->thumbnail_image) : null,
             'character_video_url' => $character->video ? asset($character->video) : null,
             'created_at' => optional($character->created_at)->toJSON(),
             'updated_at' => optional($character->updated_at)->toJSON(),
@@ -999,9 +1040,9 @@ class CharacterController extends Controller
                     "updated_at" => $review->updated_at,
                 ];
             });
-            if ($featured_product_reviews->isEmpty()) {
-    $featured_product_reviews = 'No featured product reviews found for this character';
-}
+        if ($featured_product_reviews->isEmpty()) {
+            $featured_product_reviews = 'No featured product reviews found for this character';
+        }
         $product_reviews = ProductReview::where('character_id', $character->id)
             ->where('is_featured', 0)
             ->with('video')
@@ -1027,9 +1068,9 @@ class CharacterController extends Controller
                     "updated_at" => $review->updated_at,
                 ];
             });
-            if ($product_reviews->isEmpty()) {
-    $product_reviews = 'No product reviews found for this character';
-}
+        if ($product_reviews->isEmpty()) {
+            $product_reviews = 'No product reviews found for this character';
+        }
 
         // dd($featured_product_reviews,$product_reviews);
 
@@ -1198,7 +1239,18 @@ class CharacterController extends Controller
         });
 
         // dd($videoData);
-
+        $bloopers = $character->bloopers()->get()->map(function ($blooper) {
+            return [
+                'id' => $blooper->id,
+                'name' => $blooper->name,
+                'description' => $blooper->description,
+                'stars' => (int) $blooper->stars,
+                'video_url' => $blooper->video ? asset($blooper->video) : null,
+                'image_url' => $blooper->image ? asset($blooper->image) : null,
+                'created_at' => optional($blooper->created_at)->toDateTimeString(),
+                'updated_at' => optional($blooper->updated_at)->toDateTimeString(),
+            ];
+        });
 
         $characterReviewRows = \App\Models\Review::with(['user:id,name,profile_image'])
             ->whereIn('video_id', $videos->pluck('id'))
@@ -1237,6 +1289,7 @@ class CharacterController extends Controller
             'persona' => $character->persona,
             'details' => $character->details,
             'image' => $character->image ? asset($character->image) : null,
+            'thumbnail_image' => $character->thumbnail_image ? asset($character->thumbnail_image) : null,
             'character_video_url' => $character->video ? asset($character->video) : null,
             'created_at' => optional($character->created_at)->toJSON(),
             'updated_at' => optional($character->updated_at)->toJSON(),
@@ -1293,7 +1346,7 @@ class CharacterController extends Controller
                 ? $character->regions->map(fn($r) => ['id' => $r->id, 'region_code' => $r->region_code])
                 : [],
             'videos' => $videoData,
-            // NEW: character-level reviews + aggregates
+            'bloopers' => $bloopers,
             'character_reviews' => $characterReviews,
             'character_rating_avg' => $characterRatingAvg ? round((float) $characterRatingAvg, 2) : null,
             'character_rating_count' => $characterRatingCount,

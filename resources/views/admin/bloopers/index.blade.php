@@ -1,18 +1,14 @@
 @extends('layouts.admin.master')
 
-@push('styles')
-    <style>
-        /* Custom styles if needed */
-    </style>
-@endpush
-
-@section('title', 'Characters')
+@section('title', 'Bloopers')
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Characters</h2>
-        @can('character.create')
-            <a href="{{ route('admin.characters.create') }}" class="btn btn-primary">+ Add Character</a>
+        <h2 class="mb-0">Bloopers for "{{ $character->name }}"</h2>
+        @can('bloopers.manage')
+            <a href="{{ route('admin.bloopers.create', $character) }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Add Blooper
+            </a>
         @endcan
     </div>
 
@@ -23,48 +19,62 @@
         </div>
     @endif
 
-    @if ($characters->count())
+    @if ($bloopers->count())
         <div class="card shadow-sm border-0">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table id="characters-table" class="table table-hover table-bordered align-middle">
+                    <table id="bloopers-table" class="table table-striped table-hover align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 60px;">#</th>
-                                <th>Name</th>
-                                <th>Persona</th>
+                                <th>Video</th>
                                 <th>Image</th>
-                                <th style="width: 20px;">Actions</th>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>Stars</th>
+                                <th style="width: 140px;" class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($characters as $character)
+                            @foreach ($bloopers as $blooper)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $character->name }}</td>
-                                    <td>{{ Str::limit($character->persona, 50) }}</td>
                                     <td>
-                                        <img src="{{ asset($character->image) }}" alt="{{ $character->name }}"
-                                            style="max-width: 200px; height: auto;">
+                                        <video width="250" controls>
+                                            <source src="{{ asset($blooper->video) }}" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                     </td>
                                     <td>
-                                        @can('character.edit')
-                                            <a href="{{ route('admin.characters.edit', $character) }}"
-                                                class="btn btn-warning me-1">
+                                        @if ($blooper->image)
+                                            <img src="{{ asset($blooper->image) }}" alt="{{ $blooper->name }}"
+                                                width="200" class="img-thumbnail">
+                                        @endif
+                                    </td>
+                                    <td>{{ $blooper->name ?? '—' }}</td>
+                                    <td>{{ Str::limit($blooper->description, 50) ?? '—' }}</td>
+                                    <td>
+                                        @for ($i = 1; $i <= 5; $i++)
+                                            @if ($i <= $blooper->stars)
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            @else
+                                                <i class="bi bi-star text-secondary"></i>
+                                            @endif
+                                        @endfor
+                                    </td>
+                                    <td class="text-center">
+                                        @can('bloopers.edit')
+                                            <a href="{{ route('admin.bloopers.edit', $blooper) }}"
+                                                class="btn btn-sm btn-warning" title="Edit">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
                                         @endcan
-                                        @can('bloopers.edit')
-                                            <a href="{{ route('admin.bloopers.index', $character) }}" class="btn btn-info me-1">
-                                                <i class="bi bi-camera-reels"></i> Bloopers
-                                            </a>
-                                        @endcan
-                                        @can('character.delete')
-                                            <form action="{{ route('admin.characters.destroy', $character) }}" method="POST"
-                                                class="d-inline delete-character-form">
+                                        @can('bloopers.delete')
+                                            <form action="{{ route('admin.bloopers.destroy', $blooper) }}" method="POST"
+                                                class="d-inline delete-blooper-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" class="btn btn-danger delete-btn">
+                                                <button type="button" class="btn btn-sm btn-danger delete-btn" title="Delete">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
@@ -73,29 +83,30 @@
                                 </tr>
                             @endforeach
                         </tbody>
+
                     </table>
                 </div>
             </div>
         </div>
     @else
         <div class="alert alert-info text-center mt-4">
-            <strong>No characters found.</strong> Start by adding a new one.
+            <strong>No bloopers found for this character.</strong> Start by adding a new one.
         </div>
     @endif
 @endsection
 
 @push('scripts')
-    <!-- DataTables -->
+    <!-- DataTables Script -->
     <script>
         $(document).ready(function() {
-            $('#characters-table').DataTable({
+            $('#bloopers-table').DataTable({
                 responsive: true,
                 pageLength: 10,
                 ordering: true,
                 autoWidth: false,
                 language: {
                     search: "_INPUT_",
-                    searchPlaceholder: "Search characters..."
+                    searchPlaceholder: "Search bloopers..."
                 }
             });
         });

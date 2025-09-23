@@ -390,7 +390,7 @@ class ChannelController extends Controller
     public function index_people_by_region_api(Request $request, $region = null)
     {
         try {
-            // region can come from URL or body/query
+            
             $input = strtoupper($region ?? $request->input('region', ''));
 
             $allowed = ['AU', 'CA', 'UK', 'US'];
@@ -411,9 +411,66 @@ class ChannelController extends Controller
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 })
-                ->whereHas('categories', function ($q) {
-                    $q->where('slug', 'people');
+                // ->whereHas('categories', function ($q) {
+                //     $q->where('slug', 'people');
+                // })
+                ->where('name', 'like', '%people%')
+                ->with([
+                    'regions:id,region_code' 
+                ])
+                ->latest()
+                ->get();
+
+            // enrich + hide fields
+            $channels->each(function ($channel) {
+                $channel->image_url = $channel->image ? asset($channel->image) : null;
+                $channel->makeHidden(['image']);
+                if ($channel->relationLoaded('regions')) {
+                    $channel->regions->each->makeHidden(['pivot']);
+                }
+            });
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Channels fetched successfully',
+                'data' => $channels,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch channels',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function index_pets_by_region_api(Request $request, $region = null)
+    {
+        try {
+            
+            $input = strtoupper($region ?? $request->input('region', ''));
+
+            $allowed = ['AU', 'CA', 'UK', 'US'];
+            $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
+
+            // Only channels that have the requested region AND belong to 'people' category
+            $channels = Channel::select(
+                'id',
+                'name',
+                'image',
+                'primary_color',
+                'secondary_color',
+                'accent_color',
+                'background_color',
+                'created_at',
+                'updated_at'
+            )
+                ->whereHas('regions', function ($q) use ($regionCode) {
+                    $q->where('region_code', $regionCode);
                 })
+                // ->whereHas('categories', function ($q) {
+                //     $q->where('slug', 'pet');
+                // })
+                ->where('name', 'like', '%pet%')
                 ->with([
                     'regions:id,region_code' 
                 ])

@@ -26,6 +26,7 @@ use App\Http\Controllers\AffiliateLinkController;
 use App\Http\Controllers\ProductMessageController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProductReviewController;
+use App\Http\Controllers\BlooperController;
 
 
 // Route::get('/', function () {
@@ -151,6 +152,11 @@ Route::middleware(['auth'])
         // routes/web.php
         Route::patch('product-reviews/{review}/featured',[ProductReviewController::class, 'updateFeatured'])->name('product_review.featured');
 
+        Route::get('characters/{character}/bloopers', [BlooperController::class, 'index'])->name('bloopers.index');
+        Route::get('characters/{character}/bloopers/create', [BlooperController::class, 'create'])->name('bloopers.create');
+        Route::get('characters/{character}/bloopers/edit', [BlooperController::class, 'edit'])->name('bloopers.edit');
+        Route::post('characters/{character}/bloopers', [BlooperController::class, 'store'])->name('bloopers.store');
+        Route::delete('bloopers/{blooper}', [BlooperController::class, 'destroy'])->name('bloopers.destroy');
 
 
         // Users (maybe only super_admin + managers)
