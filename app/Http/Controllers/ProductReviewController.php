@@ -138,8 +138,9 @@ class ProductReviewController extends Controller
 
         $file = $request->file('file');
         $reviewType = $request->review_type;
-
         $ext = strtolower($file->getClientOriginalExtension());
+
+        // Validate extensions
         if ($reviewType === 'mp3' && $ext !== 'mp3') {
             return redirect()->back()->withErrors(['file' => 'Please upload an MP3 file for the MP3 review type.'])->withInput();
         }
@@ -150,19 +151,21 @@ class ProductReviewController extends Controller
         $video = Video::findOrFail($request->video_id);
 
         if ($reviewType === 'mp3') {
+            // Store mp3 locally
             $destination = public_path('product_review');
             if (!is_dir($destination)) {
                 @mkdir($destination, 0755, true);
             }
 
-            // Unique filename and move
             $filename = 'review_' . uniqid() . '.mp3';
             $file->move($destination, $filename);
 
             $reviewUrl = url('product_review/' . $filename);
         } else {
+            // Upload mp4 to Vimeo and get the actual Vimeo URL
             $filePath = $file->getPathname();
             $reviewUrl = $this->uploadToVimeo($filePath);
+
         }
 
         ProductReview::create([
@@ -174,6 +177,7 @@ class ProductReviewController extends Controller
 
         return redirect()->back()->with('success', 'Product review submitted successfully!');
     }
+
 
     public function updateFeatured(ProductReview $review, Request $request)
     {
