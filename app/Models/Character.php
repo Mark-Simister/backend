@@ -94,5 +94,10 @@ class Character extends Model
         return $this->hasMany(Blooper::class);
     }
 
+    public function productReviews()
+    {
+        return $this->hasMany(ProductReview::class, 'character_id', 'id');
+    }
+
 
 }

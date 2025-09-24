@@ -17,7 +17,8 @@ class ProductReview extends Model
         'video_id', 
         'review_url', 
         'is_featured', 
-        'is_active'
+        'is_active',
+        'views'
     ];
 
     public function character()

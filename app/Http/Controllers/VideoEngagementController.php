@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Video;
 use App\Models\CategoryFollow;
 use App\Models\VideoWatchHistory;
+use App\Models\ProductReview;
+use App\Models\ProductReviewWatch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
 
 class VideoEngagementController extends Controller
@@ -336,6 +339,51 @@ class VideoEngagementController extends Controller
             'data' => $followedCategories,
         ]);
     }
+
+
+
+public function trackView(Request $request, $productReviewId)
+{
+    $user = $request->user('api') ?? $request->user('sanctum');
+    if (!$user) {
+        return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+    }
+
+    try {
+        $productReview = ProductReview::findOrFail($productReviewId);
+    } catch (ModelNotFoundException $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Product review not found'
+        ], 404);
+    }
+
+    // Check if user already watched
+    $alreadyWatched = ProductReviewWatch::where('product_review_id', $productReviewId)
+        ->where('user_id', $user->id)
+        ->exists();
+
+    if ($alreadyWatched) {
+        return response()->json([
+            'status' => true,
+            'message' => 'User has already viewed this product review',
+            'views' => $productReview->views,
+        ]);
+    }
+
+    $productReview->increment('views');
+
+    ProductReviewWatch::create([
+        'product_review_id' => $productReviewId,
+        'user_id' => $user->id,
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Product review view tracked successfully',
+        'views' => $productReview->views,
+    ]);
+}
 
 
 

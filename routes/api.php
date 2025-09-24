@@ -133,6 +133,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/categories/{categoryId}/follow', [VideoEngagementController::class, 'followCategory']);
     Route::get('/followed-categories', [VideoEngagementController::class, 'listFollowedCategories']);
 
+    Route::post('/product-review/{id}/view', [VideoEngagementController::class, 'trackView']);
 
     Route::post('/channels/{id}/follow', [ChannelController::class, 'follow'])->name('channels.follow');
     Route::get('recommended-channels/{region?}', [CategoryController::class, 'recommendedChannels']);
@@ -174,6 +175,7 @@ Route::get(
 )->name('channels.details');
 
 Route::get('/region/{region?}', [ChannelController::class, 'filter_region_api']);
+Route::get('/region_new/{region?}', [ChannelController::class, 'filter_region_api_new']);
 Route::get('categories', [CategoryController::class, 'index_api']);
 // Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api']);
 Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api'])->name('categories.byRegion');
@@ -187,6 +189,11 @@ Route::get('characters/{id}', [CharacterController::class, 'show_api']);
 // Route::get('/characters/{id}/with-videos/{region}', [CharacterController::class, 'showWithVideos']);
 Route::get('/character-detail/{id}/{region}', [CharacterController::class, 'showWithVideos'])->name('characters.withVideos');
 Route::get('/character-details/{id}/{region}', [CharacterController::class, 'showWithVideosNew'])->name('characters.withVideosNew');
+Route::get('/product-reviews/region/{region}', [CharacterController::class, 'getAllProductReviews']);
+Route::get('/featured-reviews/region/{region}', [CharacterController::class, 'getAllFeaturedReviews']);
+Route::get('/latest-product-reviews/region/{region}', [CharacterController::class, 'getLatestProductReviews']);
+Route::get('/most-followed-product-reviews/region/{region}', [CharacterController::class, 'getMostViewedProductReviews']);
+Route::get('/meet-the-reviewers/region/{region}', [CharacterController::class, 'getProductReviewCharacters']);
 
 Route::get('/characters/region/{region?}', [CharacterController::class, 'index_by_region_api']);
 
@@ -204,8 +211,11 @@ Route::get('/free-videos/{region}/{id}', [VideoController::class, 'freeVideosDet
 // All in one
 Route::get('/trending-videos/{region}', [VideoController::class, 'trendingVideos']);
 Route::get('/top-deals/{region}', [VideoController::class, 'topDeals']);
+Route::get('/top-rated-products/{region}', [VideoController::class, 'topRatedProducts']);
 Route::get('/trending-characters/{region}', [VideoController::class, 'charactersFromVideosAndPaid']);
 Route::get('/videos-detail/{region}/{id}', [VideoController::class, 'allVideosDetail']);
+Route::get('/top-this-week/{region}', [VideoController::class, 'trendingVideos']);
+Route::get('/hot-this-week/{region}', [VideoController::class, 'hotThisWeek']);
 
 // Route::get('/subscription-listings/by-region/{region?}', [SubscriptionListingController::class, 'index_region_api']);
 Route::get('/subscription-listings/region/{region}', [SubscriptionListingController::class, 'index_region_api']);

@@ -1134,6 +1134,421 @@ class ChannelController extends Controller
     }
 
 
+    public function filter_region_api_new(Request $request, $region = null) 
+{
+    /**
+     * ---------------------------
+     * Helper: Parse tags
+     * ---------------------------
+     */
+    $parseTags = function ($raw) {
+        if (is_string($raw)) {
+            $raw = trim($raw);
+            if ($raw !== '' && ($raw[0] === '[' || str_contains($raw, ','))) {
+                $arr = $raw[0] === '[' ? json_decode($raw, true) : explode(',', $raw);
+            } else {
+                $arr = $raw === '' ? [] : [$raw];
+            }
+        } elseif (is_array($raw)) {
+            $arr = $raw;
+        } else {
+            $arr = [];
+        }
+
+        $arr = array_map(fn($t) => is_string($t) ? trim($t) : $t, $arr);
+        $arr = array_values(array_filter($arr, fn($t) => is_string($t) && $t !== ''));
+        return array_values(array_unique($arr));
+    };
+
+    /**
+     * ---------------------------
+     * Helper: Parse IDs
+     * ---------------------------
+     */
+    $parseIds = function ($raw) {
+        if (is_string($raw)) {
+            $raw = trim($raw);
+            if ($raw !== '' && $raw[0] === '[') {
+                $parts = json_decode($raw, true);
+            } else {
+                $parts = explode(',', $raw);
+            }
+        } elseif (is_array($raw)) {
+            $parts = $raw;
+        } else {
+            $parts = [];
+        }
+
+        $ids = [];
+        foreach ($parts as $p) {
+            $id = (int) trim((string) $p);
+            if ($id > 0) {
+                $ids[$id] = true;
+            }
+        }
+        return array_values(array_unique(array_keys($ids))); // unique ints
+    };
+
+    /**
+     * ---------------------------
+     * Helper: Apply video tag filter
+     * ---------------------------
+     */
+    $applyVideoTagFilter = function ($q, array $tags, bool $matchAll) {
+        if (empty($tags)) return;
+        $q->where(function ($sub) use ($tags, $matchAll) {
+            foreach ($tags as $idx => $tag) {
+                $expr = "JSON_CONTAINS(CAST(videos.tags AS JSON), ?)";
+                $param = json_encode($tag, JSON_UNESCAPED_UNICODE);
+                if ($matchAll) {
+                    $sub->whereRaw($expr, [$param]); // AND
+                } else {
+                    $idx === 0
+                        ? $sub->whereRaw($expr, [$param])
+                        : $sub->orWhereRaw($expr, [$param]); // OR
+                }
+            }
+        });
+    };
+
+    /**
+     * ---------------------------
+     * Helper: Apply video highlight filter
+     * ---------------------------
+     */
+    $applyVideoHighlightFilter = function ($q, array $ids, bool $matchAll) {
+        if (empty($ids)) return;
+        $q->where(function ($sub) use ($ids, $matchAll) {
+            foreach ($ids as $idx => $id) {
+                // Strip leading/trailing quotes inside SQL before FIND_IN_SET
+                $expr = "FIND_IN_SET(CAST(? AS CHAR), TRIM(BOTH '\"' FROM videos.highlight_tags))";
+                if ($matchAll) {
+                    $sub->whereRaw($expr, [$id]); // AND
+                } else {
+                    $idx === 0
+                        ? $sub->whereRaw($expr, [$id]) // first
+                        : $sub->orWhereRaw($expr, [$id]); // OR others
+                }
+            }
+        });
+    };
+
+    /**
+     * ---------------------------
+     * Parse request inputs
+     * ---------------------------
+     */
+    $input = strtoupper($region ?? $request->input('region', ''));
+    $allowed = ['AU', 'CA', 'UK', 'US']; // extend as needed
+    $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
+
+    // IDs
+    $channelIds   = $parseIds($request->input('channel', []));
+    $categoryIds  = $parseIds($request->input('category', []));
+    $characterIds = $parseIds($request->input('character', []));
+    $tagIdsFilter = $parseIds($request->input('tag_ids', []));
+
+    // Tags
+    $tagsInputRaw = $request->input('tags', $request->input('tag', []));
+    $hlInputRaw   = $request->input('highlight', $request->input('highlight_tags', $request->input('highlights', [])));
+
+    $tagsFilter = $parseTags($tagsInputRaw);
+    $hlFilter   = $parseIds($hlInputRaw);
+
+    $matchAll = $request->boolean('match_all', false);
+    $hasTagOrHlOrTagIds = !empty($tagsFilter) || !empty($hlFilter) || !empty($tagIdsFilter);
+
+    /**
+     * ---------------------------
+     * Video where condition
+     * ---------------------------
+     */
+    $videoWhere = function ($q) use ($regionCode, $applyVideoTagFilter, $applyVideoHighlightFilter, $tagsFilter, $hlFilter, $matchAll, $tagIdsFilter) {
+        $q->whereHas('regions', fn($r) => $r->where('region_code', $regionCode));
+        $applyVideoTagFilter($q, $tagsFilter, $matchAll);
+        $applyVideoHighlightFilter($q, $hlFilter, $matchAll);
+
+        if (!empty($tagIdsFilter)) {
+            $q->where(function ($sub) use ($tagIdsFilter, $matchAll) {
+                foreach ($tagIdsFilter as $idx => $tagId) {
+                    $expr = 'FIND_IN_SET(?, videos.tag_ids)';
+                    if ($matchAll) {
+                        $sub->whereRaw($expr, [$tagId]); // AND
+                    } else {
+                        $idx === 0
+                            ? $sub->whereRaw($expr, [$tagId]) // first
+                            : $sub->orWhereRaw($expr, [$tagId]); // OR others
+                    }
+                }
+            });
+        }
+    };
+
+    /**
+     * ---------------------------
+     * Channels
+     * ---------------------------
+     */
+    $channelsQuery = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+        ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+        ->with(['regions:id,region_code'])
+        ->latest();
+
+    if (!empty($channelIds)) {
+        $channelsQuery->whereIn('id', $channelIds);
+    } elseif ($hasTagOrHlOrTagIds) {
+        $channelsQuery->whereHas('categories.characters.videos', $videoWhere);
+    }
+
+    $channels = $channelsQuery->get()->each(function ($ch) {
+        $ch->image_url = $ch->image ? asset($ch->image) : null;
+        $ch->makeHidden(['image']);
+        if ($ch->relationLoaded('regions')) {
+            $ch->regions->each->makeHidden(['pivot']);
+        }
+    });
+
+    $channelIdsForChildren = empty($channelIds) ? $channels->pluck('id')->all() : $channelIds;
+
+    /**
+     * ---------------------------
+     * Categories
+     * ---------------------------
+     */
+    $categoriesQuery = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
+        ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+        ->when(!empty($channelIdsForChildren), fn($q) => $q->whereIn('channel_id', $channelIdsForChildren))
+        ->with(['regions:id,region_code'])
+        ->latest();
+
+    if (!empty($categoryIds)) {
+        $categoriesQuery->whereIn('id', $categoryIds);
+    } elseif ($hasTagOrHlOrTagIds) {
+        $categoriesQuery->whereHas('characters.videos', $videoWhere);
+    }
+
+    $categories = $categoriesQuery->get()->each(function ($cat) {
+        $cat->image_url = $cat->image ? asset($cat->image) : null;
+        $cat->makeHidden(['image']);
+        if ($cat->relationLoaded('regions')) {
+            $cat->regions->each->makeHidden(['pivot']);
+        }
+    });
+
+    $categoryIdsForChildren = empty($categoryIds) ? $categories->pluck('id')->all() : $categoryIds;
+
+    /**
+     * ---------------------------
+     * Characters
+     * ---------------------------
+     */
+    $charactersQuery = Character::select([
+        'id',
+        'name',
+        'image',
+        'category_id',
+        'character_page_url_slug',
+        'public_private_toggle',
+        'created_at',
+        'updated_at',
+        'character_tag',
+        'character_role'
+    ])
+        ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+        ->when(!empty($categoryIdsForChildren), fn($q) => $q->whereIn('category_id', $categoryIdsForChildren))
+        ->with(['regions:id,region_code'])
+        ->latest();
+
+    if (!empty($characterIds)) {
+        $charactersQuery->whereIn('id', $characterIds);
+    } elseif ($hasTagOrHlOrTagIds) {
+        $charactersQuery->whereHas('videos', $videoWhere);
+    }
+
+    $characters = $charactersQuery->get()->each(function ($c) {
+        $c->image_url = $c->image ? asset($c->image) : null;
+        $c->character_tag = $c->character_tag ? explode(',', $c->character_tag) : [];
+        $c->character_role = $c->character_role ? explode(',', $c->character_role) : [];
+        $c->makeHidden(['image']);
+        if ($c->relationLoaded('regions')) {
+            $c->regions->each->makeHidden(['pivot']);
+        }
+    });
+
+    $characterIdsForChildren = empty($characterIds) ? $characters->pluck('id')->all() : $characterIds;
+
+    /**
+     * ---------------------------
+     * Videos
+     * ---------------------------
+     */
+    
+    $videosQuery = Video::select([
+        'id',
+        'title',
+        'thumbnail_image',
+        'video_url',
+        'type',
+        'product_thumbnail',
+        'product_name',
+        'product_asin_sku',
+        'public_rating',
+        'character_id',
+        'tag_ids',
+        'highlight_tags',
+        'created_at',
+        'updated_at'
+    ])
+        ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+        ->when(!empty($characterIdsForChildren), fn($q) => $q->whereIn('character_id', $characterIdsForChildren))
+        ->latest();
+
+    $applyVideoTagFilter($videosQuery, $tagsFilter, $matchAll);
+    $applyVideoHighlightFilter($videosQuery, $hlFilter, $matchAll);
+
+    if (!empty($tagIdsFilter)) {
+        $videosQuery->where(function ($sub) use ($tagIdsFilter, $matchAll) {
+            foreach ($tagIdsFilter as $idx => $tagId) {
+                $expr = 'FIND_IN_SET(?, videos.tag_ids)';
+                if ($matchAll) {
+                    $sub->whereRaw($expr, [$tagId]); // AND
+                } else {
+                    $idx === 0
+                        ? $sub->whereRaw($expr, [$tagId]) // first
+                        : $sub->orWhereRaw($expr, [$tagId]); // OR others
+                }
+            }
+        });
+    }
+
+    $videos = $videosQuery->get();
+
+    /**
+     * ---------------------------
+     * Collect tag IDs from videos
+     * ---------------------------
+     */
+    $tagIds = [];
+    foreach ($videos as $v) {
+        $vTagIds = explode(',', (string) $v->tag_ids);
+        foreach ($vTagIds as $id) {
+            $id = (int) trim((string) $id);
+            if ($id > 0) {
+                $tagIds[$id] = true;
+            }
+        }
+    }
+
+    // Fetch tag names for collected tag_ids
+    $tagsWithNames = Tag::whereIn('id', array_keys($tagIds))
+        ->get(['id', 'name'])
+        ->pluck('name', 'id')
+        ->toArray();
+
+    $tagsIdsList = collect(array_keys($tagIds))
+        ->filter()
+        ->map(fn($id) => ['id' => (int) $id, 'name' => ($tagsWithNames[$id] ?? '')])
+        ->values()
+        ->all();
+
+    /**
+     * ---------------------------
+     * Available tags & highlight tags
+     * ---------------------------
+     */
+    $tagSet = [];
+    $highlightTagIds = [];
+    foreach ($videos as $v) {
+        $vTags = is_array($v->tags) ? $v->tags : (is_string($v->tags) ? json_decode($v->tags, true) : []);
+        if (is_array($vTags)) {
+            foreach ($vTags as $t) {
+                if (is_string($t) && $t !== '') {
+                    $tagSet[$t] = true;
+                }
+            }
+        }
+        foreach (explode(',', (string) $v->highlight_tags) as $rawId) {
+            $id = (int) trim($rawId);
+            if ($id > 0) {
+                $highlightTagIds[$id] = true;
+            }
+        }
+    }
+
+    $availableTags = array_keys($tagSet);
+    sort($availableTags);
+
+    $availableHighlightTags = [];
+    if (!empty($highlightTagIds)) {
+        $ids = array_keys($highlightTagIds);
+        $availableHighlightTags = HighlightTag::select('id', 'label', 'emoji')
+            ->whereIn('id', $ids)
+            ->orderBy('label')
+            ->get()
+            ->map(fn($ht) => [
+                'id' => $ht->id,
+                'label' => $ht->label,
+                'emoji' => asset($ht->emoji)
+            ])
+            ->values();
+    }
+
+    /**
+     * ---------------------------
+     * Format videos with tag names
+     * ---------------------------
+     */
+    $videosPayload = $videos->map(function ($v) use ($tagsWithNames) {
+        $vTagIds = explode(',', (string) $v->tag_ids);
+        $highlightIds = collect(explode(',', (string) $v->highlight_tags))
+            ->filter()
+            ->map(fn($x) => (int) trim($x))
+            ->filter()
+            ->values()
+            ->all();
+
+        $tagDetails = array_map(function ($id) use ($tagsWithNames) {
+            $id = (int) trim((string) $id);
+            $name = $tagsWithNames[$id] ?? '';
+            return ['id' => $id, 'name' => $name];
+        }, $vTagIds);
+
+        return [
+            'id' => $v->id,
+            'title' => $v->title,
+            'thumbnail_image' => $v->thumbnail_image ? asset($v->thumbnail_image) : null,
+            'video_url' => $v->video_url,
+            'type' => $v->type,
+            'product_thumbnail' => $v->product_thumbnail ? asset($v->product_thumbnail) : null,
+            'product_name' => $v->product_name,
+            'product_asin_sku' => $v->product_asin_sku,
+            'public_rating' => $v->public_rating,
+            'character_id' => $v->character_id,
+            'tags' => $tagDetails,
+            'highlight_tag_ids' => $highlightIds,
+            'created_at' => optional($v->created_at)->toDateTimeString(),
+        ];
+    });
+
+    /**
+     * ---------------------------
+     * Final JSON response
+     * ---------------------------
+     */
+    return response()->json([
+        'status' => true,
+        'message' => 'Region filter fetched successfully',
+        'data' => [
+            'channels' => $channels,
+            'categories' => $categories,
+            'characters' => $characters,
+            'videos' => $videosPayload,
+            'highlight_tags' => $availableHighlightTags,
+            'tags_ids' => $tagsIdsList,
+        ],
+    ]);
+}
+
 
 
 

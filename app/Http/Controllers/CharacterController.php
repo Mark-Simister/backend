@@ -1363,6 +1363,290 @@ class CharacterController extends Controller
         ], 200);
     }
 
+    public function getAllProductReviews(Request $request, $region)
+    {
+        return $this->fetchReviewsByRegion($request, $region, 0); // 0 → non-featured
+    }
+
+    public function getAllFeaturedReviews(Request $request, $region)
+    {
+        return $this->fetchReviewsByRegion($request, $region, 1); // 1 → featured
+    }
+
+
+    /**
+     * Helper to fetch product reviews based on region + featured flag
+     */
+    protected function fetchReviewsByRegion(Request $request, $region, $isFeatured)
+    {
+        try {
+            // Normalize region code
+            $regionCode = strtoupper($region);
+            $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+            if (!in_array($regionCode, $allowedRegions)) {
+                $regionCode = 'GLOBAL';
+            }
+            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            $userId = $user?->id;
+            $isSubscribed = $user && $this->hasValidSubscription($userId);
+
+            $reviews = ProductReview::query()
+                ->where('is_featured', $isFeatured)
+                ->where('is_active', 1)
+                ->with(['video', 'character.regions'])
+                ->whereHas('character.regions', function ($q) use ($regionCode) {
+                    $q->where('region_code', $regionCode);
+                })
+                ->get()
+                // ->map(function ($review) {
+                ->map(function ($review) use ($isSubscribed) {
+                    $video = $review->video;
+
+                    $paidFlag = $video && $video->type === 'vimeo';
+
+                    return [
+                        "id" => $review->id,
+                        "character_id" => $review->character_id,
+                        "video_id" => $review->video_id,
+                        "review_url" => $review->review_url,
+                        "is_featured" => $review->is_featured,
+                        "is_active" => $review->is_active,
+                        "thumbnail_image" => $video?->thumbnail_image ? asset($video->thumbnail_image) : null,
+                        "title" => $video?->title,
+                        "description" => $video?->description,
+                        "type" => $video?->type,
+                        "video_url" => $video?->video_url,
+                        "paid" => $paidFlag,
+                        "is_subscribed" => $isSubscribed,
+                        "created_at" => $review->created_at,
+                        "updated_at" => $review->updated_at,
+                    ];
+                });
+
+            return response()->json([
+                'status' => true,
+                'message' => $reviews->isEmpty()
+                    ? ($isFeatured ? 'No featured product reviews found' : 'No product reviews found')
+                    : ($isFeatured ? 'Featured product reviews fetched successfully' : 'All product reviews fetched successfully'),
+                'data' => $reviews,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch product reviews',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getLatestProductReviews(Request $request, $region)
+    {
+        return $this->fetchLatestReviewsByRegion($request, $region, 5); // limit 5
+    }
+
+    protected function fetchLatestReviewsByRegion(Request $request, $region, $limit = 5)
+    {
+        try {
+            // Normalize region code
+            $regionCode = strtoupper($region);
+            $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+            if (!in_array($regionCode, $allowedRegions)) {
+                $regionCode = 'GLOBAL';
+            }
+
+            // Get logged-in user and subscription status
+            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            $userId = $user?->id;
+            $isSubscribed = $user && $this->hasValidSubscription($userId);
+
+            $reviews = ProductReview::query()
+                ->where('is_active', 1)
+                ->with(['video', 'character.regions'])
+                ->whereHas('character.regions', function ($q) use ($regionCode) {
+                    $q->where('region_code', $regionCode);
+                })
+                ->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->get()
+                ->map(function ($review) use ($isSubscribed) {
+                    $video = $review->video;
+
+                    $paidFlag = $video && $video->type === 'vimeo';
+
+                    return [
+                        "id" => $review->id,
+                        "character_id" => $review->character_id,
+                        "video_id" => $review->video_id,
+                        "review_url" => $review->review_url,
+                        "is_featured" => $review->is_featured,
+                        "is_active" => $review->is_active,
+                        "thumbnail_image" => $video?->thumbnail_image ? asset($video->thumbnail_image) : null,
+                        "title" => $video?->title,
+                        "description" => $video?->description,
+                        "type" => $video?->type,
+                        "video_url" => $video?->video_url,
+                        "paid" => $paidFlag,
+                        "is_subscribed" => $isSubscribed,
+                        "created_at" => $review->created_at,
+                        "updated_at" => $review->updated_at,
+                    ];
+                });
+
+            return response()->json([
+                'status' => true,
+                'message' => $reviews->isEmpty()
+                    ? 'No product reviews found for this region'
+                    : 'Latest product reviews fetched successfully',
+                'data' => $reviews,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch product reviews',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getMostViewedProductReviews(Request $request, $region)
+    {
+        return $this->fetchMostViewedReviewsByRegion($request, $region, 5); // limit 5
+    }
+
+    protected function fetchMostViewedReviewsByRegion(Request $request, $region, $limit = 5)
+    {
+        try {
+            // Normalize region code
+            $regionCode = strtoupper($region);
+            $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+            if (!in_array($regionCode, $allowedRegions)) {
+                $regionCode = 'GLOBAL';
+            }
+
+            // Get logged-in user and subscription status
+            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            $userId = $user?->id;
+            $isSubscribed = $user && $this->hasValidSubscription($userId);
+
+            $reviews = ProductReview::query()
+                ->where('is_active', 1)
+                ->with(['video', 'character.regions'])
+                ->whereHas('character.regions', function ($q) use ($regionCode) {
+                    $q->where('region_code', $regionCode);
+                })
+                ->orderBy('views', 'desc') // Most viewed first
+                ->limit($limit)
+                ->get()
+                ->map(function ($review) use ($isSubscribed) {
+                    $video = $review->video;
+
+                    $paidFlag = $video && $video->type === 'vimeo';
+
+                    return [
+                        "id" => $review->id,
+                        "character_id" => $review->character_id,
+                        "video_id" => $review->video_id,
+                        "review_url" => $review->review_url,
+                        "is_featured" => $review->is_featured,
+                        "is_active" => $review->is_active,
+                        "thumbnail_image" => $video?->thumbnail_image ? asset($video->thumbnail_image) : null,
+                        "title" => $video?->title,
+                        "description" => $video?->description,
+                        "type" => $video?->type,
+                        "video_url" => $video?->video_url,
+                        "paid" => $paidFlag,
+                        "is_subscribed" => $isSubscribed,
+                        "views" => $review->views,
+                        "created_at" => $review->created_at,
+                        "updated_at" => $review->updated_at,
+                    ];
+                });
+
+            return response()->json([
+                'status' => true,
+                'message' => $reviews->isEmpty()
+                    ? 'No product reviews found for this region'
+                    : 'Most viewed product reviews fetched successfully',
+                'data' => $reviews,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch product reviews',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    public function getProductReviewCharacters(Request $request, $region)
+    {
+        try {
+            // Normalize region code
+            $regionCode = strtoupper($region);
+            $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+            if (!in_array($regionCode, $allowedRegions)) {
+                $regionCode = 'GLOBAL';
+            }
+
+            // Get logged-in user and subscription status
+            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            $userId = $user?->id;
+            $isSubscribed = $user && $this->hasValidSubscription($userId);
+
+            // Get distinct characters that have product reviews in this region
+            $characters = Character::query()
+                ->whereHas('productReviews', function ($q) {
+                    $q->where('is_active', 1);
+                })
+                ->whereHas('regions', function ($q) use ($regionCode) {
+                    $q->where('region_code', $regionCode);
+                })
+                ->with([
+                    'videos' => function ($q) use ($regionCode) {
+                        $q->where('status', 'published')
+                            ->whereHas('regions', fn($r) => $r->where('region_code', $regionCode));
+                    }
+                ])
+                ->get()
+                ->map(function ($character) use ($isSubscribed) {
+
+                    $paidFlag = $character->videos->contains(fn($v) => $v->type === 'vimeo');
+
+                    return [
+                        "id" => $character->id,
+                        "name" => $character->name,
+                        "image" => $character->image ? asset($character->image) : null,
+                        "character_page_url_slug" => $character->character_page_url_slug,
+                        "persona" => $character->persona,
+                        "details" => $character->details,
+                        "category_id" => $character->category_id,
+                        "paid" => $paidFlag,
+                        "is_subscribed" => $isSubscribed,
+                    ];
+                });
+
+            return response()->json([
+                'status' => true,
+                'message' => $characters->isEmpty()
+                    ? 'No characters found for this region'
+                    : 'Characters fetched successfully',
+                'data' => $characters,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch characters',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
     // private function hasValidSubscription(int $userId): bool
     // {
     //     // implement / reuse your actual subscription check
