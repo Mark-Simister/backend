@@ -336,7 +336,7 @@ class VideoController extends Controller
 
         $video = Video::create($validated);
         if (!empty($validated['channel_ids'])) {
-            $video->channels()->sync($validated['channel_ids']);
+            $video->channel()->sync($validated['channel_ids']);
         }
         // dd($video);
 
@@ -989,7 +989,7 @@ class VideoController extends Controller
         }
 
         if (!empty($validated['channel_ids'])) {
-            $video->channels()->sync($validated['channel_ids']);
+            $video->channel()->sync($validated['channel_ids']);
         }
 
         // return redirect()->route('admin.videos.index')->with('success', 'Video updated successfully.');
