@@ -9,10 +9,14 @@ class Channel extends Model
     use HasFactory;
 
 
-    protected $fillable = ['name', 'image','primary_color',
+    protected $fillable = [
+        'name',
+        'image',
+        'primary_color',
         'secondary_color',
         'accent_color',
-        'background_color',];
+        'background_color',
+    ];
 
     protected $hidden = ['image'];
     protected $appends = ['image_url'];
@@ -22,10 +26,20 @@ class Channel extends Model
         return $this->image ? asset($this->image) : null;
     }
 
+    // public function categories()
+    // {
+    //     return $this->hasMany(Category::class);
+    // }
+
     public function categories()
     {
-        return $this->hasMany(Category::class);
+        return $this->belongsToMany(Category::class, 'category_channel');
     }
+    public function videos()
+    {
+        return $this->belongsToMany(Video::class, 'video_channel');
+    }
+
     public function regions()
     {
         return $this->belongsToMany(Region::class, 'channel_region');

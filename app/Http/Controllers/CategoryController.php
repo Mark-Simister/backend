@@ -85,11 +85,62 @@ class CategoryController extends Controller
 
 
 
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'name' => 'required|unique:categories,name',
+    //         'channel_id' => 'required|exists:channels,id',
+    //         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+    //         'regions' => 'array|nullable',
+    //         'regions.*' => 'integer|exists:regions,id',
+    //     ]);
+
+    //     $imagePath = null;
+    //     if ($request->hasFile('image')) {
+    //         $folderPath = public_path('category');
+    //         if (!file_exists($folderPath)) {
+    //             mkdir($folderPath, 0777, true);
+    //         }
+    //         $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
+    //         $request->image->move($folderPath, $imageName);
+    //         $imagePath = 'category/' . $imageName;
+    //     }
+
+    //     DB::transaction(function () use ($request, $imagePath) {
+    //         $category = Category::create([
+    //             'name' => $request->name,
+    //             'slug' => Str::slug($request->name),
+    //             'channel_id' => $request->channel_id,
+    //             'image' => $imagePath,
+    //         ]);
+
+    //         $regionIds = collect($request->input('regions', []))
+    //             ->filter()
+    //             ->unique()
+    //             ->values();
+
+    //         if ($regionIds->isNotEmpty()) {
+    //             $rows = $regionIds->map(fn($rid) => [
+    //                 'category_id' => $category->id,
+    //                 'region_id' => $rid,
+    //             ])->all();
+
+    //             CategoryRegion::insert($rows);
+    //             // Alternatively:
+    //             // $category->regions()->attach($regionIds);
+    //         }
+    //     });
+
+    //     return redirect()->route('admin.categories.index')
+    //         ->with('success', 'Category created successfully!');
+    // }
+
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|unique:categories,name',
-            'channel_id' => 'required|exists:channels,id',
+            'channel_ids' => 'required|array',
+            'channel_ids.*' => 'exists:channels,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'regions' => 'array|nullable',
             'regions.*' => 'integer|exists:regions,id',
@@ -107,13 +158,17 @@ class CategoryController extends Controller
         }
 
         DB::transaction(function () use ($request, $imagePath) {
+            // create category without channel_id (since pivot is used now)
             $category = Category::create([
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
-                'channel_id' => $request->channel_id,
                 'image' => $imagePath,
             ]);
 
+            // attach selected channels
+            $category->channel()->attach($request->channel_ids);
+
+            // attach regions (your existing logic)
             $regionIds = collect($request->input('regions', []))
                 ->filter()
                 ->unique()
@@ -126,8 +181,6 @@ class CategoryController extends Controller
                 ])->all();
 
                 CategoryRegion::insert($rows);
-                // Alternatively:
-                // $category->regions()->attach($regionIds);
             }
         });
 
@@ -139,16 +192,38 @@ class CategoryController extends Controller
 
 
 
+
+    // public function edit(Category $category)
+    // {
+
+    //     $category->loadMissing('regions');
+
+    //     $channels = Channel::all();
+
+
+    //     $selectedRegions = $category->regions()
+    //         ->pluck('regions.id')
+    //         ->toArray();
+
+    //     // show active regions OR ones already selected
+    //     $regions = Region::where('is_active', 1)
+    //         ->orWhereIn('id', $selectedRegions)
+    //         ->get();
+
+    //     return view('admin.categories.edit', compact('category', 'channels', 'regions', 'selectedRegions'));
+    // }
     public function edit(Category $category)
     {
-
-        $category->loadMissing('regions');
+        $category->loadMissing(['regions', 'channel']); // eager load channels too
 
         $channels = Channel::all();
 
-
         $selectedRegions = $category->regions()
             ->pluck('regions.id')
+            ->toArray();
+
+        $selectedChannels = $category->channel()
+            ->pluck('channels.id')
             ->toArray();
 
         // show active regions OR ones already selected
@@ -156,15 +231,18 @@ class CategoryController extends Controller
             ->orWhereIn('id', $selectedRegions)
             ->get();
 
-        return view('admin.categories.edit', compact('category', 'channels', 'regions', 'selectedRegions'));
+        return view('admin.categories.edit', compact('category', 'channels', 'regions', 'selectedRegions', 'selectedChannels'));
     }
+
 
 
     public function update(Request $request, Category $category)
     {
         $request->validate([
             'name' => 'required|unique:categories,name,' . $category->id,
-            'channel_id' => 'required|exists:channels,id',
+            // 'channel_id' => 'required|exists:channels,id',
+            'channel_ids' => 'required|array',
+            'channel_ids.*' => 'exists:channels,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'regions' => 'nullable|array',
             'regions.*' => 'integer|exists:regions,id',
@@ -187,33 +265,60 @@ class CategoryController extends Controller
             $imagePath = 'category/' . $imageName;
         }
 
+        // DB::transaction(function () use ($request, $category, $imagePath) {
+        //     $category->update([
+        //         'name' => $request->name,
+        //         'slug' => Str::slug($request->name),
+        //         'channel_id' => $request->channel_id,
+        //         'image' => $imagePath,
+        //     ]);
+
+        //     // Wipe old and insert new (mirrors your channel logic)
+        //     CategoryRegion::where('category_id', $category->id)->delete();
+
+        //     $regionIds = collect($request->input('regions', []))
+        //         ->filter()
+        //         ->unique()
+        //         ->values();
+
+        //     if ($regionIds->isNotEmpty()) {
+        //         $rows = $regionIds->map(fn($rid) => [
+        //             'category_id' => $category->id,
+        //             'region_id' => $rid,
+        //         ])->all();
+
+        //         CategoryRegion::insert($rows);
+        //         // Alternatively:
+        //         // $category->regions()->sync($regionIds);
+        //     }
+        // });
         DB::transaction(function () use ($request, $category, $imagePath) {
-            $category->update([
-                'name' => $request->name,
-                'slug' => Str::slug($request->name),
-                'channel_id' => $request->channel_id,
-                'image' => $imagePath,
-            ]);
+    $category->update([
+        'name' => $request->name,
+        'slug' => Str::slug($request->name),
+        'image' => $imagePath,
+    ]);
 
-            // Wipe old and insert new (mirrors your channel logic)
-            CategoryRegion::where('category_id', $category->id)->delete();
+    // sync channels instead of single channel_id
+    $category->channel()->sync($request->channel_ids);
 
-            $regionIds = collect($request->input('regions', []))
-                ->filter()
-                ->unique()
-                ->values();
+    // wipe old regions and insert new
+    CategoryRegion::where('category_id', $category->id)->delete();
 
-            if ($regionIds->isNotEmpty()) {
-                $rows = $regionIds->map(fn($rid) => [
-                    'category_id' => $category->id,
-                    'region_id' => $rid,
-                ])->all();
+    $regionIds = collect($request->input('regions', []))
+        ->filter()
+        ->unique()
+        ->values();
 
-                CategoryRegion::insert($rows);
-                // Alternatively:
-                // $category->regions()->sync($regionIds);
-            }
-        });
+    if ($regionIds->isNotEmpty()) {
+        $rows = $regionIds->map(fn($rid) => [
+            'category_id' => $category->id,
+            'region_id' => $rid,
+        ])->all();
+
+        CategoryRegion::insert($rows);
+    }
+});
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Category updated successfully!');
@@ -325,7 +430,7 @@ class CategoryController extends Controller
             ], 500);
         }
     }
-    
+
     public function index_by_region_api_pets(Request $request, $region = null)
     {
         try {
@@ -349,7 +454,7 @@ class CategoryController extends Controller
             }
 
             $categories = $query->get();
-            
+
             $data = $categories->map(function ($category) {
                 if ($category->relationLoaded('regions')) {
                     $category->regions->each->makeHidden(['pivot']);
