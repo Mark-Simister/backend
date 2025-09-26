@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('video_region', function (Blueprint $table) {
@@ -14,9 +13,9 @@ return new class extends Migration
             $table->unsignedBigInteger('region_id');
             $table->timestamps();
 
-            $table->foreign('video_id')->references('id')->on('videos')->onDelete('cascade');
-            $table->foreign('region_id')->references('id')->on('regions')->onDelete('cascade');
+            // Remove foreign keys
 
+            // Keep unique constraint to prevent duplicate pairs
             $table->unique(['video_id', 'region_id']);
         });
     }

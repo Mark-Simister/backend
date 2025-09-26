@@ -4,9 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-   /**
+return new class extends Migration {
+    /**
      * Run the migrations.
      */
     public function up(): void
@@ -17,13 +16,12 @@ return new class extends Migration
             $table->unsignedBigInteger('region_id');
             $table->timestamps();
 
-            // Foreign keys
-            $table->foreign('character_id')->references('id')->on('characters')->onDelete('cascade');
-            $table->foreign('region_id')->references('id')->on('regions')->onDelete('cascade');
+            // Remove foreign keys
 
-            // Prevent duplicate pairs
+            // Keep unique constraint to prevent duplicate pairs
             $table->unique(['character_id', 'region_id']);
         });
+
     }
 
     /**

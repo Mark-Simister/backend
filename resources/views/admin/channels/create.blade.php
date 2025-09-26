@@ -16,6 +16,23 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+
+                    <div class="form-group mb-3">
+                        <label>Channel Category <span class="text-danger">*</span></label>
+                        <select name="channel_category" class="form-control @error('channel_category') is-invalid @enderror"
+                            required>
+                            <option value="" disabled {{ old('channel_category') ? '' : 'selected' }} class="text-danger">
+                                -- Select Channel Category --
+                            </option>
+                            <option value="people" {{ old('channel_category') == 'people' ? 'selected' : '' }}>People</option>
+                            <option value="pet" {{ old('channel_category') == 'pet' ? 'selected' : '' }}>Pet</option>
+                        </select>
+                        @error('channel_category')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+
                     <div class="form-group region-flex chcrt">
                         <label>Select Regions</label>
                         @foreach ($regions as $region)

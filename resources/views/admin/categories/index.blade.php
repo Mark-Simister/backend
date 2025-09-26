@@ -39,8 +39,8 @@
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $category->name }}</td>
                                     <td><span class="badge bg-secondary">{{ $category->slug }}</span></td>
-                                    {{-- <td>{{ $category->channel ? $category->channel->name : '—' }}</td> --}}
-                                    <td>
+                                    <td>{{ $category->channel ? $category->channel->name : '—' }}</td>
+                                    {{-- <td>
                                         @if ($category->channel->count())
                                             @foreach ($category->channel as $channel)
                                                 <span class="badge bg-info">{{ $channel->name }}</span>
@@ -48,7 +48,7 @@
                                         @else
                                             &mdash;
                                         @endif
-                                    </td>
+                                    </td> --}}
                                     <td class="text-center">
                                         @can('category.edit')
                                             <a href="{{ route('admin.categories.edit', $category) }}"

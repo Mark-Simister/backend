@@ -10,14 +10,16 @@ return new class extends Migration
     {
         Schema::create('comments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('video_id')->constrained('videos')->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('parent_id')->nullable()->constrained('comments')->cascadeOnDelete();
+            $table->unsignedBigInteger('video_id');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('parent_id')->nullable();
+
             $table->text('body');
             $table->unsignedInteger('replies_count')->default(0);
             $table->timestamps();
 
             $table->index(['video_id', 'parent_id', 'created_at']);
+
         });
     }
 

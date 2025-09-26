@@ -17,6 +17,22 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+                    
+                    <div class="form-group mb-3">
+                        <label>Channel Category <span class="text-danger">*</span></label>
+                        <select name="channel_category" class="form-control" required>
+                            <option value="people"
+                                {{ old('channel_category', $channel->channel_category) == 'people' ? 'selected' : '' }}>People
+                            </option>
+                            <option value="pet"
+                                {{ old('channel_category', $channel->channel_category) == 'pet' ? 'selected' : '' }}>Pet
+                            </option>
+                        </select>
+                        @error('channel_category')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
 
                     <div class="form-group region-flex">
                         <label for="regions">Select Regions:</label><br>

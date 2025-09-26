@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void {
         Schema::create('channels', function (Blueprint $table) {
-            $table->id(); // Use UUID if needed
-            $table->string('name');
-            $table->foreignId('category_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
-        });
+        $table->id(); // Use UUID if needed
+        $table->string('name');
+        $table->unsignedBigInteger('category_id');
+
+        $table->timestamps();
+    });
     }
 
     /**

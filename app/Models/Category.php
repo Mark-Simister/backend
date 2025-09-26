@@ -21,15 +21,15 @@ class Category extends Model
         });
     }
 
-    // public function channel()
-    // {
-    //     return $this->belongsTo(Channel::class, 'channel_id');
-    // }
-
     public function channel()
     {
-        return $this->belongsToMany(Channel::class, 'category_channel');
+        return $this->belongsTo(Channel::class, 'channel_id');
     }
+
+    // public function channel()
+    // {
+    //     return $this->belongsToMany(Channel::class, 'category_channel');
+    // }
 
     public function characters()
     {

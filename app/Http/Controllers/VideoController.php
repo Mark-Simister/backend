@@ -205,29 +205,29 @@ class VideoController extends Controller
 
         $character = Character::find($validated['character_id']);
 
-        // if ($character) {
-        //     // Get category_id from the character
-        //     $validated['category_id'] = $character->category_id;
-
-        //     // Get channel_id from the category
-        //     $category = Category::find($validated['category_id']);
-        //     if ($category) {
-        //         $validated['channel_id'] = $category->channel_id;
-        //     }
-        // }
         if ($character) {
+            // Get category_id from the character
             $validated['category_id'] = $character->category_id;
 
+            // Get channel_id from the category
             $category = Category::find($validated['category_id']);
             if ($category) {
-                $channelIds = \DB::table('category_channel')
-                    ->where('category_id', $category->id)
-                    ->pluck('channel_id')
-                    ->toArray();
-
-                $validated['channel_ids'] = $channelIds;
+                $validated['channel_id'] = $category->channel_id;
             }
         }
+        // if ($character) {
+        //     $validated['category_id'] = $character->category_id;
+
+        //     $category = Category::find($validated['category_id']);
+        //     if ($category) {
+        //         $channelIds = \DB::table('category_channel')
+        //             ->where('category_id', $category->id)
+        //             ->pluck('channel_id')
+        //             ->toArray();
+
+        //         $validated['channel_ids'] = $channelIds;
+        //     }
+        // }
 
         // dd($validated['category_id'],$validated['channel_id'] );
 
@@ -335,9 +335,9 @@ class VideoController extends Controller
         }
 
         $video = Video::create($validated);
-        if (!empty($validated['channel_ids'])) {
-            $video->channel()->sync($validated['channel_ids']);
-        }
+        // if (!empty($validated['channel_ids'])) {
+        //     $video->channel()->sync($validated['channel_ids']);
+        // }
         // dd($video);
 
         // Attach regions if any
@@ -809,21 +809,6 @@ class VideoController extends Controller
 
         $validated = $validator->validated();
 
-        // if ($validated['character_id']) {
-        //     $character = Character::find($validated['character_id']);
-        //     if ($character) {
-        //         $validated['category_id'] = $character->category_id;
-
-        //         $category = Category::find($validated['category_id']);
-        //         if ($category) {
-        //             $validated['channel_id'] = $category->channel_id;
-        //         }
-        //     }
-        // } else {
-        //     // If character_id is not provided, keep existing category_id and channel_id
-        //     $validated['category_id'] = $video->category_id;
-        //     $validated['channel_id'] = $video->channel_id;
-        // }
         if ($validated['character_id']) {
             $character = Character::find($validated['character_id']);
             if ($character) {
@@ -831,28 +816,43 @@ class VideoController extends Controller
 
                 $category = Category::find($validated['category_id']);
                 if ($category) {
-                    // Get all channel IDs linked to the category
-                    $channelIds = \DB::table('category_channel')
-                        ->where('category_id', $category->id)
-                        ->pluck('channel_id')
-                        ->toArray();
-
-                    // Store channel IDs temporarily for pivot sync
-                    $validated['channel_ids'] = $channelIds;
+                    $validated['channel_id'] = $category->channel_id;
                 }
             }
         } else {
-            // Keep existing category_id
+            // If character_id is not provided, keep existing category_id and channel_id
             $validated['category_id'] = $video->category_id;
-
-            // Get all channel IDs for the existing category
-            $channelIds = \DB::table('category_channel')
-                ->where('category_id', $video->category_id)
-                ->pluck('channel_id')
-                ->toArray();
-
-            $validated['channel_ids'] = $channelIds;
+            $validated['channel_id'] = $video->channel_id;
         }
+        // if ($validated['character_id']) {
+        //     $character = Character::find($validated['character_id']);
+        //     if ($character) {
+        //         $validated['category_id'] = $character->category_id;
+
+        //         $category = Category::find($validated['category_id']);
+        //         if ($category) {
+        //             // Get all channel IDs linked to the category
+        //             $channelIds = \DB::table('category_channel')
+        //                 ->where('category_id', $category->id)
+        //                 ->pluck('channel_id')
+        //                 ->toArray();
+
+        //             // Store channel IDs temporarily for pivot sync
+        //             $validated['channel_ids'] = $channelIds;
+        //         }
+        //     }
+        // } else {
+        //     // Keep existing category_id
+        //     $validated['category_id'] = $video->category_id;
+
+        //     // Get all channel IDs for the existing category
+        //     $channelIds = \DB::table('category_channel')
+        //         ->where('category_id', $video->category_id)
+        //         ->pluck('channel_id')
+        //         ->toArray();
+
+        //     $validated['channel_ids'] = $channelIds;
+        // }
 
 
         $tagIdsCsv = (string) $request->input('tag_ids', '');
@@ -988,9 +988,9 @@ class VideoController extends Controller
             $video->regions()->sync([]);
         }
 
-        if (!empty($validated['channel_ids'])) {
-            $video->channel()->sync($validated['channel_ids']);
-        }
+        // if (!empty($validated['channel_ids'])) {
+        //     $video->channel()->sync($validated['channel_ids']);
+        // }
 
         // return redirect()->route('admin.videos.index')->with('success', 'Video updated successfully.');
         $video->refresh();

@@ -79,14 +79,14 @@ class Video extends Model
         return $this->belongsTo(Character::class);
     }
 
-    // public function channel()
-    // {
-    //     return $this->belongsTo(Channel::class);
-    // }
-        public function channel()
+    public function channel()
     {
-        return $this->belongsToMany(Channel::class, 'video_channel');
+        return $this->belongsTo(Channel::class);
     }
+    //     public function channel()
+    // {
+    //     return $this->belongsToMany(Channel::class, 'video_channel');
+    // }
 
     public function category()
     {

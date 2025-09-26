@@ -77,6 +77,39 @@ trait HasSubscriptionSections
 
         return $q->latest();
     }
+    protected function buildVideosQueryNew(Request $request, string $regionCode, int $highlightTag, ?int $userId, ?string $channelCategory = null): Builder
+{
+    $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+        ->where('status', 'published');
+
+    // subscription-aware type filter
+    $this->applySubscriptionVideoType($q, $userId);
+
+    // optional filters
+    foreach (['channel_id', 'character_id', 'category_id'] as $f) {
+        if ($request->filled($f)) {
+            $q->where($f, $request->get($f));
+        }
+    }
+
+    // highlight tag (2 = top deals, 3 = trending)
+    $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+
+    // region
+    $q->whereHas('regions', function ($query) use ($regionCode) {
+        $query->where('region_code', $regionCode);
+    });
+
+    // filter by channel category if $channelCategory is provided
+    if ($channelCategory) {
+        $q->whereHas('channel', function ($query) use ($channelCategory) {
+            $query->where('channel_category', $channelCategory);
+        });
+    }
+
+    return $q->latest();
+}
+
 
     protected function buildVideosQueryWithoutSubscription(Request $request, string $regionCode, int $highlightTag): Builder
 {
@@ -186,6 +219,30 @@ trait HasSubscriptionSections
         ];
     }
 
+    protected function getSubscriptionSectionsNew(Request $request, string $region, ?string $type = null): array
+{
+    $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+    $userId = $user?->id;
+    $regionCode = $this->resolveRegionCode($region);
+
+    // Pass $type to the buildVideosQuery method
+    $qTopDeals = $this->buildVideosQueryNew($request, $regionCode, 2, $userId, $type);
+    $qTrending = $this->buildVideosQueryNew($request, $regionCode, 3, $userId, $type);
+
+    $topDeals = $qTopDeals->get();
+    $trending = $qTrending->get();
+
+    $this->attachTagPairs($topDeals);
+    $this->attachTagPairs($trending);
+
+    return [
+        'top_deals' => $topDeals->map(fn($v) => $this->mapVideo($v))->values(),
+        'trending_products' => $trending->map(fn($v) => $this->mapVideo($v))->values(),
+        'is_paid_user' => (bool) ($userId && $this->hasValidSubscription($userId)),
+    ];
+}
+
+
     protected function buildChannelByRegionQuery(string $regionCode)
 {
     return Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
@@ -193,6 +250,31 @@ trait HasSubscriptionSections
         ->with(['regions:id,region_code'])
         ->latest();
 }
+protected function buildChannelByRegionQueryNew(string $regionCode, ?string $channelCategory = null)
+{
+    $query = Channel::select(
+            'id',
+            'name',
+            'image',
+            'primary_color',
+            'secondary_color',
+            'accent_color',
+            'background_color',
+            'created_at',
+            'updated_at'
+        )
+        ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+        ->with(['regions:id,region_code'])
+        ->latest();
+
+    // Filter by channel_category if provided
+    if ($channelCategory) {
+        $query->where('channel_category', $channelCategory);
+    }
+
+    return $query;
+}
+
 protected function mapChannel($channel): array
 {
     // expose image_url and hide raw image
@@ -220,4 +302,12 @@ protected function getChannelsForRegion(Request $request, string $region): array
 
     return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
 }
+protected function getChannelsForRegionNew(Request $request, string $region, ?string $type = null): array
+{
+    $regionCode = $this->resolveRegionCode($region);
+    $channels = $this->buildChannelByRegionQueryNew($regionCode, $type)->get();
+
+    return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
+}
+
 }

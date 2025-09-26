@@ -80,38 +80,6 @@ class ChannelController extends Controller
         return view('admin.channels.create', compact('regions'));
     }
 
-    // public function store(Request $request)
-// {
-//     $request->validate([
-//         'name' => 'required|unique:channels,name',
-//         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
-//         'regions' => 'array|nullable',
-//     ]);
-
-    //     $imagePath = null;
-//     if ($request->hasFile('image')) {
-//         $folderPath = public_path('channel');
-//         if (!file_exists($folderPath)) {
-//             mkdir($folderPath, 0777, true);
-//         }
-//         $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
-//         $request->image->move($folderPath, $imageName);
-//         $imagePath = 'channel/' . $imageName;
-//     }
-
-    //     $channel = Channel::create([
-//         'name' => $request->name,
-//         'slug' => Str::slug($request->name),
-//         'image' => $imagePath,
-//     ]);
-
-    //     // Attach regions
-//     if ($request->has('regions')) {
-//         $channel->regions()->attach($request->regions);
-//     }
-
-    //     return redirect()->route('admin.channels.index')->with('success', 'Channel created successfully!');
-// }
 
     public function store(Request $request)
     {
@@ -119,11 +87,12 @@ class ChannelController extends Controller
             'name' => 'required|unique:channels,name',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
             'regions' => 'array|nullable',
-            'regions.*' => 'integer|exists:regions,id', // validate each region id
+            'regions.*' => 'integer|exists:regions,id', 
             'primary_color' => 'nullable|string|max:20',
             'secondary_color' => 'nullable|string|max:20',
             'accent_color' => 'nullable|string|max:20',
             'background_color' => 'nullable|string|max:20',
+            'channel_category' => 'required|in:pet,people',
         ]);
 
         $imagePath = null;
@@ -146,12 +115,13 @@ class ChannelController extends Controller
                 'secondary_color' => $request->secondary_color,
                 'accent_color' => $request->accent_color,
                 'background_color' => $request->background_color,
+                'channel_category' => $request->channel_category,
             ]);
 
-            // Insert pivot rows via ChannelRegion model
+            
             $regionIds = collect($request->input('regions', []))
-                ->filter()             // remove nulls
-                ->unique()             // avoid duplicates
+                ->filter()             
+                ->unique()             
                 ->values();
 
             if ($regionIds->isNotEmpty()) {
@@ -181,45 +151,6 @@ class ChannelController extends Controller
         return view('admin.channels.edit', compact('channel', 'regions', 'selectedRegions'));
     }
 
-    // public function update(Request $request, Channel $channel)
-// {
-//     $request->validate([
-//         'name' => 'required|unique:channels,name,' . $channel->id,
-//         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
-//         'regions' => 'nullable|array',
-//         'regions.*' => 'exists:regions,id',
-//     ]);
-
-    //     $imagePath = $channel->image;
-
-    //     if ($request->hasFile('image')) {
-//         $folderPath = public_path('channel');
-//         if (!file_exists($folderPath)) {
-//             mkdir($folderPath, 0777, true);
-//         }
-
-    //         // delete old image if exists
-//         if ($channel->image && file_exists(public_path($channel->image))) {
-//             unlink(public_path($channel->image));
-//         }
-
-    //         $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
-//         $request->image->move($folderPath, $imageName);
-//         $imagePath = 'channel/' . $imageName;
-//     }
-
-    //     $channel->update([
-//         'name' => $request->name,
-//         'slug' => Str::slug($request->name),
-//         'image' => $imagePath,
-//     ]);
-
-    //     // Sync selected regions
-//     $channel->regions()->sync($request->regions ?? []);
-
-    //     return redirect()->route('admin.channels.index')->with('success', 'Channel updated successfully!');
-// }
-
     public function update(Request $request, Channel $channel)
     {
         $request->validate([
@@ -231,6 +162,7 @@ class ChannelController extends Controller
             'secondary_color' => 'nullable|string|max:20',
             'accent_color' => 'nullable|string|max:20',
             'background_color' => 'nullable|string|max:20',
+            'channel_category' => 'required|in:pet,people',
         ]);
 
         $imagePath = $channel->image;
@@ -252,7 +184,7 @@ class ChannelController extends Controller
         }
 
         DB::transaction(function () use ($request, $channel, $imagePath) {
-            // Update channel itself
+            
             $channel->update([
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
@@ -261,6 +193,7 @@ class ChannelController extends Controller
                 'secondary_color' => $request->secondary_color,
                 'accent_color' => $request->accent_color,
                 'background_color' => $request->background_color,
+                'channel_category' => $request->channel_category,
             ]);
 
             // Remove old region links
@@ -388,16 +321,17 @@ class ChannelController extends Controller
         }
     }
     public function index_people_by_region_api(Request $request, $region = null)
-    {
-        try {
+{
+    try {
+        $input = strtoupper($region ?? $request->input('region', ''));
+        $allowed = ['AU', 'CA', 'UK', 'US'];
+        $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
-            $input = strtoupper($region ?? $request->input('region', ''));
+        
+        // $type = $request->input('type', 'people');
+        $type = 'people';
 
-            $allowed = ['AU', 'CA', 'UK', 'US'];
-            $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
-
-            // Only channels that have the requested region AND belong to 'people' category
-            $channels = Channel::select(
+        $channels = Channel::select(
                 'id',
                 'name',
                 'image',
@@ -405,55 +339,50 @@ class ChannelController extends Controller
                 'secondary_color',
                 'accent_color',
                 'background_color',
+                'channel_category',
                 'created_at',
                 'updated_at'
             )
-                ->whereHas('regions', function ($q) use ($regionCode) {
-                    $q->where('region_code', $regionCode);
-                })
-                // ->whereHas('categories', function ($q) {
-                //     $q->where('slug', 'people');
-                // })
-                ->where('name', 'like', '%people%')
-                ->with([
-                    'regions:id,region_code'
-                ])
-                ->latest()
-                ->get();
+            ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+            ->when($type, fn($q) => $q->where('channel_category', $type)) // <-- filter by type
+            ->latest()
+            ->get();
 
-            // enrich + hide fields
-            $channels->each(function ($channel) {
-                $channel->image_url = $channel->image ? asset($channel->image) : null;
-                $channel->makeHidden(['image']);
-                if ($channel->relationLoaded('regions')) {
-                    $channel->regions->each->makeHidden(['pivot']);
-                }
-            });
+        // enrich + hide fields
+        $channels->each(function ($channel) {
+            $channel->image_url = $channel->image ? asset($channel->image) : null;
+            $channel->makeHidden(['image']);
+            if ($channel->relationLoaded('regions')) {
+                $channel->regions->each->makeHidden(['pivot']);
+            }
+        });
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Channels fetched successfully',
-                'data' => $channels,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to fetch channels',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'status' => true,
+            'message' => 'Channels fetched successfully',
+            'data' => $channels,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to fetch channels',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
+
     public function index_pets_by_region_api(Request $request, $region = null)
-    {
-        try {
+{
+    try {
+        $input = strtoupper($region ?? $request->input('region', ''));
+        $allowed = ['AU', 'CA', 'UK', 'US'];
+        $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
-            $input = strtoupper($region ?? $request->input('region', ''));
+        
+        // $type = $request->input('type', 'people');
+        $type = 'pet';
 
-            $allowed = ['AU', 'CA', 'UK', 'US'];
-            $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
-
-            // Only channels that have the requested region AND belong to 'people' category
-            $channels = Channel::select(
+        $channels = Channel::select(
                 'id',
                 'name',
                 'image',
@@ -461,44 +390,37 @@ class ChannelController extends Controller
                 'secondary_color',
                 'accent_color',
                 'background_color',
+                'channel_category',
                 'created_at',
                 'updated_at'
             )
-                ->whereHas('regions', function ($q) use ($regionCode) {
-                    $q->where('region_code', $regionCode);
-                })
-                // ->whereHas('categories', function ($q) {
-                //     $q->where('slug', 'pet');
-                // })
-                ->where('name', 'like', '%pet%')
-                ->with([
-                    'regions:id,region_code'
-                ])
-                ->latest()
-                ->get();
+            ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+            ->when($type, fn($q) => $q->where('channel_category', $type)) // <-- filter by type
+            ->latest()
+            ->get();
 
-            // enrich + hide fields
-            $channels->each(function ($channel) {
-                $channel->image_url = $channel->image ? asset($channel->image) : null;
-                $channel->makeHidden(['image']);
-                if ($channel->relationLoaded('regions')) {
-                    $channel->regions->each->makeHidden(['pivot']);
-                }
-            });
+        // enrich + hide fields
+        $channels->each(function ($channel) {
+            $channel->image_url = $channel->image ? asset($channel->image) : null;
+            $channel->makeHidden(['image']);
+            if ($channel->relationLoaded('regions')) {
+                $channel->regions->each->makeHidden(['pivot']);
+            }
+        });
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Channels fetched successfully',
-                'data' => $channels,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to fetch channels',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'status' => true,
+            'message' => 'Channels fetched successfully',
+            'data' => $channels,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to fetch channels',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
 
 
@@ -844,29 +766,12 @@ class ChannelController extends Controller
             });
         };
 
-        // $applyVideoHighlightFilter = function ($q, array $ids, bool $matchAll) {
-        //     if (empty($ids))
-        //         return;
-        //     $q->where(function ($sub) use ($ids, $matchAll) {
-        //         foreach ($ids as $idx => $id) {
-        //             $expr = "FIND_IN_SET(?, videos.highlight_tags)";
-        //             if ($matchAll) {
-        //                 $sub->whereRaw($expr, [$id]);
-        //             } else {
-        //                 $idx === 0
-        //                     ? $sub->whereRaw($expr, [$id])
-        //                     : $sub->orWhereRaw($expr, [$id]);
-        //             }
-        //         }
-        //     });
-        // };
         $applyVideoHighlightFilter = function ($q, array $ids, bool $matchAll) {
             if (empty($ids))
                 return;
             $q->where(function ($sub) use ($ids, $matchAll) {
                 foreach ($ids as $idx => $id) {
-                    // Strip leading/trailing quotes inside SQL before FIND_IN_SET
-                    $expr = "FIND_IN_SET(CAST(? AS CHAR), TRIM(BOTH '\"' FROM videos.highlight_tags))";
+                    $expr = "FIND_IN_SET(?, videos.highlight_tags)";
                     if ($matchAll) {
                         $sub->whereRaw($expr, [$id]);
                     } else {
@@ -877,6 +782,23 @@ class ChannelController extends Controller
                 }
             });
         };
+        // $applyVideoHighlightFilter = function ($q, array $ids, bool $matchAll) {
+        //     if (empty($ids))
+        //         return;
+        //     $q->where(function ($sub) use ($ids, $matchAll) {
+        //         foreach ($ids as $idx => $id) {
+        //             // Strip leading/trailing quotes inside SQL before FIND_IN_SET
+        //             $expr = "FIND_IN_SET(CAST(? AS CHAR), TRIM(BOTH '\"' FROM videos.highlight_tags))";
+        //             if ($matchAll) {
+        //                 $sub->whereRaw($expr, [$id]);
+        //             } else {
+        //                 $idx === 0
+        //                     ? $sub->whereRaw($expr, [$id])
+        //                     : $sub->orWhereRaw($expr, [$id]);
+        //             }
+        //         }
+        //     });
+        // };
 
 
         $input = strtoupper($region ?? $request->input('region', ''));
@@ -926,16 +848,16 @@ class ChannelController extends Controller
             ->with(['regions:id,region_code'])
             ->latest();
 
-        // if (!empty($channelIds)) {
-        //     $channelsQuery->whereIn('id', $channelIds);
-        // } elseif ($hasTagOrHlOrTagIds) {
-        //     $channelsQuery->whereHas('categories.characters.videos', $videoWhere);
-        // }
         if (!empty($channelIds)) {
-            $channelsQuery->whereIn('channels.id', $channelIds);
+            $channelsQuery->whereIn('id', $channelIds);
         } elseif ($hasTagOrHlOrTagIds) {
             $channelsQuery->whereHas('categories.characters.videos', $videoWhere);
         }
+        // if (!empty($channelIds)) {
+        //     $channelsQuery->whereIn('channels.id', $channelIds);
+        // } elseif ($hasTagOrHlOrTagIds) {
+        //     $channelsQuery->whereHas('categories.characters.videos', $videoWhere);
+        // }
 
 
         $channels = $channelsQuery->get()->each(function ($ch) {
@@ -947,20 +869,20 @@ class ChannelController extends Controller
 
         $channelIdsForChildren = empty($channelIds) ? $channels->pluck('id')->all() : $channelIds;
 
-        // $categoriesQuery = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
-        //     ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
-        //     ->when(!empty($channelIdsForChildren), fn($q) => $q->whereIn('channel_id', $channelIdsForChildren))
-        //     ->with(['regions:id,region_code'])
-        //     ->latest();
-        $categoriesQuery = Category::select('id', 'name', 'slug', 'image', 'created_at', 'updated_at')
+        $categoriesQuery = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
             ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
-            ->when(
-                !empty($channelIdsForChildren),
-                fn($q) =>
-                $q->whereHas('channel', fn($q2) => $q2->whereIn('channels.id', $channelIdsForChildren))
-            )
+            ->when(!empty($channelIdsForChildren), fn($q) => $q->whereIn('channel_id', $channelIdsForChildren))
             ->with(['regions:id,region_code'])
             ->latest();
+        // $categoriesQuery = Category::select('id', 'name', 'slug', 'image', 'created_at', 'updated_at')
+        //     ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+        //     ->when(
+        //         !empty($channelIdsForChildren),
+        //         fn($q) =>
+        //         $q->whereHas('channel', fn($q2) => $q2->whereIn('channels.id', $channelIdsForChildren))
+        //     )
+        //     ->with(['regions:id,region_code'])
+        //     ->latest();
 
         if (!empty($categoryIds)) {
             $categoriesQuery->whereIn('id', $categoryIds);
@@ -1339,20 +1261,20 @@ class ChannelController extends Controller
          * Categories
          * ---------------------------
          */
-        // $categoriesQuery = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
-        //     ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
-        //     ->when(!empty($channelIdsForChildren), fn($q) => $q->whereIn('channel_id', $channelIdsForChildren))
-        //     ->with(['regions:id,region_code'])
-        //     ->latest();
         $categoriesQuery = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
             ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
-            ->when(
-                !empty($channelIdsForChildren),
-                fn($q) =>
-                $q->whereHas('channel', fn($q2) => $q2->whereIn('channels.id', $channelIdsForChildren))
-            )
+            ->when(!empty($channelIdsForChildren), fn($q) => $q->whereIn('channel_id', $channelIdsForChildren))
             ->with(['regions:id,region_code'])
             ->latest();
+        // $categoriesQuery = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
+        //     ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+        //     ->when(
+        //         !empty($channelIdsForChildren),
+        //         fn($q) =>
+        //         $q->whereHas('channel', fn($q2) => $q2->whereIn('channels.id', $channelIdsForChildren))
+        //     )
+        //     ->with(['regions:id,region_code'])
+        //     ->latest();
 
         if (!empty($categoryIds)) {
             $categoriesQuery->whereIn('id', $categoryIds);
@@ -1416,27 +1338,7 @@ class ChannelController extends Controller
          * ---------------------------
          */
 
-        // $videosQuery = Video::select([
-        //     'id',
-        //     'title',
-        //     'thumbnail_image',
-        //     'video_url',
-        //     'type',
-        //     'product_thumbnail',
-        //     'product_name',
-        //     'product_asin_sku',
-        //     'public_rating',
-        //     'character_id',
-        //     'tag_ids',
-        //     'highlight_tags',
-        //     'created_at',
-        //     'updated_at'
-        // ])
-        //     ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
-        //     ->when(!empty($characterIdsForChildren), fn($q) => $q->whereIn('character_id', $characterIdsForChildren))
-        //     ->latest();
-
-        $videosQuery = Video::select(
+        $videosQuery = Video::select([
             'id',
             'title',
             'thumbnail_image',
@@ -1451,11 +1353,31 @@ class ChannelController extends Controller
             'highlight_tags',
             'created_at',
             'updated_at'
-        )
+        ])
             ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
             ->when(!empty($characterIdsForChildren), fn($q) => $q->whereIn('character_id', $characterIdsForChildren))
-            ->when(!empty($channelIdsForChildren), fn($q) => $q->whereHas('channel', fn($q2) => $q2->whereIn('channels.id', $channelIdsForChildren)))
             ->latest();
+
+        // $videosQuery = Video::select(
+        //     'id',
+        //     'title',
+        //     'thumbnail_image',
+        //     'video_url',
+        //     'type',
+        //     'product_thumbnail',
+        //     'product_name',
+        //     'product_asin_sku',
+        //     'public_rating',
+        //     'character_id',
+        //     'tag_ids',
+        //     'highlight_tags',
+        //     'created_at',
+        //     'updated_at'
+        // )
+        //     ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+        //     ->when(!empty($characterIdsForChildren), fn($q) => $q->whereIn('character_id', $characterIdsForChildren))
+        //     ->when(!empty($channelIdsForChildren), fn($q) => $q->whereHas('channel', fn($q2) => $q2->whereIn('channels.id', $channelIdsForChildren)))
+        //     ->latest();
 
 
         $applyVideoTagFilter($videosQuery, $tagsFilter, $matchAll);

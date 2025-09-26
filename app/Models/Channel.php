@@ -16,6 +16,7 @@ class Channel extends Model
         'secondary_color',
         'accent_color',
         'background_color',
+        'channel_category',
     ];
 
     protected $hidden = ['image'];
@@ -26,15 +27,15 @@ class Channel extends Model
         return $this->image ? asset($this->image) : null;
     }
 
-    // public function categories()
-    // {
-    //     return $this->hasMany(Category::class);
-    // }
-
     public function categories()
     {
-        return $this->belongsToMany(Category::class, 'category_channel');
+        return $this->hasMany(Category::class);
     }
+
+    // public function categories()
+    // {
+    //     return $this->belongsToMany(Category::class, 'category_channel');
+    // }
     public function videos()
     {
         return $this->belongsToMany(Video::class, 'video_channel');

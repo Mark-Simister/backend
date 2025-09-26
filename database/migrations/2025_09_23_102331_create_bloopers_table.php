@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,10 +12,14 @@ return new class extends Migration
     {
         Schema::create('bloopers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('character_id')->constrained('characters')->onDelete('cascade');
-            $table->string('video'); 
+
+            // Remove foreign key
+            $table->unsignedBigInteger('character_id');
+
+            $table->string('video');
             $table->timestamps();
         });
+
     }
 
     public function down(): void

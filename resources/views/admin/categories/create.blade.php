@@ -16,7 +16,7 @@
                         @enderror
                     </div>
 
-                    {{-- <div class="form-group mt-3">
+                    <div class="form-group mt-3">
                 <label>Channel <span class="text-danger">*</span></label>
                 <select name="channel_id" class="form-control" required>
                     <option value="">-- Select Channel --</option>
@@ -30,10 +30,13 @@
                 @error('channel_ids')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
-            </div> --}}
-                    <div class="form-group mt-3">
+            </div>
+                    {{-- <div class="form-group mt-3">
                         <label>Channels <span class="text-danger">*</span></label>
-                        <select name="channel_ids[]" class="form-control" multiple required>
+                        <select name="channel_ids[]" class="form-control @error('channel_ids') is-invalid @enderror" required> 
+                            <option value="" disabled {{ old('channel_ids') ? '' : 'selected' }} class="text-danger">
+                                -- Select Channel --
+                            </option>
                             @foreach ($channels as $channel)
                                 <option value="{{ $channel->id }}"
                                     {{ collect(old('channel_ids'))->contains($channel->id) ? 'selected' : '' }}>
@@ -41,11 +44,12 @@
                                 </option>
                             @endforeach
                         </select>
-                        <small class="text-muted">Hold CTRL (Windows) or CMD (Mac) to select multiple.</small>
+
                         @error('channel_ids')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
-                    </div>
+                    </div> --}}
+
 
                     <div class="form-group region-flex">
                         <label>Select Regions</label><br>

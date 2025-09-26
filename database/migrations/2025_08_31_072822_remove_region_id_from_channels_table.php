@@ -9,14 +9,14 @@ return new class extends Migration
     public function up()
 {
     Schema::table('channels', function (Blueprint $table) {
-        $table->dropColumn('region_id');
+        // $table->dropColumn('region_id');
     });
 }
 
 public function down()
 {
     Schema::table('channels', function (Blueprint $table) {
-        $table->unsignedBigInteger('region_id')->nullable();
+        // $table->unsignedBigInteger('region_id')->nullable();
     });
 }
 };

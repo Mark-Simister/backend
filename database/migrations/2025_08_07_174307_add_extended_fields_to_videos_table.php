@@ -21,6 +21,8 @@ return new class extends Migration
             $table->float('final_beastie_score')->nullable();
             $table->string('product_thumbnail')->nullable();
 
+            // review_details
+
             // Video Info
             $table->string('video_type')->nullable();
             $table->json('video_platforms')->nullable();
@@ -42,13 +44,14 @@ return new class extends Migration
             $table->boolean('sponsored')->default(false);
 
             // SEO & Social Sharing
-            // $table->string('seo_title')->nullable();
-            // $table->text('seo_description')->nullable();
-            // $table->longText('hashtags')->nullable();
-            // $table->string('cta_text')->nullable();
-            // $table->string('open_graph_image')->nullable();
-            // $table->string('twitter_title')->nullable();
-            // $table->text('twitter_description')->nullable();
+            $table->string('seo_title')->nullable();
+            $table->text('seo_description')->nullable();
+            $table->longText('hashtags')->nullable();
+            $table->string('cta_text')->nullable();
+            $table->string('open_graph_image')->nullable();
+            
+            $table->string('twitter_title')->nullable();
+            $table->text('twitter_description')->nullable();
         });
     }
 

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id(); // or $table->uuid('id')->primary(); if you prefer UUIDs
             $table->string('name');
             $table->text('persona')->nullable();
-            $table->foreignId('channel_id')->constrained('channels')->onDelete('cascade');
+            $table->unsignedBigInteger('channel_id');
             $table->timestamps();
         });
     }

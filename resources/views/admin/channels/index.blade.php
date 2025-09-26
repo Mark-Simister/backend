@@ -35,6 +35,7 @@
                                 <th style="width: 60px;">#</th>
                                 <th>Image</th>
                                 <th>Name</th>
+                                <th>Category</th>
                                 <th>Regions</th>
                                 <th>Created</th>
                                 <th style="width: 160px;" class="text-center">Actions</th>
@@ -53,6 +54,11 @@
                                         @endif
                                     </td>
                                     <td>{{ $channel->name }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary text-capitalize">
+                                            {{ $channel->channel_category }}
+                                        </span>
+                                    </td>
                                     <td>
                                         @foreach ($channel->regions as $region)
                                             <span class="badge bg-info">{{ $region->region_name }}</span>
@@ -109,7 +115,7 @@
         });
     </script>
 
- 
+
     <!-- SweetAlert Delete Confirmation -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
