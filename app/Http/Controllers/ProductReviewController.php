@@ -102,7 +102,9 @@ class ProductReviewController extends Controller
         } else {
             // Upload mp4 to Vimeo and get the actual Vimeo URL
             $filePath = $file->getPathname();
-            $reviewUrl = $this->uploadToVimeo($filePath);
+            // $reviewUrl = $this->uploadToVimeo($filePath);
+            $reviewUrl = $this->uploadToVimeo($filePath, true); // mark as review
+
 
         }
 
@@ -134,51 +136,43 @@ class ProductReviewController extends Controller
     }
 
 
+//     public function uploadToVimeo($filePath)
+// {
+//     try {
+//         // Upload the video
+//         $uri = $this->vimeo->upload($filePath); 
+//         // $uri is like "/videos/1121145795"
 
+//         // Make video public
+//         $this->vimeo->request($uri, [
+//             'privacy' => [
+//                 'view' => 'anybody'   // this makes it public
+//             ]
+//         ], 'PATCH');
 
-    // Vimeo Upload Helper Method
-    // private function uploadToVimeo($filePath)
-    // {
-    //     try {
-    //         $uri = $this->vimeo->upload($filePath);
+//         // Extract numeric ID and return short URL
+//         $videoId = (int) str_replace('/videos/', '', $uri);
+//         return 'https://vimeo.com/' . $videoId;
 
-    //         return 'https://vimeo.com' . $uri;
-    //     } catch (\Exception $e) {
-    //         return null;
-    //     }
-    // }
-    // public function uploadToVimeo($filePath)
-    // {
-    //     try {
-    //         $uri = $this->vimeo->upload($filePath); 
-    //         // Example response: "/videos/1121145795"
-
-    //         // Extract numeric ID from URI
-    //         $videoId = (int) str_replace('/videos/', '', $uri);
-
-    //         // Return clean short URL
-    //         return 'https://vimeo.com/' . $videoId;
-    //     } catch (\Exception $e) {
-    //         // Optional: log the error
-    //         \Log::error('Vimeo upload failed: ' . $e->getMessage());
-    //         return null;
-    //     }
-    // }
-    public function uploadToVimeo($filePath)
+//     } catch (\Exception $e) {
+//         \Log::error('Vimeo upload failed: ' . $e->getMessage());
+//         return null;
+//     }
+// }
+public function uploadToVimeo($filePath, $isReview = false)
 {
     try {
         // Upload the video
         $uri = $this->vimeo->upload($filePath); 
-        // $uri is like "/videos/1121145795"
-
         // Make video public
         $this->vimeo->request($uri, [
             'privacy' => [
-                'view' => 'anybody'   // this makes it public
-            ]
+                'view' => 'anybody' 
+            ],
+            // Add tag if it's a review
+            'tags' => $isReview ? ['product_review'] : []
         ], 'PATCH');
 
-        // Extract numeric ID and return short URL
         $videoId = (int) str_replace('/videos/', '', $uri);
         return 'https://vimeo.com/' . $videoId;
 
@@ -187,6 +181,7 @@ class ProductReviewController extends Controller
         return null;
     }
 }
+
 
 
 }

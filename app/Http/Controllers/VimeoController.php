@@ -35,9 +35,11 @@ class VimeoController extends Controller
         'created_time',
         'duration',
         'pictures.sizes.link',
+        'tags.name',
     ]);
 
-    $result = $vimeo->listAllMyVideos($perPage, $fields, $page); // make sure your service accepts $page
+    $result = $vimeo->listAllMyVideos($perPage, $fields, $page);
+    // dd($result); // make sure your service accepts $page
     $videos = $result['videos'] ?? [];
     $total  = $result['total']  ?? count($videos);
 

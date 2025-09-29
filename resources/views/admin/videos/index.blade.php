@@ -63,6 +63,9 @@
                                                 class="btn btn-outline-primary me-1">SEO</a>
                                             <a href="{{ route('admin.videos.edit.product', $video) }}"
                                                 class="btn btn-outline-success me-1">Product</a>
+                                            <a href="{{ route('admin.videos.character-insights.index', $video->id) }}"
+                                                class="btn btn-outline-secondary me-1">Character Insights</a>
+                                            <a href="{{ route('admin.similar-products.edit', $video->id) }}" class="btn btn-outline-warning me-1">Similar Products</a>
                                         @endcan
                                     </td>
                                     <td>

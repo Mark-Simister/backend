@@ -27,6 +27,9 @@ use App\Http\Controllers\ProductMessageController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\BlooperController;
+use App\Http\Controllers\CharacterInsightController;
+use App\Http\Controllers\SimilarProductController;
+use Illuminate\Support\Facades\Artisan;
 
 
 // Route::get('/', function () {
@@ -125,6 +128,23 @@ Route::middleware(['auth'])
             ->name('videos.update.seo')
             ->middleware('permission:video.edit');
 
+
+        Route::get('{video}/similar-products/edit', [VideoController::class, 'editSimilarProducts'])->name('similar-products.edit');
+        Route::post('{video}/similar-products/update', [VideoController::class, 'updateSimilarProducts'])->name('similar-products.update');
+        Route::get('similar-products/{videoId}/region/{regionId}', [VideoController::class, 'getSimilarProductsByRegion']);
+
+        // Fetch products by region
+        Route::get('/similar-products/{video}/region/{region}', [SimilarProductController::class, 'fetchByRegion']);
+
+        // Create a new product
+        Route::post('/similar-products/{video}/create', [SimilarProductController::class, 'store']);
+
+        // Update an existing product
+        Route::post('/similar-products/{product}/update', [SimilarProductController::class, 'update']);
+
+        // Delete a product
+        Route::delete('/similar-products/{product}/delete', [SimilarProductController::class, 'destroy']);
+
         //     Route::get('videos/{video}/seo/{region}', [VideoSeoController::class, 'regionData'])
         //  ->name('videos.seo.region');
     
@@ -139,18 +159,26 @@ Route::middleware(['auth'])
         Route::put('videos/{video}/update-product', [VideoController::class, 'updateProduct'])
             ->name('videos.update.product')
             ->middleware('permission:video.edit');
+
+        Route::get('/videos/{videoId}/character-insights', [CharacterInsightController::class, 'index'])->name('videos.character-insights.index');
+        Route::get('/videos/{videoId}/character-insights/create', [CharacterInsightController::class, 'create'])->name('videos.character-insights.create');
+        Route::post('/videos/{videoId}/character-insights', [CharacterInsightController::class, 'store'])->name('videos.character-insights.store');
+        Route::get('/videos/{videoId}/character-insights/{characterInsight}/edit', [CharacterInsightController::class, 'edit'])->name('videos.character-insights.edit');
+        Route::put('/videos/{videoId}/character-insights/{characterInsight}', [CharacterInsightController::class, 'update'])->name('videos.character-insights.update');
+        Route::delete('/videos/{videoId}/character-insights/{characterInsight}', [CharacterInsightController::class, 'destroy'])->name('videos.character-insights.destroy');
+
         Route::get('/vimeo', [VimeoController::class, 'index'])->name('vimeo.index');
         Route::post('/admin/vimeo/assign', [VimeoController::class, 'assign'])
             ->middleware('can:video.update')
             ->name('admin.vimeo.assign');
-        
+
 
         Route::get('product-reviews', [ProductReviewController::class, 'index'])->name('product-reviews.index');
         Route::get('product-reviews/{category}/characters', [ProductReviewController::class, 'product_review_character'])->name('product_review.character');
         Route::post('product-reviews/store', [ProductReviewController::class, 'store'])->name('product_review.store');
         Route::get('videos/fetch/{character_id}', [ProductReviewController::class, 'fetchVideos'])->name('fetch_videos');
         // routes/web.php
-        Route::patch('product-reviews/{review}/featured',[ProductReviewController::class, 'updateFeatured'])->name('product_review.featured');
+        Route::patch('product-reviews/{review}/featured', [ProductReviewController::class, 'updateFeatured'])->name('product_review.featured');
 
         Route::get('characters/{character}/bloopers', [BlooperController::class, 'index'])->name('bloopers.index');
         Route::get('characters/{character}/bloopers/create', [BlooperController::class, 'create'])->name('bloopers.create');
@@ -253,6 +281,16 @@ Route::middleware(['auth'])->get('/admin-test', function () {
     return 'Welcome Admin';
 });
 
+
+Route::get('/clear-all', function () {
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+    Artisan::call('optimize');
+
+    return "All caches cleared successfully!";
+})->name('clear.all');
 
 
 

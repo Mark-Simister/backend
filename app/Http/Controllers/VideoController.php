@@ -22,6 +22,8 @@ use App\Models\Region;
 use App\Models\AffiliateLink;
 use App\Models\Comment;
 use App\Models\VideoWatchHistory;
+use App\Models\CharacterInsight;
+use App\Models\ProductReview;
 use Illuminate\Support\Facades\DB;
 use App\HasSubscriptionSections;
 
@@ -565,6 +567,43 @@ class VideoController extends Controller
             ->route('admin.videos.edit.seo', $video)
             ->with('success', 'SEO fields updated.');
     }
+
+    public function editSimilarProducts($videoId)
+    {
+        $video = Video::findOrFail($videoId);
+
+        $regions = Region::where('is_active', 1)->get();
+
+        // Default to Global (id=0) if no region selected yet
+        $selectedRegionId = 0;
+
+        // Load similar products for selected region (default Global)
+        $similarProducts = \DB::table('similar_products')
+            ->where('video_id', $video->id)
+            ->where('region_id', $selectedRegionId)
+            ->get();
+
+        return view('admin.videos.edit-similar-products', compact(
+            'video',
+            'regions',
+            'similarProducts',
+            'selectedRegionId'
+        ));
+    }
+
+
+
+    public function getSimilarProductsByRegion($videoId, $regionId)
+    {
+        $products = \DB::table('similar_products')
+            ->where('video_id', $videoId)
+            ->where('region_id', $regionId)
+            ->get();
+
+        return response()->json($products);
+    }
+
+
 
     public function getSeoByRegion(Video $video, $regionId)
     {
@@ -2661,6 +2700,22 @@ class VideoController extends Controller
                 ], 404);
             }
 
+            $characterInsights = CharacterInsight::where('video_id', $video->id)
+                ->get()
+                ->map(function ($insight) {
+                    return [
+                        'id' => $insight->id,
+                        'title' => $insight->title,
+                        'short_description' => $insight->short_description,
+                        'image' => $insight->character_insight_image ? asset($insight->character_insight_image) : null,
+                        'created_at' => $insight->created_at?->toDateTimeString(),
+                        'updated_at' => $insight->updated_at?->toDateTimeString(),
+                    ];
+                });
+
+
+
+
             $isPaidVideo = in_array($video->type, ['vimeo']);
 
             $paidFlag = $isPaidVideo;
@@ -2682,6 +2737,58 @@ class VideoController extends Controller
 
             $isAuthenticated = $user !== null;
             $userId = $isAuthenticated ? $user->id : null;
+
+            // Fetch review by this character for this video first
+            $videoReview = ProductReview::where('character_id', $video->character_id)
+                ->where('video_id', $video->id)
+                ->where('is_active', 1)
+                ->with('video')
+                ->first();
+
+            // Fetch other reviews by this character excluding this video
+            $otherReviews = ProductReview::where('character_id', $video->character_id)
+                ->where('video_id', '!=', $video->id)
+                ->where('is_active', 1)
+                ->with('video')
+                ->orderByDesc('created_at')
+                ->limit(5)
+                ->get();
+
+            // Merge reviews: video-specific review first, then others
+            $mergedReviews = collect([]);
+            if ($videoReview) {
+                $mergedReviews->push($videoReview);
+            }
+
+            // Add other reviews up to remaining slots (total 5)
+            $remainingSlots = 5 - $mergedReviews->count();
+            if ($remainingSlots > 0) {
+                $mergedReviews = $mergedReviews->merge($otherReviews->take($remainingSlots));
+            }
+
+            // Map to response format
+            $moreReviewsData = $mergedReviews->map(function ($review) {
+                $video = $review->video;
+                $paidFlag = $video && $video->type === 'vimeo';
+
+                return [
+                    'id' => $review->id,
+                    'character_id' => $review->character_id,
+                    'video_id' => $review->video_id,
+                    'review_url' => $review->review_url ?? null,
+                    'is_featured' => $review->is_featured ?? null,
+                    'is_active' => $review->is_active ?? null,
+                    'views' => $review->views ?? 0,
+                    'thumbnail_image' => $video?->thumbnail_image ? asset($video->thumbnail_image) : null,
+                    'title' => $video?->title ?? null,
+                    'description' => $video?->description ?? null,
+                    'type' => $video?->type ?? null,
+                    'video_url' => $video?->video_url ?? null,
+                    'paid' => $paidFlag,
+                    'created_at' => $review->created_at?->toDateTimeString(),
+                    'updated_at' => $review->updated_at?->toDateTimeString(),
+                ];
+            });
 
 
             $watchHistory = $isAuthenticated ? VideoWatchHistory::where('user_id', $userId)
@@ -2708,6 +2815,24 @@ class VideoController extends Controller
                     'url' => $link->url,
                 ];
             });
+
+            // Fetch Local Available Products based on the region
+            $localProducts = \DB::table('similar_products')
+                ->where('video_id', $video->id)
+                ->where('region_id', $regionId)
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(function ($p) {
+                    return [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'short_description' => $p->short_description,
+                        'url' => $p->url,
+                        'image' => $p->image ? asset($p->image) : null,
+                        'created_at' => $p->created_at,
+                        'updated_at' => $p->updated_at,
+                    ];
+                });
 
             $tagMap = collect();
             $idsForMap = collect($video->tag_ids_array ?? [])->filter()->unique();
@@ -2858,8 +2983,10 @@ class VideoController extends Controller
                     'watched_at' => $watchedAt,
                 ],
                 'related_products' => $related,
+                'local_available_products' => $localProducts,
                 'character_data' => $characterData,
-
+                'character_insights' => $characterInsights,
+                'more_reviews' => $moreReviewsData,
             ];
 
             return response()->json([
