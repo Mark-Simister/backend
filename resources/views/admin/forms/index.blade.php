@@ -1,73 +1,88 @@
 @extends('layouts.admin.master')
 
-@section('title', 'Categories')
+@section('title', 'Forms')
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Categories</h2>
-        @can('category.create')
-            <a href="{{ route('admin.categories.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-lg"></i> Add Category
+        <h2 class="mb-0">Forms</h2>
+        @can('form.create')
+            <a href="{{ route('admin.forms.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Add Form
             </a>
         @endcan
     </div>
 
     @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="auto-alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    @if ($categories->count())
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="auto-alert">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+
+    @if ($forms->count())
         <div class="card shadow-sm border-0">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table id="categories-table" class="table table-striped table-hover align-middle">
+                    <table id="forms-table" class="table table-striped table-hover align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 60px;">#</th>
                                 <th>Name</th>
-                                <th>Slug</th>
-                                <th>Channel</th>
-                                <th>Category Images</th>
+                                <th>Video</th>
+                                <th>Fields</th>
+                                <th>CTA Type</th> <!-- New column -->
+                                <th>Status</th>
                                 <th style="width: 140px;" class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($categories as $category)
+                            @foreach ($forms as $form)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $category->name }}</td>
-                                    <td><span class="badge bg-secondary">{{ $category->slug }}</span></td>
-                                    <td>{{ $category->channel ? $category->channel->name : '—' }}</td>
+                                    <td>{{ $form->name }}</td>
                                     <td>
-                                        @if ($category->image && file_exists(public_path($category->image)))
-                                            <img src="{{ asset($category->image) }}" alt="{{ $category->name }}"
-                                                class="category-img">
+                                        @if ($form->video_path)
+                                            <video width="200" controls>
+                                                <source src="{{ asset($form->video_path) }}" type="video/mp4">
+                                                Your browser does not support the video tag.
+                                            </video>
                                         @else
-                                            <span class="text-muted">No Image</span>
+                                            —
                                         @endif
                                     </td>
-                                    {{-- <td>
-                                        @if ($category->channel->count())
-                                            @foreach ($category->channel as $channel)
-                                                <span class="badge bg-info">{{ $channel->name }}</span>
-                                            @endforeach
+                                    <td>{{ count($form->fields) }} fields</td>
+                                    <td>
+                                        @if ($form->cta_type === 'apply_now')
+                                            <span class="badge bg-primary">Apply Now</span>
+                                        @elseif($form->cta_type === 'reachout')
+                                            <span class="badge bg-success">Reachout</span>
                                         @else
-                                            &mdash;
+                                            <span class="badge bg-secondary">—</span>
                                         @endif
-                                    </td> --}}
+                                    </td>
+                                    <td>{{ $form->is_active ? 'Active' : 'Inactive' }}</td>
                                     <td class="text-center">
-                                        @can('category.edit')
-                                            <a href="{{ route('admin.categories.edit', $category) }}"
-                                                class="btn btn-sm btn-warning" title="Edit">
+                                        @can('form.edit')
+                                            <a href="{{ route('admin.forms.edit', $form) }}" class="btn btn-sm btn-warning"
+                                                title="Edit">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
                                         @endcan
-                                        @can('category.delete')
-                                            <form action="{{ route('admin.categories.destroy', $category) }}" method="POST"
-                                                class="d-inline delete-category-form">
+                                        @can('form.delete')
+                                            <form action="{{ route('admin.forms.destroy', $form) }}" method="POST"
+                                                class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="button" class="btn btn-sm btn-danger delete-btn" title="Delete">
@@ -85,39 +100,33 @@
         </div>
     @else
         <div class="alert alert-info text-center mt-4">
-            <strong>No categories found.</strong> Start by adding a new one.
+            <strong>No forms found.</strong> Start by adding a new form.
         </div>
     @endif
 @endsection
 
 @push('scripts')
-    <!-- DataTables Script -->
     <script>
         $(document).ready(function() {
-            $('#categories-table').DataTable({
+            $('#forms-table').DataTable({
                 responsive: true,
                 pageLength: 10,
                 ordering: true,
                 autoWidth: false,
                 language: {
                     search: "_INPUT_",
-                    searchPlaceholder: "Search categories..."
+                    searchPlaceholder: "Search forms..."
                 }
             });
         });
-    </script>
 
-
-    <!-- SweetAlert Delete Confirmation -->
-    <script>
+        // SweetAlert Delete Confirmation
         document.addEventListener('DOMContentLoaded', function() {
             const deleteButtons = document.querySelectorAll('.delete-btn');
-
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const form = this.closest('form');
-
                     Swal.fire({
                         title: 'Are you sure?',
                         text: "You won't be able to revert this!",
@@ -134,5 +143,12 @@
                 });
             });
         });
-    </script>
+        setTimeout(function() {
+                const alert = document.getElementById('auto-alert');
+                if (alert) {
+                    alert.classList.remove('show');
+                    alert.classList.add('hide');
+                }
+            }, 5000);
+        </script>
 @endpush

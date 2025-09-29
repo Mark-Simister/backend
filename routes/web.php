@@ -29,7 +29,9 @@ use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\BlooperController;
 use App\Http\Controllers\CharacterInsightController;
 use App\Http\Controllers\SimilarProductController;
+use App\Http\Controllers\FormController;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 
 // Route::get('/', function () {
@@ -172,6 +174,26 @@ Route::middleware(['auth'])
             ->middleware('can:video.update')
             ->name('admin.vimeo.assign');
 
+        // Page to select a form first
+        Route::get('forms/submissions-page', [FormController::class, 'submissionsPageNew'])
+            ->name('forms.submissions_page')
+            ->middleware('permission:form.view');
+
+        // Then the resource route
+        Route::resource('forms', FormController::class)
+            ->middleware('permission:form.view|form.create|form.edit|form.delete');
+
+        // Handle frontend form submissions
+        Route::post('forms/{form}/submit', [FormController::class, 'submit'])
+            ->name('forms.submit')
+            ->middleware('permission:form.view|form.create|form.edit|form.delete');
+
+        // Existing route for specific form submissions
+        Route::get('forms/{form}/submissions', [FormController::class, 'submissions'])
+            ->name('forms.submissions')
+            ->middleware('permission:form.view');
+
+
 
         Route::get('product-reviews', [ProductReviewController::class, 'index'])->name('product-reviews.index');
         Route::get('product-reviews/{category}/characters', [ProductReviewController::class, 'product_review_character'])->name('product_review.character');
@@ -282,15 +304,40 @@ Route::middleware(['auth'])->get('/admin-test', function () {
 });
 
 
-Route::get('/clear-all', function () {
-    Artisan::call('config:clear');
-    Artisan::call('cache:clear');
-    Artisan::call('route:clear');
-    Artisan::call('view:clear');
-    Artisan::call('optimize');
+// Route::get('/clear-all', function () {
+//     Artisan::call('config:clear');
+//     Artisan::call('cache:clear');
+//     Artisan::call('route:clear');
+//     Artisan::call('view:clear');
+//     Artisan::call('optimize');
 
-    return "All caches cleared successfully!";
+//     return "All caches cleared successfully!";
+// })->name('clear.all');
+Route::get('/clear-all', function () {
+    $commands = [
+        'config:clear',
+        'cache:clear',
+        'route:clear',
+        'view:clear',
+        'optimize',
+    ];
+
+    $output = [];
+    foreach ($commands as $command) {
+        try {
+            $result = Artisan::call($command);
+            $output[$command] = Artisan::output();
+        } catch (\Exception $e) {
+            // Log the error
+            Log::error("Artisan command '$command' failed: " . $e->getMessage());
+            $output[$command] = 'Error: ' . $e->getMessage();
+        }
+    }
+
+    // Show output in browser
+    return response()->json($output);
 })->name('clear.all');
+
 
 
 

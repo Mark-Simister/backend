@@ -165,22 +165,38 @@
                 </a>
             </li>
         @endcan
+        @can('form.view')
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#formsMenu" aria-expanded="false"
+                    aria-controls="formsMenu">
+                    <i class="ti-layout-list-thumb-alt menu-icon"></i>
+                    <span class="menu-title">Forms</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="formsMenu">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('admin/forms') ? 'active' : '' }}"
+                                href="{{ route('admin.forms.index') }}">
+                                All Forms
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('admin/forms/submissions-page') ? 'active' : '' }}"
+                                href="{{ route('admin.forms.submissions_page') }}">
+                                Form Submissions
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        @endcan
 
 
-        <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
-                aria-controls="form-elements">
-                <i class="icon-columns menu-icon"></i>
-                <span class="menu-title">Form elements</span>
-                <i class="menu-arrow"></i>
-            </a>
-            <div class="collapse" id="form-elements">
-                <ul class="nav flex-column sub-menu">
-                    <li class="nav-item"><a class="nav-link" href="pages/forms/basic_elements.html">Basic
-                            Elements</a></li>
-                </ul>
-            </div>
-        </li>
+
+
+
+
         <li class="nav-item">
             <a class="nav-link" data-bs-toggle="collapse" href="#charts" aria-expanded="false"
                 aria-controls="charts">

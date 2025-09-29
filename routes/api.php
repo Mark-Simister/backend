@@ -21,6 +21,7 @@ use App\Http\Controllers\GlobalColorController;
 use App\Http\Controllers\ProductMessageController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\FormController;
 // use App\Http\Controllers\VimeoController;
 
 use Illuminate\Support\Facades\Http;
@@ -235,6 +236,12 @@ Route::get('advanced-search/region/{region}', [SearchController::class, 'advance
 
 Route::post('/subscribe', [NewsletterController::class, 'subscribe_api']);
 Route::get('/newsletter-subscriptions', [NewsletterController::class, 'index_api']);
+
+// forms
+Route::get('forms', [FormController::class, 'apiIndex']);
+Route::post('forms/{form}/submit', [FormController::class, 'apiSubmit']);
+
+
 
 Route::get('/my-country', function (Request $request) {
     // Try real client IP from common proxy/CDN headers, else fallback to Laravel's IP.
