@@ -40,4 +40,16 @@ class Category extends Model
         return $this->belongsToMany(\App\Models\Region::class, 'category_region');
     }
 
+    public function videos()
+{
+    return $this->hasManyThrough(
+        \App\Models\Video::class,
+        \App\Models\Character::class,
+        'category_id',   // Foreign key on characters table
+        'character_id',  // Foreign key on videos table
+        'id',            // Local key on categories table
+        'id'             // Local key on characters table
+    );
+}
+
 }

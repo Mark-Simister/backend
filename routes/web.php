@@ -246,6 +246,8 @@ Route::get('/pm-maker', function () {
 // Cron-jobs
 
 Route::get('/jobs/cancel-overdue-renewals', [CronJobController::class, 'cancelOverdueRenewals']);
+Route::get('/cron/assign-highlight-tags', [CronJobController::class, 'assignHighlightTags']);
+
 
 Route::middleware(['auth'])->get('/admin-test', function () {
     return 'Welcome Admin';

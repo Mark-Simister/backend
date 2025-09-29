@@ -5,9 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Highlight Tags</h2>
-        @can('highlight_tag.create')
+        {{-- @can('highlight_tag.create')
             <a href="{{ route('admin.highlight_tags.create') }}" class="btn btn-primary">+ Add Highlight Tag</a>
-        @endcan
+        @endcan --}}
     </div>
 
     @if (session('success'))
@@ -50,7 +50,7 @@
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
                                         @endcan
-                                        @can('highlight_tag.delete')
+                                        {{-- @can('highlight_tag.delete')
                                             <form action="{{ route('admin.highlight_tags.destroy', $highlightTag) }}"
                                                 method="POST" class="d-inline delete-highlight-form">
                                                 @csrf
@@ -59,7 +59,7 @@
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
-                                        @endcan
+                                        @endcan --}}
                                     </td>
                                 </tr>
                             @endforeach
