@@ -87,8 +87,12 @@ Route::middleware(['auth:api'])->group(function () {
     Route::delete('characters/{id}', [CharacterController::class, 'destroy_api']);
 
     Route::post('/purchase/region/{region}', [BillingController::class, 'purchase']);
+    Route::post('/subscriptions/{id}/cancel',     [BillingController::class, 'cancelAutoRenew']);
+    Route::post('/subscriptions/{id}/reactivate', [BillingController::class, 'reactivateAutoRenew']);
 
-    Route::post('/subscriptions/{id}/cancel', [BillingController::class, 'cancel']);
+    // cancel immediately
+    Route::post('/subscriptions/{id}/cancel-now', [BillingController::class, 'cancelNow'])
+        ->name('subscriptions.cancel_now');
     //Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook'); 
     // Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])
     // ->withoutMiddleware(['auth:api', 'auth:sanctum', ]) 

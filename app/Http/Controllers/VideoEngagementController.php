@@ -95,46 +95,80 @@ class VideoEngagementController extends Controller
         return response()->json([], 204);
     }
 
+    // public function recordWatch(Request $request, $videoId)
+    // {
+
+    //     $video = Video::find($videoId);
+
+    //     if (!$video) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Video not found',
+    //         ], 404);
+    //     }
+
+    //     $user = Auth::user();
+
+    //     if (!$user) {
+    //         return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+    //     }
+
+    //     $alreadyWatched = VideoWatchHistory::where('user_id', $user->id)
+    //         ->where('video_id', $video->id)
+    //         ->exists();
+
+    //     if (!$alreadyWatched) {
+    //         VideoWatchHistory::create([
+    //             'user_id' => $user->id,
+    //             'video_id' => $video->id,
+    //         ]);
+
+    //         $video->increment('views');
+    //     }
+
+    //     return response()->json([
+    //         'status' => 'ok',
+    //         'message' => 'Watch recorded',
+    //         'data' => [
+    //             'video_id' => $video->id,
+    //             'views' => $video->views,
+    //         ]
+    //     ], 200);
+    // }
     public function recordWatch(Request $request, $videoId)
     {
-
         $video = Video::find($videoId);
-
         if (!$video) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Video not found',
             ], 404);
         }
-
         $user = Auth::user();
-
         if (!$user) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthenticated',
+            ], 401);
         }
-
-        $alreadyWatched = VideoWatchHistory::where('user_id', $user->id)
-            ->where('video_id', $video->id)
-            ->exists();
-
-        if (!$alreadyWatched) {
-            VideoWatchHistory::create([
-                'user_id' => $user->id,
-                'video_id' => $video->id,
-            ]);
-
-            $video->increment('views');
-        }
-
+        // Increment the view counter EVERY time this endpoint is hit.
+        $video->increment('views');
+        //    firstOrCreate will insert on first watch and do nothing on repeats.
+        VideoWatchHistory::firstOrCreate([
+            'user_id' => $user->id,
+            'video_id' => $video->id,
+        ]);
+        $video->refresh();
         return response()->json([
             'status' => 'ok',
             'message' => 'Watch recorded',
             'data' => [
                 'video_id' => $video->id,
                 'views' => $video->views,
-            ]
+            ],
         ], 200);
     }
+
 
     public function updateWatchHistory(Request $request, $videoId)
     {
@@ -342,48 +376,48 @@ class VideoEngagementController extends Controller
 
 
 
-public function trackView(Request $request, $productReviewId)
-{
-    $user = $request->user('api') ?? $request->user('sanctum');
-    if (!$user) {
-        return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
-    }
+    public function trackView(Request $request, $productReviewId)
+    {
+        $user = $request->user('api') ?? $request->user('sanctum');
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
 
-    try {
-        $productReview = ProductReview::findOrFail($productReviewId);
-    } catch (ModelNotFoundException $e) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Product review not found'
-        ], 404);
-    }
+        try {
+            $productReview = ProductReview::findOrFail($productReviewId);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Product review not found'
+            ], 404);
+        }
 
-    // Check if user already watched
-    $alreadyWatched = ProductReviewWatch::where('product_review_id', $productReviewId)
-        ->where('user_id', $user->id)
-        ->exists();
+        // Check if user already watched
+        $alreadyWatched = ProductReviewWatch::where('product_review_id', $productReviewId)
+            ->where('user_id', $user->id)
+            ->exists();
 
-    if ($alreadyWatched) {
+        if ($alreadyWatched) {
+            return response()->json([
+                'status' => true,
+                'message' => 'User has already viewed this product review',
+                'views' => $productReview->views,
+            ]);
+        }
+
+        $productReview->increment('views');
+
+        ProductReviewWatch::create([
+            'product_review_id' => $productReviewId,
+            'user_id' => $user->id,
+        ]);
+
         return response()->json([
             'status' => true,
-            'message' => 'User has already viewed this product review',
+            'message' => 'Product review view tracked successfully',
             'views' => $productReview->views,
         ]);
     }
-
-    $productReview->increment('views');
-
-    ProductReviewWatch::create([
-        'product_review_id' => $productReviewId,
-        'user_id' => $user->id,
-    ]);
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Product review view tracked successfully',
-        'views' => $productReview->views,
-    ]);
-}
 
 
 
