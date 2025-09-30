@@ -1,5 +1,4 @@
 <style>
-   
     .form-step {
         display: none;
     }
@@ -76,6 +75,203 @@
         border: 1px solid red !important;
     }
 </style>
+
+<style>
+    /* Make Select2 look/size like Bootstrap form controls */
+    #tags_select+.select2 .select2-selection--multiple {
+        min-height: 46px;
+        padding: 6px 8px;
+        border-radius: .5rem;
+        border: 1px solid #ced4da;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Render chips nicely and larger */
+    #tags_select+.select2 .select2-selection__rendered {
+        display: flex;
+        gap: .375rem;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        font-size: 1rem;
+        /* <- bigger text */
+        line-height: 1.4;
+    }
+
+    #tags_select+.select2 .select2-selection__choice {
+        font-size: .95rem;
+        /* <- bigger chip text */
+        line-height: 1.4;
+        padding: .25rem .5rem;
+        border-radius: .375rem;
+        border: 1px solid #ced4da;
+        background: #f8f9fa;
+        white-space: normal;
+        /* allow wrapping if long */
+        max-width: 100%;
+    }
+
+    #tags_select+.select2 .select2-selection__choice__remove {
+        margin-right: .25rem;
+    }
+
+    /* Input where you type new tags */
+    #tags_select+.select2 .select2-search--inline .select2-search__field {
+        font-size: 1rem;
+        margin-top: 0;
+    }
+
+    /* Dropdown options size */
+    .select2-container .select2-results__option {
+        font-size: 1rem;
+        padding: .5rem .75rem;
+    }
+
+    /* Red border when invalid (you already add .is-invalid in JS) */
+    .select2-container .select2-selection.is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .15);
+    }
+
+    /*  character select 2 start */
+    /* Make the Select2 sit full-width like form-control */
+    #character_id+.select2-container {
+        width: 100% !important;
+    }
+
+    /* Match Bootstrap .form-select sizing & look */
+    #character_id+.select2 .select2-selection--single {
+        height: 46px;
+        /* same as .form-select-lg-ish */
+        border: 1px solid #ced4da;
+        border-radius: .5rem;
+        /* like your other fields */
+        padding: .375rem .75rem;
+        /* vertical/horizontal padding */
+        display: flex;
+        align-items: center;
+        /* vertically center text */
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    /* Remove extra left padding Select2 adds inside the selection */
+    #character_id+.select2 .select2-selection__rendered {
+        padding-left: 0 !important;
+        color: #212529;
+        /* Bootstrap text color */
+    }
+
+    /* Align the dropdown arrow vertically and nudge right for spacing */
+    #character_id+.select2 .select2-selection__arrow {
+        height: 46px;
+        /* match selection height */
+        right: .5rem;
+        /* give some breathing room */
+    }
+
+    /* Dropdown panel styling to match Bootstrap */
+    .select2-container--default .select2-dropdown {
+        border-color: #ced4da;
+        border-radius: .5rem;
+        overflow: hidden;
+        /* rounded corners on menu */
+    }
+
+    /* Option sizing inside the dropdown */
+    .select2-container--default .select2-results__option {
+        font-size: 1rem;
+        padding: .5rem .75rem;
+    }
+
+    /* Focus ring similar to Bootstrap */
+    #character_id+.select2 .select2-selection--single:focus {
+        outline: 0;
+        box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+        border-color: #86b7fe;
+    }
+
+    /* Invalid state hook (if you toggle .is-invalid in JS) */
+    #character_id+.select2 .select2-selection.is-invalid,
+    #character_id.is-invalid+.select2 .select2-selection {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .15);
+    }
+
+    /* character select 2 end */
+
+    /* highlight tags select 2 start */
+    /* Apply to both tags + highlight_tags */
+    #tags_select+.select2 .select2-selection--multiple,
+    #highlight_tags+.select2 .select2-selection--multiple {
+        min-height: 46px;
+        padding: 6px 8px;
+        border-radius: .5rem;
+        border: 1px solid #ced4da;
+        display: flex;
+        align-items: center;
+    }
+
+    #tags_select+.select2 .select2-selection__rendered,
+    #highlight_tags+.select2 .select2-selection__rendered {
+        display: flex;
+        gap: .375rem;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        font-size: 1rem;
+        /* bigger text */
+        line-height: 1.4;
+    }
+
+    #tags_select+.select2 .select2-selection__choice,
+    #highlight_tags+.select2 .select2-selection__choice {
+        font-size: .95rem;
+        line-height: 1.4;
+        padding: .25rem .5rem;
+        border-radius: .375rem;
+        border: 1px solid #ced4da;
+        background: #f8f9fa;
+        white-space: normal;
+        max-width: 100%;
+    }
+
+    #tags_select+.select2 .select2-selection__choice__remove,
+    #highlight_tags+.select2 .select2-selection__choice__remove {
+        margin-right: .25rem;
+    }
+
+    /* Inline search input */
+    #tags_select+.select2 .select2-search--inline .select2-search__field,
+    #highlight_tags+.select2 .select2-search--inline .select2-search__field {
+        font-size: 1rem;
+        margin-top: 0;
+    }
+
+    /* Dropdown option size */
+    .select2-container .select2-results__option {
+        font-size: 1rem;
+        padding: .5rem .75rem;
+    }
+
+    /* Invalid state border (if you add .is-invalid to the selection) */
+    .select2-container .select2-selection.is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .15);
+    }
+
+    /* Optional: shared sizing class used above */
+    .select2-lg.select2-selection {
+        min-height: 46px;
+        font-size: 1rem;
+    }
+
+    /* highlight tags select 2 end */
+</style>
+
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 
@@ -193,7 +389,7 @@
         <div class="form-step">
             <div class="mb-3">
                 <label for="character_id">Character</label>
-                <select name="character_id" id="character_id" class="form-select" required>
+                {{-- <select name="character_id" id="character_id" class="form-select" required>
                     <option value="" disabled selected>-- Select Character --</option>
                     @foreach ($characters as $character)
                         <option value="{{ $character->id }}"
@@ -201,7 +397,17 @@
                             {{ $character->name }}
                         </option>
                     @endforeach
+                </select> --}}
+                <select name="character_id" id="character_id" class="form-select" required>
+                    <option></option> <!-- empty first option for Select2 placeholder -->
+                    @foreach ($characters as $character)
+                        <option value="{{ $character->id }}"
+                            {{ old('character_id', $video->character_id ?? '') == $character->id ? 'selected' : '' }}>
+                            {{ $character->name }}
+                        </option>
+                    @endforeach
                 </select>
+
                 <div id="character_error" class="invalid-feedback" style="display:none;">Please select a character.
                 </div>
             </div>
@@ -429,7 +635,7 @@
             <div class="mb-3">
                 <label for="highlight_tags">Highlight Tags</label>
                 <select name="highlight_tags[]" id="highlight_tags" class="form-select" multiple>
-                    <option value="" disabled selected>-- Select Highlight Tags --</option>
+                    {{-- <option value="" disabled selected>-- Select Highlight Tags --</option> --}}
                     @foreach ($highlight_tags as $highlight_tag)
                         <option value="{{ $highlight_tag->id }}"
                             {{ in_array((string) $highlight_tag->id, array_map('strval', $hlSelected)) ? 'selected' : '' }}>
@@ -738,7 +944,7 @@
                         id: "character_id",
                         err: "character_error"
                     },
-                    
+
                     {
                         id: "access_level",
                         err: "access_level_error"
@@ -822,11 +1028,11 @@
         });
 
         // clear error on change for step 2 controls
-        ["character_id",  "access_level"].forEach(id => {
+        ["character_id", "access_level"].forEach(id => {
             const el = document.getElementById(id);
             const map = {
                 character_id: "character_error",
-                
+
                 access_level: "access_level_error",
             };
             const msg = document.getElementById(map[id]);
@@ -868,7 +1074,7 @@
             characterSelect.classList.remove('is-invalid');
         }
 
-       
+
 
         let accessLevelSelect = document.getElementById('access_level');
         if (!accessLevelSelect.value) {
@@ -890,7 +1096,7 @@
         }
     });
 
-    
+
 
     document.getElementById('access_level').addEventListener('change', function() {
         let accessLevelSelect = this;
@@ -920,5 +1126,41 @@
 
         syncUrlRequired();
         typeSel.addEventListener('change', syncUrlRequired);
+    });
+</script>
+<script>
+    // for charcter select 2
+    // Put after the select2 script is loaded
+    $('#character_id').select2({
+        placeholder: '-- Select Character --',
+        allowClear: true,
+        width: '100%',
+        dropdownAutoWidth: true,
+        selectionCssClass: 'select2-lg',
+        dropdownCssClass: 'select2-lg',
+        // Better fuzzy-ish match (substring, case-insensitive)
+        matcher: function(params, data) {
+            if ($.trim(params.term) === '') return data;
+            if (typeof data.text === 'undefined') return null;
+            const term = params.term.toLowerCase();
+            const text = data.text.toLowerCase();
+            return text.indexOf(term) > -1 ? data : null;
+        }
+    });
+
+    // keep your validation styling consistent
+    $('#character_id').on('change', function() {
+        const $sel = $(this).next('.select2-container').find('.select2-selection');
+        if ($(this).val()) $sel.removeClass('is-invalid');
+        else $sel.addClass('is-invalid');
+    });
+
+    $('#highlight_tags').select2({
+        placeholder: '-- Select Highlight Tags --',
+        allowClear: true,
+        width: '100%',
+        closeOnSelect: false, // nicer for multi-pick
+        selectionCssClass: 'select2-lg', // same size class as tags
+        dropdownCssClass: 'select2-lg'
     });
 </script>

@@ -2,6 +2,7 @@
 
 @section('title', 'Add Character')
 @push('styles')
+    {{-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> --}}
     <style>
         /*  */
     </style>
@@ -66,8 +67,8 @@
                         @enderror
                     </div>
                     <div class="form-group mt-3">
-                        <label>Character Video></label>
-                        <input type="file" name="video" accept="video/*">
+                        <label>Character Video</label>
+                        <input type="file" name="video" accept="video/*" class="form-control">
                         @error('video')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -109,7 +110,7 @@
                         @endif
                     </div>
 
-                    <div class="form-group mt-3">
+                    {{-- <div class="form-group mt-3">
                         <label>Category <span class="text-danger">*</span></label>
                         <select name="category_id" class="form-control" required>
                             <option value="">Select Category</option>
@@ -123,7 +124,25 @@
                         @error('category_id')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
+                    </div> --}}
+                    <div class="form-group mt-3">
+                        <label for="category_id">Category <span class="text-danger">*</span></label>
+                        <select name="category_id" id="category_id"
+                            class="form-control @error('category_id') is-invalid @enderror" required>
+                            <option></option> {{-- empty option enables Select2 placeholder --}}
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}"
+                                    {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('category_id')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
                     </div>
+
+
 
                     <div class="form-group mt-3">
                         <label>Location</label>
@@ -580,3 +599,28 @@
         </div>
     </div>
 @endsection
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
+<script>
+$(function () {
+  function makeSelect2(id, opts) {
+    var $el = $(id);
+    if (!$el.length || $el.hasClass('select2-hidden-accessible')) return;
+    $el.select2(Object.assign({
+      width: '100%',
+      placeholder: $el.attr('placeholder') || 'Select...'
+    }, opts || {}));
+  }
+
+  // single
+  makeSelect2('#category_id', { allowClear: true });
+
+  // multi (chips)
+  makeSelect2('#character_tag',  { closeOnSelect: false });
+  makeSelect2('#character_role', { closeOnSelect: false });
+});
+</script>
+
+@endpush
+

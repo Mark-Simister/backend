@@ -1,8 +1,9 @@
 @extends('layouts.admin.master')
 @push('styles')
-    <style>
-        /*  */
-    </style>
+        
+        <style>
+           /*  */
+        </style>
 @endpush
 @section('title', 'Edit Character')
 
@@ -109,7 +110,7 @@
                         </div> --}}
                         @endif
                     </div>
-                    
+
                     {{-- Thumbnail Image --}}
                     <div class="form-group mt-3">
                         <label>Character Thumbnail Image</label>
@@ -128,9 +129,25 @@
                         @endif
                     </div>
 
-                    <div class="form-group mt-3">
+                    {{-- <div class="form-group mt-3">
                         <label>Category</label>
                         <select name="category_id" class="form-control" required>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}"
+                                    {{ old('category_id', $character->category_id) == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('category_id')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div> --}}
+                    <div class="form-group mt-3">
+                        <label for="category_id">Category</label>
+                        <select name="category_id" id="category_id"
+                            class="form-control @error('category_id') is-invalid @enderror" required>
+                            <option></option> {{-- empty for Select2 placeholder --}}
                             @foreach ($categories as $category)
                                 <option value="{{ $category->id }}"
                                     {{ old('category_id', $character->category_id) == $category->id ? 'selected' : '' }}>
@@ -505,3 +522,32 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
+    <script>
+$(function () {
+  $('#category_id').select2({
+    width: '100%',
+    placeholder: 'Select Category',
+    allowClear: true
+  });
+
+  $('#character_tag').select2({
+    width: '100%',
+    placeholder: 'Select tags',
+    allowClear: true,
+    closeOnSelect: false
+  });
+
+  $('#character_role').select2({
+    width: '100%',
+    placeholder: 'Select roles',
+    allowClear: true,
+    closeOnSelect: false
+  });
+});
+</script>
+
+@endpush

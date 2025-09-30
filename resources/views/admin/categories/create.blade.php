@@ -1,6 +1,12 @@
 @extends('layouts.admin.master')
 @section('title', 'Add Category')
 
+@push('styles')
+<style>
+/*  */
+</style>
+    
+@endpush
 @section('content')
     <div class="card">
         <div class="card-body">
@@ -17,20 +23,32 @@
                     </div>
 
                     <div class="form-group mt-3">
-                <label>Channel <span class="text-danger">*</span></label>
-                <select name="channel_id" class="form-control" required>
+                        <label>Channel <span class="text-danger">*</span></label>
+                        {{-- <select name="channel_id" class="form-control" required>
                     <option value="">-- Select Channel --</option>
                     @foreach ($channels as $channel)
                         <option value="{{ $channel->id }}" {{ old('channel_id') == $channel->id ? 'selected' : '' }}>
                             {{ $channel->name }}
                         </option>
                     @endforeach
-                </select>
-                @error('channel_id') <span class="text-danger">{{ $message }}</span> @enderror
-                @error('channel_ids')
+                </select> --}}
+                        <select name="channel_id" id="channel_id" class="form-control" required>
+  <option></option>
+  @foreach ($channels as $channel)
+    <option value="{{ $channel->id }}" {{ old('channel_id') == $channel->id ? 'selected' : '' }}>
+      {{ $channel->name }}
+    </option>
+  @endforeach
+</select>
+
+
+                        @error('channel_id')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
-            </div>
+                        @error('channel_ids')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
                     {{-- <div class="form-group mt-3">
                         <label>Channels <span class="text-danger">*</span></label>
                         <select name="channel_ids[]" class="form-control @error('channel_ids') is-invalid @enderror" required> 
@@ -79,3 +97,16 @@
         </div>
     </div>
 @endsection
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
+<script>
+  $(function () {
+    $('#channel_id').select2({
+      width: '100%',
+      placeholder: '-- Select Channel --',
+      allowClear: true
+    });
+  });
+</script>
+@endpush

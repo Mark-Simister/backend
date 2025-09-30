@@ -1,6 +1,11 @@
 @extends('layouts.admin.master')
 @section('title', 'Edit Category')
-
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<style>
+    /*  */
+</style>
+@endpush
 @section('content')
     <div class="card">
         <div class="card-body">
@@ -19,7 +24,7 @@
 
                     <div class="form-group mt-3">
                 <label>Channel <span class="text-danger">*</span></label>
-                <select name="channel_id" class="form-control" required>
+                {{-- <select name="channel_id" class="form-control" required>
                     <option value="">-- Select Channel --</option>
                     @foreach ($channels as $channel)
                         <option value="{{ $channel->id }}" 
@@ -27,7 +32,15 @@
                             {{ $channel->name }}
                         </option>
                     @endforeach
-                </select>
+                </select> --}}
+                <select name="channel_id" id="channel_id" class="form-control" required>
+  <option></option>
+  @foreach ($channels as $channel)
+    <option value="{{ $channel->id }}" {{ old('channel_id', $category->channel_id) == $channel->id ? 'selected' : '' }}>
+      {{ $channel->name }}
+    </option>
+  @endforeach
+</select>
                 @error('channel_id') <span class="text-danger">{{ $message }}</span> @enderror
                 @error('channel_ids')
                             <span class="text-danger">{{ $message }}</span>
@@ -85,3 +98,16 @@
         </div>
     </div>
 @endsection
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
+<script>
+  $(function () {
+    $('#channel_id').select2({
+      width: '100%',
+      placeholder: '-- Select Channel --',
+      allowClear: true
+    });
+  });
+</script>
+@endpush
