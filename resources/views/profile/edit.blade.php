@@ -17,12 +17,12 @@
                 {{ __('Update Password') }}
             </button>
         </li>
-        <li class="nav-item" role="presentation">
+        {{-- <li class="nav-item" role="presentation">
             <button class="nav-link text-danger" id="delete-tab" data-bs-toggle="tab" data-bs-target="#delete"
                 type="button" role="tab" aria-controls="delete" aria-selected="false">
                 {{ __('Delete Account') }}
             </button>
-        </li>
+        </li> --}}
     </ul>
 
     {{-- Tab Contents --}}

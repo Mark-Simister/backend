@@ -32,7 +32,7 @@
         </div>
 
         <!-- Email Field -->
-        <div class="mb-3">
+        {{-- <div class="mb-3">
             <label for="email" class="form-label">{{ __('Email') }}</label>
             <input
                 type="email"
@@ -65,7 +65,7 @@
                     @endif
                 </div>
             @endif
-        </div>
+        </div> --}}
 
         <!-- Save Button + Status -->
         <div class="d-flex align-items-center gap-3">

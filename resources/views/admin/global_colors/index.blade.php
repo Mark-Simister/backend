@@ -5,11 +5,11 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Global Colors</h2>
-    @can('global-color.create')
+    {{-- @can('global-color.create')
     <a href="{{ route('admin.global-colors.create') }}" class="btn btn-primary">
         <i class="bi bi-plus-lg"></i> Add Global Color
     </a>
-    @endcan
+    @endcan --}}
 </div>
 
 @if(session('success'))
@@ -51,7 +51,7 @@
                                 <i class="bi bi-pencil-square"></i>
                             </a>
                             @endcan
-                            @can('global-color.delete')
+                            {{-- @can('global-color.delete')
                             <form action="{{ route('admin.global-colors.destroy', $color) }}" 
                                   method="POST" 
                                   class="d-inline delete-color-form">
@@ -61,7 +61,7 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
-                            @endcan
+                            @endcan --}}
                         </td>
                     </tr>
                     @endforeach
