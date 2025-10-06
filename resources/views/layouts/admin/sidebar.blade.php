@@ -38,33 +38,47 @@
                 </a>
             </li>
         @endcan
-        @can('character_tag.view')
-            <li
-                class="nav-item {{ request()->is('admin/character_tags*') && !request()->is('admin/product-reviews*') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('admin.character_tags.index') }}">
-                    <i class="icon-layout menu-icon"></i>
-                    <span class="menu-title">Character Tags</span>
-                </a>
-            </li>
-        @endcan
-        @can('character_role.view')
-            <li
-                class="nav-item {{ (request()->is('admin/character_roles') || request()->is('admin/character_roles/create') || request()->is('admin/character_roles/*/edit')) && !request()->is('admin/product-reviews*') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
-                    <i class="icon-layout menu-icon"></i>
-                    <span class="menu-title">Character Roles</span>
-                </a>
-            </li>
-        @endcan
         @can('character.view')
-            <li
-                class="nav-item {{ request()->is('admin/characters*') && !request()->is('admin/product-reviews/*/characters*') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('admin.characters.index') }}">
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#characterMenu" aria-expanded="false"
+                    aria-controls="characterMenu">
                     <i class="ti-user menu-icon"></i>
                     <span class="menu-title">Characters</span>
+                    <i class="menu-arrow"></i>
                 </a>
+                <div class="collapse {{ request()->is('admin/characters*') || request()->is('admin/character_tags*') || request()->is('admin/character_roles*') ? 'show' : '' }}"
+                    id="characterMenu">
+                    <ul class="nav flex-column sub-menu">
+                        @can('character.view')
+                            <li class="nav-item {{ request()->is('admin/characters*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.characters.index') }}">
+                                    <i class="ti-user menu-icon"></i>
+                                    <span class="menu-title">Characters</span>
+                                </a>
+                            </li>
+                        @endcan
+                        @can('character_tag.view')
+                            <li class="nav-item {{ request()->is('admin/character_tags*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.character_tags.index') }}">
+                                    <i class="icon-layout menu-icon"></i>
+                                    <span class="menu-title">Character Tags</span>
+                                </a>
+                            </li>
+                        @endcan
+                        @can('character_role.view')
+                            <li class="nav-item {{ request()->is('admin/character_roles*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.character_roles.index') }}">
+                                    <i class="icon-layout menu-icon"></i>
+                                    <span class="menu-title">Character Roles</span>
+                                </a>
+                            </li>
+                        @endcan
+                        
+                    </ul>
+                </div>
             </li>
         @endcan
+
         @can('highlight_tag.view')
             <li class="nav-item {{ request()->is('admin/highlight_tags*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.highlight_tags.index') }}">
@@ -90,7 +104,7 @@
                 </a>
             </li>
         @endcan
-        @can('rating_review.view')
+        {{-- @can('rating_review.view')
             <li class="nav-item {{ request()->is('admin/reviews*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}"
                     href="{{ route('admin.reviews.index') }}">
@@ -98,7 +112,7 @@
                     <span class="menu-title">Ratings &amp; Reviews</span>
                 </a>
             </li>
-        @endcan
+        @endcan --}}
         @can('users.view')
             <li class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.users.index') }}">
@@ -197,7 +211,7 @@
 
 
 
-        <li class="nav-item">
+        {{-- <li class="nav-item">
             <a class="nav-link" data-bs-toggle="collapse" href="#charts" aria-expanded="false"
                 aria-controls="charts">
                 <i class="icon-bar-graph menu-icon"></i>
@@ -254,7 +268,7 @@
                         </a></li>
                 </ul>
             </div>
-        </li>
+        </li> --}}
         {{-- @role('super_admin')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.permissions.index') }}">

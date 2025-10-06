@@ -1,12 +1,11 @@
 <section class="mb-5">
     <div class="mb-3">
-        
         <p class="text-muted small">
             {{ __('Ensure your account is using a long, random password to stay secure.') }}
         </p>
     </div>
 
-    <form method="POST" action="{{ route('password.update') }}">
+    <form method="POST" action="{{ route('password.update') }}" id="password-update-form">
         @csrf
         @method('put')
 
@@ -75,4 +74,21 @@
             @endif
         </div>
     </form>
+
+    <script>
+        // Add event listener to the form submit event
+        document.getElementById('password-update-form').addEventListener('submit', function(event) {
+            const password = document.getElementById('update_password_password').value;
+            const confirmPassword = document.getElementById('update_password_password_confirmation').value;
+
+            // Check if the password or confirmation contains spaces
+            if (/\s/.test(password)) {
+                event.preventDefault();  // Prevent form submission
+                alert("Password should not contain any spaces.");
+            } else if (/\s/.test(confirmPassword)) {
+                event.preventDefault();  // Prevent form submission
+                alert("Confirm Password should not contain any spaces.");
+            }
+        });
+    </script>
 </section>

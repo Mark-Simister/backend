@@ -13,7 +13,7 @@
         <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
             <span class="icon-menu"></span>
         </button>
-        <ul class="navbar-nav mr-lg-2">
+        {{-- <ul class="navbar-nav mr-lg-2">
             <li class="nav-item nav-search d-none d-lg-block">
                 <div class="input-group">
                     <div class="input-group-prepend hover-cursor" id="navbar-search-icon">
@@ -25,7 +25,7 @@
                         aria-label="search" aria-describedby="search">
                 </div>
             </li>
-        </ul>
+        </ul> --}}
         {{-- <ul class="navbar-nav navbar-nav-right">
                     <li class="nav-item dropdown">
                         <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
@@ -103,7 +103,7 @@
                 </ul> --}}
 
         <ul class="navbar-nav navbar-nav-right">
-            <li class="nav-item dropdown">
+            {{-- <li class="nav-item dropdown">
                 <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
                     data-bs-toggle="dropdown">
                     <i class="icon-bell mx-0"></i>
@@ -146,10 +146,10 @@
                         </div>
                     </a>
                 </div>
-            </li>
+            </li> --}}
 
             <!-- User Profile -->
-            <li class="nav-item nav-profile dropdown">
+            {{-- <li class="nav-item nav-profile dropdown">
                 <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" id="profileDropdown">
                     <img src="{{ asset('admin/assets/images/faces/face28.jpg') }}" alt="profile" />
                 </a>
@@ -164,24 +164,25 @@
                         <i class="ti-settings text-primary me-2"></i> Profile
                     </a>
                 </div>
-            </li>
+            </li> --}}
 
             <!-- Logout and profile  button OUTSIDE -->
             <div class="extra_buttons" style="display:flex;">
-                <li class="nav-item me-0">
-                    <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-primary ms-2">
-                        <i class="ti-settings text-primary me-1"></i> 
-                    </a>
-                </li>
-                <li class="nav-item ms-0 me-2">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-danger ms-2">
-                            <i class="ti-power-off me-1"></i>
-                        </button>
-                    </form>
-                </li>
-            </div>
+    <li class="nav-item me-0">
+        <a href="{{ url('profile') }}" class="btn btn-sm btn-outline-primary ms-2 {{ request()->is('profile') ? 'active' : '' }}">
+            <i class="ti-settings {{ request()->is('profile') ? 'text-white' : 'text-primary' }} me-1"></i> 
+        </a>
+    </li>
+    <li class="nav-item ms-0 me-2">
+        <form method="POST" action="{{ url('logout') }}">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-outline-danger ms-2">
+                <i class="ti-power-off me-1"></i>
+            </button>
+        </form>
+    </li>
+</div>
+
 
            
             
