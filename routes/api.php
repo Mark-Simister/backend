@@ -215,6 +215,7 @@ Route::get('/free-videos/{region}/{id}', [VideoController::class, 'freeVideosDet
 
 // All in one
 Route::get('/trending-videos/{region}', [VideoController::class, 'trendingVideos']);
+Route::get('/latest-videos/{region}', [VideoController::class, 'latestVideos']);
 Route::get('/top-deals/{region}', [VideoController::class, 'topDeals']);
 Route::get('/top-rated-products/{region}', [VideoController::class, 'topRatedProducts']);
 Route::get('/trending-characters/{region}', [VideoController::class, 'charactersFromVideosAndPaid']);

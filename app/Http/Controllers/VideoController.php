@@ -1764,6 +1764,91 @@ class VideoController extends Controller
             ], 500);
         }
     }
+    public function latestVideos(Request $request, $region)
+{
+    // dd($request, $region);
+    try {
+        $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+        $userId = $user?->id;
+
+        $request->validate([
+            'channel_id' => 'sometimes|integer',
+            'character_id' => 'sometimes|integer',
+        ]);
+
+        $regionCode = strtoupper($region);
+        $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+        if (!in_array($regionCode, $allowedRegions)) {
+            $regionCode = 'GLOBAL';
+        }
+
+        // Build the base query using the helper method from the trait
+        $q = $this->buildVideosQueryWithoutSubscription2($request, $regionCode);
+
+        // $videos = $q->get();
+        $videos = $q->limit(6)->get();
+
+        if ($videos->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No data found for the selected region and filters.',
+                'data' => [],
+            ], 404);
+        }
+
+        $this->attachTagPairs($videos);
+
+        $isPaidUser = $user && $this->hasValidSubscription($userId);
+
+        $data = $videos->map(function ($video) use ($isPaidUser) {
+            if ($video->relationLoaded('regions')) {
+                $video->regions->each->makeHidden(['pivot']);
+            }
+
+            $isPaidVideo = in_array($video->type, ['vimeo']);
+            $paidFlag = $isPaidVideo;
+            $isSubscribed = $isPaidUser;
+
+            return [
+                'id' => $video->id,
+                'title' => $video->title,
+                'description' => $video->description,
+                'type' => $video->type,
+                'video_url' => $video->video_url ?? '',
+                'thumbnail_url' => $video->thumbnail_url,
+                'character_id' => $video->character_id,
+                'channel_id' => $video->channel_id,
+                'category_id' => $video->category_id,
+                'access_level' => $video->access_level,
+                'affiliate_link' => $video->affiliate_link,
+                'tags' => $video->tag_pairs,
+                'highlight_tags' => $video->highlight_tags,
+                'created_at' => $video->created_at->toDateTimeString(),
+                'updated_at' => $video->updated_at->toDateTimeString(),
+                'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+                'regions' => $video->regions->map(fn($r) => [
+                    'id' => $r->id,
+                    'region_code' => $r->region_code,
+                ]),
+                'paid' => $paidFlag,
+                'is_subscribed' => $isSubscribed,
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Latest videos fetched successfully',
+            'data' => $data,
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to fetch videos',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 
     public function hotThisWeek(Request $request, $region)
     {
@@ -2738,6 +2823,23 @@ class VideoController extends Controller
             $isAuthenticated = $user !== null;
             $userId = $isAuthenticated ? $user->id : null;
 
+            // Fetch other videos with the same character_id, excluding the current video
+            $moreVideos = Video::where('status', 'published')
+                ->where('character_id', $video->character_id)
+                ->where('id', '!=', $video->id)
+                ->orderByDesc('created_at')
+                ->limit(2)
+                ->get()
+                ->map(function ($v) {
+                    return [
+                        'id' => $v->id,
+                        'title' => $v->title,
+                        'description' => $v->description,
+                        'thumbnail_image' => $v->thumbnail_image ? asset($v->thumbnail_image) : null,
+                    ];
+                });
+
+
             // Fetch review by this character for this video first
             $videoReview = ProductReview::where('character_id', $video->character_id)
                 ->where('video_id', $video->id)
@@ -2767,28 +2869,28 @@ class VideoController extends Controller
             }
 
             // Map to response format
-            $moreReviewsData = $mergedReviews->map(function ($review) {
-                $video = $review->video;
-                $paidFlag = $video && $video->type === 'vimeo';
+            // $moreReviewsData = $mergedReviews->map(function ($review) {
+            //     $video = $review->video;
+            //     $paidFlag = $video && $video->type === 'vimeo';
 
-                return [
-                    'id' => $review->id,
-                    'character_id' => $review->character_id,
-                    'video_id' => $review->video_id,
-                    'review_url' => $review->review_url ?? null,
-                    'is_featured' => $review->is_featured ?? null,
-                    'is_active' => $review->is_active ?? null,
-                    'views' => $review->views ?? 0,
-                    'thumbnail_image' => $video?->thumbnail_image ? asset($video->thumbnail_image) : null,
-                    'title' => $video?->title ?? null,
-                    'description' => $video?->description ?? null,
-                    'type' => $video?->type ?? null,
-                    'video_url' => $video?->video_url ?? null,
-                    'paid' => $paidFlag,
-                    'created_at' => $review->created_at?->toDateTimeString(),
-                    'updated_at' => $review->updated_at?->toDateTimeString(),
-                ];
-            });
+            //     return [
+            //         'id' => $review->id,
+            //         'character_id' => $review->character_id,
+            //         'video_id' => $review->video_id,
+            //         'review_url' => $review->review_url ?? null,
+            //         'is_featured' => $review->is_featured ?? null,
+            //         'is_active' => $review->is_active ?? null,
+            //         'views' => $review->views ?? 0,
+            //         'thumbnail_image' => $video?->thumbnail_image ? asset($video->thumbnail_image) : null,
+            //         'title' => $video?->title ?? null,
+            //         'description' => $video?->description ?? null,
+            //         'type' => $video?->type ?? null,
+            //         'video_url' => $video?->video_url ?? null,
+            //         'paid' => $paidFlag,
+            //         'created_at' => $review->created_at?->toDateTimeString(),
+            //         'updated_at' => $review->updated_at?->toDateTimeString(),
+            //     ];
+            // });
 
 
             $watchHistory = $isAuthenticated ? VideoWatchHistory::where('user_id', $userId)
@@ -2986,7 +3088,8 @@ class VideoController extends Controller
                 'local_available_products' => $localProducts,
                 'character_data' => $characterData,
                 'character_insights' => $characterInsights,
-                'more_reviews' => $moreReviewsData,
+                // 'more_reviews' => $moreReviewsData,
+                'character_more_videos' => $moreVideos,
             ];
 
             return response()->json([

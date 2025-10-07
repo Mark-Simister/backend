@@ -134,6 +134,27 @@ trait HasSubscriptionSections
     return $q->latest();
 }
 
+// for latest videos
+protected function buildVideosQueryWithoutSubscription2(Request $request, string $regionCode): Builder
+{
+    $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+        ->where('status', 'published');
+
+    // Optional filters (channel, character)
+    foreach (['channel_id', 'character_id'] as $f) {
+        if ($request->filled($f)) {
+            $q->where($f, $request->get($f));
+        }
+    }
+
+    // Region filter
+    $q->whereHas('regions', function ($query) use ($regionCode) {
+        $query->where('region_code', $regionCode);
+    });
+
+    return $q->latest();  // Ensure the query is sorted by latest videos
+}
+
     
 
     /** Map one video row to output shape */
