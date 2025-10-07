@@ -55,6 +55,13 @@ class SearchController extends Controller
             }
             // $user = $request->user();
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $hasValidSubscription = $user ? $this->hasValidSubscription($user->id) : false;
 
             $results = [];

@@ -111,7 +111,7 @@ class VideoController extends Controller
     public function create()
     {
         $channels = Channel::all();
-        $characters = Character::all();
+        $characters = Character::where('public_private_toggle', 0)->get();
         $categories = Category::all();
         $highlight_tags = HighlightTag::all();
         $regions = Region::where('is_active', 1)->get();
@@ -1681,6 +1681,13 @@ class VideoController extends Controller
     {
         try {
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
 
             $request->validate([
@@ -1765,95 +1772,109 @@ class VideoController extends Controller
         }
     }
     public function latestVideos(Request $request, $region)
-{
-    // dd($request, $region);
-    try {
-        $user = $request->user('api') ?? $request->user('sanctum') ?? null;
-        $userId = $user?->id;
+    {
+        // dd($request, $region);
+        try {
+            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
+            $userId = $user?->id;
 
-        $request->validate([
-            'channel_id' => 'sometimes|integer',
-            'character_id' => 'sometimes|integer',
-        ]);
+            $request->validate([
+                'channel_id' => 'sometimes|integer',
+                'character_id' => 'sometimes|integer',
+            ]);
 
-        $regionCode = strtoupper($region);
-        $allowedRegions = ['AU', 'CA', 'UK', 'US'];
-        if (!in_array($regionCode, $allowedRegions)) {
-            $regionCode = 'GLOBAL';
-        }
-
-        // Build the base query using the helper method from the trait
-        $q = $this->buildVideosQueryWithoutSubscription2($request, $regionCode);
-
-        // $videos = $q->get();
-        $videos = $q->limit(6)->get();
-
-        if ($videos->isEmpty()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No data found for the selected region and filters.',
-                'data' => [],
-            ], 404);
-        }
-
-        $this->attachTagPairs($videos);
-
-        $isPaidUser = $user && $this->hasValidSubscription($userId);
-
-        $data = $videos->map(function ($video) use ($isPaidUser) {
-            if ($video->relationLoaded('regions')) {
-                $video->regions->each->makeHidden(['pivot']);
+            $regionCode = strtoupper($region);
+            $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+            if (!in_array($regionCode, $allowedRegions)) {
+                $regionCode = 'GLOBAL';
             }
 
-            $isPaidVideo = in_array($video->type, ['vimeo']);
-            $paidFlag = $isPaidVideo;
-            $isSubscribed = $isPaidUser;
+            // Build the base query using the helper method from the trait
+            $q = $this->buildVideosQueryWithoutSubscription2($request, $regionCode);
 
-            return [
-                'id' => $video->id,
-                'title' => $video->title,
-                'description' => $video->description,
-                'type' => $video->type,
-                'video_url' => $video->video_url ?? '',
-                'thumbnail_url' => $video->thumbnail_url,
-                'character_id' => $video->character_id,
-                'channel_id' => $video->channel_id,
-                'category_id' => $video->category_id,
-                'access_level' => $video->access_level,
-                'affiliate_link' => $video->affiliate_link,
-                'tags' => $video->tag_pairs,
-                'highlight_tags' => $video->highlight_tags,
-                'created_at' => $video->created_at->toDateTimeString(),
-                'updated_at' => $video->updated_at->toDateTimeString(),
-                'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
-                'regions' => $video->regions->map(fn($r) => [
-                    'id' => $r->id,
-                    'region_code' => $r->region_code,
-                ]),
-                'paid' => $paidFlag,
-                'is_subscribed' => $isSubscribed,
-            ];
-        });
+            // $videos = $q->get();
+            $videos = $q->limit(6)->get();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Latest videos fetched successfully',
-            'data' => $data,
-        ], 200);
+            if ($videos->isEmpty()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No data found for the selected region and filters.',
+                    'data' => [],
+                ], 404);
+            }
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Failed to fetch videos',
-            'error' => $e->getMessage()
-        ], 500);
+            $this->attachTagPairs($videos);
+
+            $isPaidUser = $user && $this->hasValidSubscription($userId);
+
+            $data = $videos->map(function ($video) use ($isPaidUser) {
+                if ($video->relationLoaded('regions')) {
+                    $video->regions->each->makeHidden(['pivot']);
+                }
+
+                $isPaidVideo = in_array($video->type, ['vimeo']);
+                $paidFlag = $isPaidVideo;
+                $isSubscribed = $isPaidUser;
+
+                return [
+                    'id' => $video->id,
+                    'title' => $video->title,
+                    'description' => $video->description,
+                    'type' => $video->type,
+                    'video_url' => $video->video_url ?? '',
+                    'thumbnail_url' => $video->thumbnail_url,
+                    'character_id' => $video->character_id,
+                    'channel_id' => $video->channel_id,
+                    'category_id' => $video->category_id,
+                    'access_level' => $video->access_level,
+                    'affiliate_link' => $video->affiliate_link,
+                    'tags' => $video->tag_pairs,
+                    'highlight_tags' => $video->highlight_tags,
+                    'created_at' => $video->created_at->toDateTimeString(),
+                    'updated_at' => $video->updated_at->toDateTimeString(),
+                    'thumbnail_image' => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+                    'regions' => $video->regions->map(fn($r) => [
+                        'id' => $r->id,
+                        'region_code' => $r->region_code,
+                    ]),
+                    'paid' => $paidFlag,
+                    'is_subscribed' => $isSubscribed,
+                ];
+            });
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Latest videos fetched successfully',
+                'data' => $data,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch videos',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     public function hotThisWeek(Request $request, $region)
     {
         try {
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
 
             $request->validate([
@@ -2102,6 +2123,13 @@ class VideoController extends Controller
     {
         try {
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
 
             $request->validate([
@@ -2221,6 +2249,13 @@ class VideoController extends Controller
     {
         try {
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
 
             $request->validate([
@@ -2423,6 +2458,13 @@ class VideoController extends Controller
         try {
             // Get the logged-in user (if available)
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
 
             // Validate the request parameters
@@ -2567,6 +2609,13 @@ class VideoController extends Controller
 
         $liked = false;
         $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+        // Check if the user is blocked
+        if ($user && $user->is_blocked) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your account has been blocked. Please contact support.',
+            ], 403); // Forbidden
+        }
         if ($user) {
             $liked = $user->likedVideos()->where('video_id', $video->id)->exists();
         }
@@ -2759,6 +2808,13 @@ class VideoController extends Controller
         try {
 
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
             $isPaidUser = $user && $this->hasValidSubscription($userId);
             // dd($user,$userId,$isPaidUser);
@@ -3729,6 +3785,13 @@ class VideoController extends Controller
         $character = Character::find($video->character_id);
         $liked = false;
         $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+        // Check if the user is blocked
+        if ($user && $user->is_blocked) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your account has been blocked. Please contact support.',
+            ], 403); // Forbidden
+        }
         if ($user) {
             $liked = $user->likedVideos()->where('video_id', $video->id)->exists();
         }
@@ -3918,6 +3981,13 @@ class VideoController extends Controller
 
             // Get the authenticated user
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
 
             $recommendedVideos = collect();
 

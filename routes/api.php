@@ -36,7 +36,8 @@ Route::post('login', [AuthController::class, 'login']);
 Route::post('otp/resend', [AuthController::class, 'resendOtp']);
 Route::post('otp/verify', [AuthController::class, 'verifyOtp']);
 
-Route::middleware(['auth:api'])->group(function () {
+// Route::middleware(['auth:api'])->group(function () {
+Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
 
@@ -228,7 +229,8 @@ Route::get('/subscription-listings/region/{region}', [SubscriptionListingControl
 
 Route::prefix('videos/{video}')->group(function () {
     Route::get('/comments', [CommentController::class, 'index']);
-    Route::middleware('auth:api')->post('/comments', [CommentController::class, 'store']);
+    // Route::middleware('auth:api')->post('/comments', [CommentController::class, 'store']);
+    Route::middleware(['auth:api', 'check_blocked'])->post('/comments', [CommentController::class, 'store']);
 });
 
 Route::get('/comments/{comment}', [CommentController::class, 'show']);

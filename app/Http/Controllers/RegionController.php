@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Region;
+use App\Models\Currency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
@@ -27,6 +28,7 @@ class RegionController extends Controller
     public function index()
     {
         $regions = Region::latest()->paginate(10);
+         
         return view('admin.regions.index', compact('regions'));
     }
 

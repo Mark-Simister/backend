@@ -202,10 +202,10 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Durability Score</label>
+                                <label>Durability Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="durability_score" class="form-control"
                                     value="{{ old('durability_score', $character->durability_score) }}" min="0"
-                                    max="100">
+                                    max="5">
                                 @error('durability_score')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -225,10 +225,10 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Comfort Score</label>
+                                <label>Comfort Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="comfort_score" class="form-control"
                                     value="{{ old('comfort_score', $character->comfort_score) }}" min="0"
-                                    max="100">
+                                    max="5">
                                 @error('comfort_score')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -248,9 +248,9 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Style Score</label>
+                                <label>Style Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="style_score" class="form-control"
-                                    value="{{ old('style_score', $character->style_score) }}" min="0" max="100">
+                                    value="{{ old('style_score', $character->style_score) }}" min="0" max="5">
                                 @error('style_score')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -270,10 +270,10 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Affordability Score</label>
+                                <label>Affordability Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="affordability_score" class="form-control"
                                     value="{{ old('affordability_score', $character->affordability_score) }}" min="0"
-                                    max="100">
+                                    max="5">
                                 @error('affordability_score')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -293,10 +293,10 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Tech Feature Score</label>
+                                <label>Tech Feature Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="tech_feature_score" class="form-control"
                                     value="{{ old('tech_feature_score', $character->tech_feature_score) }}" min="0"
-                                    max="100">
+                                    max="5">
                                 @error('tech_feature_score')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -316,10 +316,10 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Eco-friendliness Score</label>
+                                <label>Eco-friendliness Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="eco_friendliness_score" class="form-control"
                                     value="{{ old('eco_friendliness_score', $character->eco_friendliness_score) }}"
-                                    min="0" max="100">
+                                    min="0" max="5">
                                 @error('eco_friendliness_score')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -339,10 +339,10 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Engagement Score</label>
+                                <label>Engagement Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="engagement_score" class="form-control"
                                     value="{{ old('engagement_score', $character->engagement_score) }}" min="0"
-                                    max="100">
+                                    max="5">
                                 @error('engagement_score')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -362,7 +362,7 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Ease of Use Score</label>
+                                <label>Ease of Use Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="ease_of_use_score" class="form-control"
                                     value="{{ old('ease_of_use_score', $character->ease_of_use_score) }}" min="0"
                                     max="100">
@@ -385,10 +385,10 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Performance Score</label>
+                                <label>Performance Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="performance_score" class="form-control"
                                     value="{{ old('performance_score', $character->performance_score) }}" min="0"
-                                    max="100">
+                                    max="5">
                                 @error('performance_score')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -408,10 +408,10 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Brand Reputation Score</label>
+                                <label>Brand Reputation Score <span class="text-info">(Score 1- 5)</span></label>
                                 <input type="number" name="brand_reputation_score" class="form-control"
                                     value="{{ old('brand_reputation_score', $character->brand_reputation_score) }}"
-                                    min="0" max="100">
+                                    min="0" max="5">
                                 @error('brand_reputation_score')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -456,10 +456,10 @@
                     </div>
 
                     <div class="form-group mt-3">
-                        <label for="character_popularity_score">Character Popularity Score</label>
+                        <label for="character_popularity_score">Character Popularity Score <span class="text-info">(Score 1- 5)</span></label>
                         <input type="number" name="character_popularity_score" id="character_popularity_score"
                             class="form-control"
-                            value="{{ old('character_popularity_score', $character->character_popularity_score ?? '') }}">
+                            value="{{ old('character_popularity_score', $character->character_popularity_score ?? '') }}"  min="0" max="5">
                         @error('character_popularity_score')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -475,7 +475,7 @@
                     {{-- {{dd($character, $character_tag, $character->character_tag, $character_role,$character->character_role)}} --}}
 
                     <div class="form-group mt-3">
-                        <label for="character_tag">Character Tag</label>
+                        <label for="character_tag">Character Tag <span class="text-info">( Multi Select )</span></label>
                         <select name="character_tag[]" id="character_tag" class="form-control" multiple>
                             @foreach ($character_tag as $tag_option)
                                 <option value="{{ $tag_option->name }}"
@@ -493,7 +493,7 @@
                     </div>
 
                     <div class="form-group mt-3">
-                        <label for="character_role">Character Roles</label><span class="text-info">( Multi Select )</span>
+                        <label for="character_role">Character Roles <span class="text-info">( Multi Select )</span></label>
                         <select name="character_role[]" id="character_role" class="form-control" multiple>
                             @foreach ($character_role as $role_option)
                                 <option value="{{ $role_option->name }}"

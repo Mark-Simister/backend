@@ -77,34 +77,34 @@ class CharacterController extends Controller
             'species' => 'nullable|string|max:255',
             'style_vibe' => 'nullable|string|max:255',
 
-            'durability_score' => 'nullable|integer|min:0|max:100',
+            'durability_score' => 'nullable|integer|min:0|max:5',
             'durability_notes' => 'nullable|string',
 
-            'comfort_score' => 'nullable|integer|min:0|max:100',
+            'comfort_score' => 'nullable|integer|min:0|max:5',
             'comfort_notes' => 'nullable|string',
 
-            'style_score' => 'nullable|integer|min:0|max:100',
+            'style_score' => 'nullable|integer|min:0|max:5',
             'style_notes' => 'nullable|string',
 
-            'affordability_score' => 'nullable|integer|min:0|max:100',
+            'affordability_score' => 'nullable|integer|min:0|max:5',
             'affordability_notes' => 'nullable|string',
 
-            'tech_feature_score' => 'nullable|integer|min:0|max:100',
+            'tech_feature_score' => 'nullable|integer|min:0|max:5',
             'tech_feature_notes' => 'nullable|string',
 
-            'eco_friendliness_score' => 'nullable|integer|min:0|max:100',
+            'eco_friendliness_score' => 'nullable|integer|min:0|max:5',
             'eco_friendliness_notes' => 'nullable|string',
 
-            'engagement_score' => 'nullable|integer|min:0|max:100',
+            'engagement_score' => 'nullable|integer|min:0|max:5',
             'engagement_notes' => 'nullable|string',
 
-            'ease_of_use_score' => 'nullable|integer|min:0|max:100',
+            'ease_of_use_score' => 'nullable|integer|min:0|max:5',
             'ease_of_use_notes' => 'nullable|string',
 
-            'performance_score' => 'nullable|integer|min:0|max:100',
+            'performance_score' => 'nullable|integer|min:0|max:5',
             'performance_notes' => 'nullable|string',
 
-            'brand_reputation_score' => 'nullable|integer|min:0|max:100',
+            'brand_reputation_score' => 'nullable|integer|min:0|max:5',
             'brand_reputation_notes' => 'nullable|string',
 
             // New fields
@@ -121,7 +121,7 @@ class CharacterController extends Controller
             'character_page_url_slug' => ['nullable', 'string', 'max:255', Rule::unique('characters', 'character_page_url_slug')],
             'public_private_toggle' => 'required|boolean',
             'character_launch_date' => 'nullable|date',
-            'character_popularity_score' => 'nullable|integer|min:0',
+            'character_popularity_score' => 'nullable|integer|min:0|max:5',
             'editor_notes_content_guidelines' => 'nullable|string',
 
             'character_tag' => 'nullable|array',
@@ -248,34 +248,34 @@ class CharacterController extends Controller
             'species' => 'nullable|string|max:255',
             'style_vibe' => 'nullable|string|max:255',
 
-            'durability_score' => 'nullable|integer|min:0|max:100',
+            'durability_score' => 'nullable|integer|min:0|max:5',
             'durability_notes' => 'nullable|string',
 
-            'comfort_score' => 'nullable|integer|min:0|max:100',
+            'comfort_score' => 'nullable|integer|min:0|max:5',
             'comfort_notes' => 'nullable|string',
 
-            'style_score' => 'nullable|integer|min:0|max:100',
+            'style_score' => 'nullable|integer|min:0|max:5',
             'style_notes' => 'nullable|string',
 
-            'affordability_score' => 'nullable|integer|min:0|max:100',
+            'affordability_score' => 'nullable|integer|min:0|max:5',
             'affordability_notes' => 'nullable|string',
 
-            'tech_feature_score' => 'nullable|integer|min:0|max:100',
+            'tech_feature_score' => 'nullable|integer|min:0|max:5',
             'tech_feature_notes' => 'nullable|string',
 
-            'eco_friendliness_score' => 'nullable|integer|min:0|max:100',
+            'eco_friendliness_score' => 'nullable|integer|min:0|max:5',
             'eco_friendliness_notes' => 'nullable|string',
 
-            'engagement_score' => 'nullable|integer|min:0|max:100',
+            'engagement_score' => 'nullable|integer|min:0|max:5',
             'engagement_notes' => 'nullable|string',
 
-            'ease_of_use_score' => 'nullable|integer|min:0|max:100',
+            'ease_of_use_score' => 'nullable|integer|min:0|max:5',
             'ease_of_use_notes' => 'nullable|string',
 
-            'performance_score' => 'nullable|integer|min:0|max:100',
+            'performance_score' => 'nullable|integer|min:0|max:5',
             'performance_notes' => 'nullable|string',
 
-            'brand_reputation_score' => 'nullable|integer|min:0|max:100',
+            'brand_reputation_score' => 'nullable|integer|min:0|max:5',
             'brand_reputation_notes' => 'nullable|string',
 
             'sex' => ['nullable', Rule::in(['male', 'female', 'other'])],
@@ -291,7 +291,7 @@ class CharacterController extends Controller
             'character_page_url_slug' => ['nullable', 'string', 'max:255', Rule::unique('characters', 'character_page_url_slug')->ignore($character->id)],
             'public_private_toggle' => 'required|boolean',
             'character_launch_date' => 'nullable|date',
-            'character_popularity_score' => 'nullable|integer|min:0',
+            'character_popularity_score' => 'nullable|integer|min:0|max:5',
             'editor_notes_content_guidelines' => 'nullable|string',
 
             'character_tag' => 'nullable|array',
@@ -419,6 +419,7 @@ class CharacterController extends Controller
                 'character_tag',
                 'character_role'
             ])
+                ->where('public_private_toggle', 0)
                 ->with([
                     'category:id,name',
                     'regions:id,region_code'
@@ -490,6 +491,7 @@ class CharacterController extends Controller
                 'character_tag',
                 'character_role'
             ])
+                ->where('public_private_toggle', 0)
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 })
@@ -720,6 +722,13 @@ class CharacterController extends Controller
     public function showWithVideos(Request $request, $id, $region)
     {
         $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+        // Check if the user is blocked
+        if ($user && $user->is_blocked) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your account has been blocked. Please contact support.',
+            ], 403); // Forbidden
+        }
 
         // dd($user);
 
@@ -994,6 +1003,13 @@ class CharacterController extends Controller
     public function showWithVideosNew(Request $request, $id, $region)
     {
         $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+        // Check if the user is blocked
+        if ($user && $user->is_blocked) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your account has been blocked. Please contact support.',
+            ], 403); // Forbidden
+        }
         $isSubscribed = $user && $this->hasValidSubscription($user->id);
 
         // dd($user);
@@ -1387,6 +1403,13 @@ class CharacterController extends Controller
                 $regionCode = 'GLOBAL';
             }
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
             $isSubscribed = $user && $this->hasValidSubscription($userId);
 
@@ -1457,6 +1480,13 @@ class CharacterController extends Controller
 
             // Get logged-in user and subscription status
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
             $isSubscribed = $user && $this->hasValidSubscription($userId);
 
@@ -1527,6 +1557,13 @@ class CharacterController extends Controller
 
             // Get logged-in user and subscription status
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
             $isSubscribed = $user && $this->hasValidSubscription($userId);
 
@@ -1594,6 +1631,13 @@ class CharacterController extends Controller
 
             // Get logged-in user and subscription status
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
             $isSubscribed = $user && $this->hasValidSubscription($userId);
 

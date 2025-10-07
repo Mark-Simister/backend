@@ -34,6 +34,7 @@
                                 <th>Name</th>
                                 <th>Persona</th>
                                 <th>Image</th>
+                                <th>Public/Private</th>
                                 <th style="width: 20px;">Actions</th>
                             </tr>
                         </thead>
@@ -46,6 +47,9 @@
                                     <td>
                                         <img src="{{ asset($character->image) }}" alt="{{ $character->name }}"
                                             style="max-width: 200px; height: auto;">
+                                    </td>
+                                    <td>
+                                        {{ $character->public_private_toggle == 0 ? 'Public' : 'Private' }}
                                     </td>
                                     <td>
                                         @can('character.edit')

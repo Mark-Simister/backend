@@ -440,6 +440,17 @@ class CategoryController extends Controller
             $allowed = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
             $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
+            // Retrieve user
+            $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
+
             $query = Category::select('id', 'name', 'slug', 'image', 'channel_id', 'created_at', 'updated_at')
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
@@ -488,6 +499,15 @@ class CategoryController extends Controller
 
             // $user = Auth::user();
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+
+
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
 
             $recommended = collect();
 
@@ -627,6 +647,13 @@ class CategoryController extends Controller
 
             // $user = Auth::user();
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
 
             $recommended = collect();
 
@@ -751,6 +778,13 @@ class CategoryController extends Controller
             }
             // Fetch recommended channels if the user is authenticated
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $followed = 0;
             if ($user) {
                 $followed = CategoryFollow::where('user_id', $user->id)
@@ -853,6 +887,13 @@ class CategoryController extends Controller
 
             // Get the authenticated user
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
 
             $recommended = collect();
 
@@ -1100,6 +1141,13 @@ class CategoryController extends Controller
                 $regionCode = 'GLOBAL';
             }
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
             $isSubscribed = $user && $this->hasValidSubscription($userId);
 
@@ -1168,6 +1216,13 @@ class CategoryController extends Controller
             }
 
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
             $isSubscribed = $user && $this->hasValidSubscription($userId);
 
@@ -1235,6 +1290,13 @@ class CategoryController extends Controller
             }
 
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+            // Check if the user is blocked
+            if ($user && $user->is_blocked) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Your account has been blocked. Please contact support.',
+                ], 403); // Forbidden
+            }
             $userId = $user?->id;
             $isSubscribed = $user && $this->hasValidSubscription($userId);
             // Get distinct characters that have product reviews in this region

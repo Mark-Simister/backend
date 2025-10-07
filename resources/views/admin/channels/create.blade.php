@@ -24,8 +24,8 @@
                             <option value="" disabled {{ old('channel_category') ? '' : 'selected' }} class="text-danger">
                                 -- Select Channel Category --
                             </option>
-                            <option value="people" {{ old('channel_category') == 'people' ? 'selected' : '' }}>People</option>
-                            <option value="pet" {{ old('channel_category') == 'pet' ? 'selected' : '' }}>Pet</option>
+                            <option value="people" {{ old('channel_category') == 'people' ? 'selected' : '' }} >People</option>
+                            <option value="pet" {{ old('channel_category') == 'pet' ? 'selected' : '' }} >Pet</option>
                         </select>
                         @error('channel_category')
                             <span class="text-danger">{{ $message }}</span>

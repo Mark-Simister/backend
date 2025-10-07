@@ -21,12 +21,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Register middleware aliases (for use in routes like middleware(['role:admin']))
+        // Register existing Spatie permission middleware aliases
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+
+             'check_blocked' => \App\Http\Middleware\CheckIfBlocked::class,
         ]);
+
 
         // Exempt Stripe webhook from CSRF
         $middleware->validateCsrfTokens(except: [
@@ -34,7 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Apply only for API requests
+        // Handle exceptions for API requests (JWT exceptions)
         $exceptions->render(function (AuthenticationException $e, $request) {
             if ($request->is('api/*')) {
                 return response()->json([
