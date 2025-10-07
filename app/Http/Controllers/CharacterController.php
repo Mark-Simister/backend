@@ -1040,9 +1040,9 @@ class CharacterController extends Controller
                     "updated_at" => $review->updated_at,
                 ];
             });
-        if ($featured_product_reviews->isEmpty()) {
-            $featured_product_reviews = 'No featured product reviews found for this character';
-        }
+        // if ($featured_product_reviews->isEmpty()) {
+        //     $featured_product_reviews = 'No featured product reviews found for this character';
+        // }
         $product_reviews = ProductReview::where('character_id', $character->id)
             ->where('is_featured', 0)
             ->with('video')
