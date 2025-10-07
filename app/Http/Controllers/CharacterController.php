@@ -1068,9 +1068,9 @@ class CharacterController extends Controller
                     "updated_at" => $review->updated_at,
                 ];
             });
-        if ($product_reviews->isEmpty()) {
-            $product_reviews = 'No product reviews found for this character';
-        }
+        // if ($product_reviews->isEmpty()) {
+        //     $product_reviews = 'No product reviews found for this character';
+        // }
 
         // dd($featured_product_reviews,$product_reviews);
 
