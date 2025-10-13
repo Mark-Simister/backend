@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Subscription;
 use Carbon\Carbon;
 use Stripe\Stripe;
-use Stripe\Subscription as StripeSubscription;
+// use Stripe\Subscription as StripeSubscription;
 use App\Models\Video;
 use App\Models\VideoLike;
 use App\Models\VideoWatchHistory;
@@ -112,6 +112,32 @@ class CronJobController extends Controller
                         if ($stripeSub->status !== 'canceled') {
                             $stripeSub->cancel();
                         }
+                        \Log::info('Canceled overdue recurring renewal', [
+    'local_id' => $sub->id,
+    'stripe_id' => $stripeId,
+]);
+
+                        // Debug: check subscriptions without actually canceling in Stripe
+// dd([
+//     'local_id' => $sub->id,
+//     'user_email' => $sub->user_email,
+//     'stripe_subscription_id' => $stripeId,
+//     'subscription_status' => $sub->subscription_status,
+//     'last_payment_status' => $sub->last_payment_status,
+//     'subscription_end_date' => $sub->subscription_end_date,
+//     'auto_renew' => $sub->auto_renew,
+// ]);
+// \Log::info('Would cancel overdue recurring renewal', [
+//     'local_id' => $sub->id,
+//     'user_email' => $sub->user_email,
+//     'stripe_subscription_id' => $stripeId,
+//     'subscription_status' => $sub->subscription_status,
+//     'last_payment_status' => $sub->last_payment_status,
+//     'subscription_end_date' => $sub->subscription_end_date,
+//     'auto_renew' => $sub->auto_renew,
+// ]);
+
+
 
                         $sub->update([
                             'subscription_status' => 'canceled',
@@ -221,6 +247,16 @@ class CronJobController extends Controller
                                 $stripeSub->cancel();
                             }
                         }
+                        // Debug: check subscriptions without actually canceling in Stripe
+// dd([
+//     'local_id' => $sub->id,
+//     'user_email' => $sub->user_email,
+//     'stripe_subscription_id' => $sub->stripe_subscription_id,
+//     'subscription_status' => $sub->subscription_status,
+//     'auto_renew' => $sub->auto_renew,
+//     'subscription_end_date' => $sub->subscription_end_date,
+// ]);
+
                     } catch (\Stripe\Exception\InvalidRequestException $e) {
                         // "No such subscription" → fine; already gone upstream
                         if (stripos($e->getMessage(), 'No such subscription') === false) {
