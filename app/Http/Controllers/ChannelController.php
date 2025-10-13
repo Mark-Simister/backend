@@ -30,7 +30,6 @@ class ChannelController extends Controller
     {
         return [
             new Middleware('auth'),
-
             // web CRUD
             new Middleware('permission:channel.view', only: ['index']),
             new Middleware('permission:channel.create', only: ['create', 'store']),
