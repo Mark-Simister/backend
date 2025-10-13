@@ -21,6 +21,16 @@
 
             <div class="form-group mt-3">
                 <label>Region Code <span class="text-danger">*</span></label>
+                <input name="region_code" class="form-control" 
+                    value="{{ old('region_code') }}" required>
+                @error('region_code')
+                    <span class="text-danger">{{ $message }}</span>
+                @enderror
+            </div>
+
+
+            {{-- <div class="form-group mt-3">
+                <label>Region Code <span class="text-danger">*</span></label>
                 <select name="region_code" class="form-control select2" required>
                     <option value="">Select Region Code</option>
                     @foreach ($currencies as $currency)
@@ -31,7 +41,7 @@
                     @endforeach
                 </select>
                 @error('region_code') <span class="text-danger">{{ $message }}</span> @enderror
-            </div>
+            </div> --}}
 
             <div class="form-group mt-3">
                 <label>Currency <span class="text-danger">*</span></label>

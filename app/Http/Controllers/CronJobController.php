@@ -26,6 +26,7 @@ class CronJobController extends Controller
 
         $unpaidStatuses = ['renew_pending', 'past_due', 'incomplete', 'unpaid', 'requires_payment_method'];
         $notAlreadyCanceled = ['active', 'renew_pending', 'past_due', 'incomplete', 'cancel_scheduled'];
+        // dd($today,$cutoff);
 
         Stripe::setApiKey(config('services.stripe.secret'));
 
@@ -92,10 +93,14 @@ class CronJobController extends Controller
                     }
 
 
-                    if (
-                        !in_array($sub->subscription_status, $unpaidStatuses) &&
-                        ($sub->last_payment_status === 'succeeded')
-                    ) {
+                    // if (
+                    //     !in_array($sub->subscription_status, $unpaidStatuses) &&
+                    //     ($sub->last_payment_status === 'succeeded')
+                    // ) {
+                    //     $skipped++;
+                    //     continue;
+                    // }
+                    if ($sub->subscription_status === 'canceled') {
                         $skipped++;
                         continue;
                     }
