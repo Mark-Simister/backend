@@ -278,23 +278,27 @@ class UserController extends Controller
     }
 
     public function me_api(Request $request)
-    {
-        
-        $user = $request->user(); // ApiUser via auth:api
-        $user->load([
-            'subscriptions_api' => fn ($q) => $q->with('listing')->latest(),
-            'reviews_api'       => fn ($q) => $q->latest()->with(['video:id,title']),
-            'roles',
-        ]);
-        // dd($user);
-        $data = $this->shapeUser($user);
+{
+    $user = $request->user(); // ApiUser via auth:api
+    $user->load([
+        'subscriptions_api' => fn ($q) => $q->with('listing')->latest(),
+        'roles',
+    ]);
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Profile fetched successfully',
-            'data'    => $data,
-        ], 200);
-    }
+    $data = $this->shapeUser($user);
+
+    // Add phone and profile image URL
+    $data['phone'] = $user->phone;
+    $data['profile_image'] = $user->profile_image ? asset($user->profile_image) : null;
+
+    return response()->json([
+        'status'  => true,
+        'message' => 'Profile fetched successfully',
+        'data'    => $data,
+    ], 200);
+}
+
+
 
     /**
      * Normalize the JSON shape (kept minimal & readable).
@@ -344,19 +348,19 @@ class UserController extends Controller
                 ];
             })->values(),
 
-            'reviews' => $user->reviews_api->map(function ($r) {
-                return [
-                    'id'         => $r->id,
-                    'rating'     => $r->rating,
-                    'review'     => $r->review,
-                    'status'     => $r->status,
-                    'created_at' => optional($r->created_at)->toDateTimeString(),
-                    'video'      => $r->relationLoaded('video') && $r->video ? [
-                        'id'    => $r->video->id,
-                        'title' => $r->video->title,
-                    ] : null,
-                ];
-            })->values(),
+            // 'reviews' => $user->reviews_api->map(function ($r) {
+            //     return [
+            //         'id'         => $r->id,
+            //         'rating'     => $r->rating,
+            //         'review'     => $r->review,
+            //         'status'     => $r->status,
+            //         'created_at' => optional($r->created_at)->toDateTimeString(),
+            //         'video'      => $r->relationLoaded('video') && $r->video ? [
+            //             'id'    => $r->video->id,
+            //             'title' => $r->video->title,
+            //         ] : null,
+            //     ];
+            // })->values(),
         ];
     }
 
