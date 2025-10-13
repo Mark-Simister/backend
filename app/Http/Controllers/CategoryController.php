@@ -887,8 +887,11 @@ public function getRegions($channelId)
             }
 
             // Get subscription sections and channels for the region
-            $sections = $this->getSubscriptionSections($request, $region ?? $request->input('region', ''));
-            $channelsByRegion = $this->getChannelsForRegion($request, $region ?? $request->input('region', ''));
+            // $sections = $this->getSubscriptionSections($request, $region ?? $request->input('region', ''));
+            $sections = $this->getSubscriptionSectionsCategory($request, $region ?? $request->input('region', ''), $category_id);
+
+            
+            $channelsByRegion = $this->getChannelsForRegionCategory($request, $region ?? $request->input('region', ''), $category_id);
 
             return response()->json([
                 'status' => true,

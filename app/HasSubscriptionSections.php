@@ -262,6 +262,32 @@ protected function buildVideosQueryWithoutSubscription3(Request $request, string
             'is_paid_user' => (bool) ($userId && $this->hasValidSubscription($userId)),
         ];
     }
+    // protected function getSubscriptionSectionsCategory(Request $request, string $region): array
+    protected function getSubscriptionSectionsCategory(Request $request, string $region, int $category_id): array
+    {
+        $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+        $userId = $user?->id;
+        $regionCode = $this->resolveRegionCode($region);
+
+        // Build both queries (2 = top deals, 3 = trending)
+        $qTopDeals = $this->buildVideosQuery($request, $regionCode, 2, $userId);
+        $qTopDeals->where('videos.category_id', $category_id);
+        $qTrending = $this->buildVideosQuery($request, $regionCode, 3, $userId);
+        $qTrending->where('videos.category_id', $category_id);
+
+        $topDeals = $qTopDeals->get();
+        $trending = $qTrending->get();
+
+        // add tag_pairs for both sets
+        $this->attachTagPairs($topDeals);
+        $this->attachTagPairs($trending);
+
+        return [
+            'top_deals' => $topDeals->map(fn($v) => $this->mapVideo($v))->values(),
+            'trending_products' => $trending->map(fn($v) => $this->mapVideo($v))->values(),
+            'is_paid_user' => (bool) ($userId && $this->hasValidSubscription($userId)),
+        ];
+    }
 
     protected function getSubscriptionSectionsNew(Request $request, string $region, ?string $type = null): array
 {
@@ -343,6 +369,18 @@ protected function getChannelsForRegion(Request $request, string $region): array
 {
     $regionCode = $this->resolveRegionCode($region);
     $channels = $this->buildChannelByRegionQuery($regionCode)->get();
+
+    return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
+}
+protected function getChannelsForRegionCategory(Request $request, string $region, $category_id): array
+{
+    $regionCode = $this->resolveRegionCode($region);
+    // $channels = $this->buildChannelByRegionQuery($regionCode)->get();
+    $channels = $this->buildChannelByRegionQuery($regionCode)
+        ->whereHas('categories', function ($q) use ($category_id) {
+            $q->where('categories.id', $category_id);
+        })
+        ->get();
 
     return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
 }
