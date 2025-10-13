@@ -59,17 +59,19 @@ Route::middleware(['auth'])
     ->name('admin.')
     ->group(function () {
 
+        // Channels
+        Route::resource('channels', ChannelController::class)
+            ->middleware('permission:channel.view|channel.create|channel.edit|channel.delete');
+
         // Category CRUD
         Route::resource('categories', CategoryController::class)
             ->middleware('permission:category.view|category.create|category.edit|category.delete');
+        Route::get('categories/{channel}/regions', [CategoryController::class, 'getRegions'])->name('categories.getRegions');
 
         // Permissions management (restrict to super_admin only if you want)
         Route::resource('permissions', PermissionController::class)
             ->middleware('role:super_admin');
 
-        // Channels
-        Route::resource('channels', ChannelController::class)
-            ->middleware('permission:channel.view|channel.create|channel.edit|channel.delete');
 
         Route::resource('regions', RegionController::class)
             ->middleware('permission:region.view|region.create|region.edit|region.delete');
@@ -88,9 +90,13 @@ Route::middleware(['auth'])
         Route::resource('characters', CharacterController::class)
             ->middleware('permission:character.view|character.create|character.edit|character.delete');
 
+        Route::get('characters/{category}/regions', [CharacterController::class, 'getRegions'])->name('characters.getRegions');
+
         // Videos
         Route::resource('videos', VideoController::class)
             ->middleware('permission:video.view|video.create|video.edit|video.delete');
+        Route::get('videos/{character}/regions', [VideoController::class, 'getRegions'])->name('videos.getRegions');
+
         Route::get('/videos/{id}/comments', [VideoController::class, 'showCommentsPage'])->name('videos.comments');
         Route::delete('/comments/{comment}', [VideoController::class, 'destroy_comment'])->name('comments.delete');
         Route::put('/comments/{comment}', [VideoController::class, 'update_comment'])->name('comments.update');
@@ -168,6 +174,7 @@ Route::middleware(['auth'])
         Route::get('/videos/{videoId}/character-insights/{characterInsight}/edit', [CharacterInsightController::class, 'edit'])->name('videos.character-insights.edit');
         Route::put('/videos/{videoId}/character-insights/{characterInsight}', [CharacterInsightController::class, 'update'])->name('videos.character-insights.update');
         Route::delete('/videos/{videoId}/character-insights/{characterInsight}', [CharacterInsightController::class, 'destroy'])->name('videos.character-insights.destroy');
+        Route::post('videos/toggle-featured', [VideoController::class, 'toggleFeatured'])->name('videos.toggleFeatured');
 
         Route::get('/vimeo', [VimeoController::class, 'index'])->name('vimeo.index');
         Route::post('/admin/vimeo/assign', [VimeoController::class, 'assign'])

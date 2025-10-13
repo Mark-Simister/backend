@@ -2,9 +2,21 @@
 
 @section('title', 'Add Character')
 @push('styles')
-    {{-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> --}}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+
     <style>
-        /*  */
+        .select2-container {
+            z-index: 9999 !important;
+            /* Ensure the dropdown is above other content */
+        }
+
+        .select2-dropdown {
+            position: absolute !important;
+            /* Ensures dropdown is positioned correctly */
+            z-index: 9999 !important;
+            /* Ensure dropdown is above other elements */
+        }
     </style>
 @endpush
 @section('content')
@@ -49,15 +61,7 @@
                         @enderror
                     </div>
 
-                    <div class="form-group region-flex">
-                        <label>Select Regions:</label><br>
-                        @foreach ($regions as $region)
-                            <div class="form-check form-check-inline">
-                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input" {{ in_array($region->id, old('regions', [])) ? 'checked' : '' }}>
-                                <label class="form-check-label">{{ $region->region_name }}</label>
-                            </div>
-                        @endforeach
-                    </div>
+
 
                     <div class="form-group mt-3">
                         <label>Mini Bio <span class="text-danger">*</span></label>
@@ -128,7 +132,7 @@
                     <div class="form-group mt-3">
                         <label for="category_id">Category <span class="text-danger">*</span></label>
                         <select name="category_id" id="category_id"
-                            class="form-control @error('category_id') is-invalid @enderror" required>
+                            class="form-control select2 @error('category_id') is-invalid @enderror" required>
                             <option></option> {{-- empty option enables Select2 placeholder --}}
                             @foreach ($categories as $category)
                                 <option value="{{ $category->id }}"
@@ -140,6 +144,29 @@
                         @error('category_id')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
+                    </div>
+
+                    {{-- <div class="form-group region-flex">
+                        <label>Select Regions:</label><br>
+                        @foreach ($regions as $region)
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"
+                                    {{ in_array($region->id, old('regions', [])) ? 'checked' : '' }}>
+                                <label class="form-check-label">{{ $region->region_name }}</label>
+                            </div>
+                        @endforeach
+                    </div> --}}
+                    <div class="form-group region-flex">
+                        <label>Select Regions:</label><br>
+                        @foreach ($regions as $region)
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"
+                                    id="region_{{ $region->id }}"
+                                    {{ in_array($region->id, old('regions', [])) ? 'checked' : '' }}>
+                                <label class="form-check-label"
+                                    for="region_{{ $region->id }}">{{ $region->region_name }}</label>
+                            </div>
+                        @endforeach
                     </div>
 
 
@@ -513,9 +540,11 @@
                     </div>
 
                     <div class="form-group mt-3">
-                        <label for="character_popularity_score">Character Popularity Score <span class="text-info">(Score 1- 5)</span></label>
+                        <label for="character_popularity_score">Character Popularity Score <span class="text-info">(Score 1-
+                                5)</span></label>
                         <input type="number" name="character_popularity_score" id="character_popularity_score"
-                            class="form-control" value="{{ old('character_popularity_score') }}"  min="0" max="5">
+                            class="form-control" value="{{ old('character_popularity_score') }}" min="0"
+                            max="5">
                         @error('character_popularity_score')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -531,15 +560,7 @@
 
                     <div class="form-group mt-3">
                         <label for="character_tag">Character Tag <span class="text-info">( Multi Select )</span></label>
-                        {{-- <select name="character_tag[]" id="character_tag" class="form-control" multiple>
-                            @foreach ($character_tag as $tag_option)
-                                <option value="{{ $tag_option->name }}"
-                                    {{ in_array($tag_option->name, explode(',', old('character_tag', $character->character_tag ?? ''))) ? 'selected' : '' }}>
-                                    {{ $tag_option->name }}
-                                </option>
-                            @endforeach
-                        </select> --}}
-                        <select name="character_tag[]" id="character_tag" class="form-control" multiple>
+                        <select name="character_tag[]" id="character_tag" class="form-control select2" multiple>
                             @php
                                 $oldTags = old('character_tag', $character->character_tag ?? '');
                                 $selectedTags = is_array($oldTags) ? $oldTags : explode(',', $oldTags);
@@ -555,21 +576,11 @@
                         @error('character_tag')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
-                        @error('character_tag.*')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
                     </div>
+
                     <div class="form-group mt-3">
                         <label for="character_role">Character Roles <span class="text-info">( Multi Select )</span></label>
-                        {{-- <select name="character_role[]" id="character_role" class="form-control" multiple>
-                            @foreach ($character_role as $role_option)
-                                <option value="{{ $role_option->name }}"
-                                    {{ in_array($role_option->name, explode(',', old('character_role', $character->character_role ?? ''))) ? 'selected' : '' }}>
-                                    {{ $role_option->name }}
-                                </option>
-                            @endforeach
-                        </select> --}}
-                        <select name="character_role[]" id="character_role" class="form-control" multiple>
+                        <select name="character_role[]" id="character_role" class="form-control select2" multiple>
                             @php
                                 $oldRoles = old('character_role', $character->character_role ?? '');
                                 $selectedRoles = is_array($oldRoles) ? $oldRoles : explode(',', $oldRoles);
@@ -585,10 +596,10 @@
                         @error('character_role')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
-                        @error('character_role.*')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
                     </div>
+
+
+
                     <div class="mt-4">
                         <button type="submit" class="btn btn-success">Save</button>
                         <a href="{{ route('admin.characters.index') }}" class="btn btn-secondary">Back</a>
@@ -600,27 +611,93 @@
     </div>
 @endsection
 @push('scripts')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
-<script>
-$(function () {
-  function makeSelect2(id, opts) {
-    var $el = $(id);
-    if (!$el.length || $el.hasClass('select2-hidden-accessible')) return;
-    $el.select2(Object.assign({
-      width: '100%',
-      placeholder: $el.attr('placeholder') || 'Select...'
-    }, opts || {}));
-  }
+    {{-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script> --}}
 
-  // single
-  makeSelect2('#category_id', { allowClear: true });
 
-  // multi (chips)
-  makeSelect2('#character_tag',  { closeOnSelect: false });
-  makeSelect2('#character_role', { closeOnSelect: false });
-});
-</script>
+    <!-- Include jQuery and Select2 JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
 
+    <script>
+        // $(function () {
+        //   function makeSelect2(id, opts) {
+        //     var $el = $(id);
+        //     if (!$el.length || $el.hasClass('select2-hidden-accessible')) return;
+        //     $el.select2(Object.assign({
+        //       width: '100%',
+        //       placeholder: $el.attr('placeholder') || 'Select...'
+        //     }, opts || {}));
+        //   }
+
+        //   // single
+        //   makeSelect2('#category_id', { allowClear: true });
+
+        //   // multi (chips)
+        //   makeSelect2('#character_tag',  { closeOnSelect: false });
+        //   makeSelect2('#character_role', { closeOnSelect: false });
+        // });
+        $(function() {
+            // Function to initialize Select2
+            function makeSelect2(id, opts) {
+                var $el = $(id);
+                if (!$el.length || $el.hasClass('select2-hidden-accessible')) return;
+                $el.select2(Object.assign({
+                    width: '100%',
+                    placeholder: $el.attr('placeholder') || 'Select...'
+                }, opts || {}));
+            }
+
+            // Initialize Select2 for multi-select dropdowns
+            makeSelect2('#character_tag', {
+                closeOnSelect: true,
+                allowClear: true
+            });
+            makeSelect2('#character_role', {
+                closeOnSelect: true,
+                allowClear: true
+            });
+
+            // Initialize Select2 for category dropdown
+            makeSelect2('#category_id', {
+                allowClear: true
+            });
+
+            // Initialize Select2 for category dropdown
+            $('#category_id').select2({
+                width: '100%',
+                placeholder: '-- Select Category --',
+                allowClear: true
+            });
+
+            // Listen for changes to the category dropdown
+            $('#category_id').change(function() {
+                const categoryId = $(this).val(); // Get selected category ID
+
+                if (categoryId) {
+                    // Make AJAX request to fetch regions associated with the selected category
+                    $.ajax({
+                        url: '{{ url('admin/characters') }}/' + categoryId + '/regions',
+                        type: 'GET',
+                        success: function(data) {
+                            // Uncheck all region checkboxes first
+                            $('input[name="regions[]"]').prop('checked', false);
+
+                            // Loop through the regions and check the corresponding checkboxes
+                            data.forEach(function(region) {
+                                // Check the checkbox with the matching region id
+                                $('#region_' + region.id).prop('checked', true);
+                            });
+                        },
+                        error: function() {
+                            alert('Error loading regions!');
+                        }
+                    });
+                } else {
+                    // If no category is selected, uncheck all regions
+                    $('input[name="regions[]"]').prop('checked', false);
+                }
+            });
+        });
+    </script>
 @endpush
-

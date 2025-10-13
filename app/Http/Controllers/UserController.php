@@ -364,22 +364,32 @@ class UserController extends Controller
 {
     $user = $request->user();
 
+    // Validate input
     $validated = $request->validate([
-        'name'          => ['sometimes','string','max:255'],
-        'phone'         => ['sometimes','string','max:30'],
-        'password'      => ['sometimes','nullable','confirmed','min:8'],
-        'profile_image' => ['sometimes','file','image','mimes:jpeg,png,jpg,webp','max:5120'], 
+        'name'          => ['sometimes', 'string', 'max:255'],
+        'phone'         => ['sometimes', 'nullable', 'string', 'max:30'],
+        'password'      => ['sometimes', 'nullable', 'confirmed', 'min:8'],
+        'profile_image' => ['sometimes', 'file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'], 
     ]);
 
+    // Ensure user uploads directory exists
     $destination = public_path('users');
     if (!File::exists($destination)) {
         File::makeDirectory($destination, 0755, true);
     }
 
+    // Check if email changed
     $emailChanged = array_key_exists('email', $validated) && $validated['email'] !== $user->email;
 
-    if (array_key_exists('name', $validated))  $user->name  = $validated['name'];
-    if (array_key_exists('phone', $validated)) $user->phone = $validated['phone'];
+    // Update user fields if present
+    if (array_key_exists('name', $validated)) {
+        $user->name = $validated['name'];
+    }
+
+    if (array_key_exists('phone', $validated)) {
+        // Can be null to clear existing phone
+        $user->phone = $validated['phone'];
+    }
 
     if (array_key_exists('password', $validated) && $validated['password']) {
         $user->password = Hash::make($validated['password']);
@@ -389,9 +399,11 @@ class UserController extends Controller
         $user->email_verified_at = null;
     }
 
+    // Handle profile image upload
     if ($request->hasFile('profile_image')) {
         $file = $request->file('profile_image');
 
+        // Delete old image if exists
         if ($user->profile_image) {
             $oldPath = public_path($user->profile_image); 
             if (File::exists($oldPath) && str_starts_with(realpath($oldPath), realpath($destination))) {
@@ -399,15 +411,13 @@ class UserController extends Controller
             }
         }
 
-        $filename = 'user_'.$user->id.'_'.time().'.'.$file->getClientOriginalExtension();
+        $filename = 'user_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
         $file->move($destination, $filename);
-
-        $user->profile_image = 'users/'.$filename;
+        $user->profile_image = 'users/' . $filename;
     }
 
     $user->save();
 
-   
     $imageUrl = $user->profile_image ? asset($user->profile_image) : null;
 
     return response()->json([
@@ -423,6 +433,7 @@ class UserController extends Controller
         ],
     ]);
 }
+
 
 
 

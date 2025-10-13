@@ -138,67 +138,11 @@
     /*  character select 2 start */
     /* Make the Select2 sit full-width like form-control */
     #character_id+.select2-container {
-        width: 100% !important;
+        /* width: 100% !important; */
     }
 
     /* Match Bootstrap .form-select sizing & look */
-    #character_id+.select2 .select2-selection--single {
-        height: 46px;
-        /* same as .form-select-lg-ish */
-        border: 1px solid #ced4da;
-        border-radius: .5rem;
-        /* like your other fields */
-        padding: .375rem .75rem;
-        /* vertical/horizontal padding */
-        display: flex;
-        align-items: center;
-        /* vertically center text */
-        font-size: 1rem;
-        line-height: 1.5;
-    }
 
-    /* Remove extra left padding Select2 adds inside the selection */
-    #character_id+.select2 .select2-selection__rendered {
-        padding-left: 0 !important;
-        color: #212529;
-        /* Bootstrap text color */
-    }
-
-    /* Align the dropdown arrow vertically and nudge right for spacing */
-    #character_id+.select2 .select2-selection__arrow {
-        height: 46px;
-        /* match selection height */
-        right: .5rem;
-        /* give some breathing room */
-    }
-
-    /* Dropdown panel styling to match Bootstrap */
-    .select2-container--default .select2-dropdown {
-        border-color: #ced4da;
-        border-radius: .5rem;
-        overflow: hidden;
-        /* rounded corners on menu */
-    }
-
-    /* Option sizing inside the dropdown */
-    .select2-container--default .select2-results__option {
-        font-size: 1rem;
-        padding: .5rem .75rem;
-    }
-
-    /* Focus ring similar to Bootstrap */
-    #character_id+.select2 .select2-selection--single:focus {
-        outline: 0;
-        box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
-        border-color: #86b7fe;
-    }
-
-    /* Invalid state hook (if you toggle .is-invalid in JS) */
-    #character_id+.select2 .select2-selection.is-invalid,
-    #character_id.is-invalid+.select2 .select2-selection {
-        border-color: #dc3545 !important;
-        box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .15);
-    }
 
     /* character select 2 end */
 
@@ -272,7 +216,7 @@
     /* highlight tags select 2 end */
 </style>
 
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{{-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> --}}
 
 
 <div class="">
@@ -348,13 +292,7 @@
 
             <div class="mb-3">
                 <label for="type">Video Platform Type <span class="text-danger">*</span></label>
-                {{-- <select name="type" id="type" class="form-select" required>
-                    <option value="" disabled selected>-- Select Platform --</option>
-                    <option value="youtube" {{ old('type', $video->type ?? '') == 'youtube' ? 'selected' : '' }}>YouTube
-                    </option>
-                    <option value="vimeo" {{ old('type', $video->type ?? '') == 'vimeo' ? 'selected' : '' }}>Vimeo
-                    </option>
-                </select> --}}
+
                 <select name="type" id="type" class="form-select" required>
                     <option value="" disabled {{ $defaultType ? '' : 'selected' }}>-- Select Platform --</option>
                     <option value="youtube" {{ $defaultType === 'youtube' ? 'selected' : '' }}>YouTube</option>
@@ -363,12 +301,6 @@
 
             </div>
 
-            {{-- <div class="mb-3">
-                <label for="video_url">Video URL <span class="text-danger">*</span></label>
-                <input type="url" name="video_url" id="video_url" class="form-control" required
-                    value="{{ old('video_url', request('video_url', $video->video_url ?? '')) }}">
-
-            </div> --}}
             <div class="mb-3">
                 <label for="video_url">
                     Video URL <span id="videoUrlStar" class="text-danger">*</span>
@@ -377,6 +309,16 @@
                     value="{{ old('video_url', request('video_url', $video->video_url ?? '')) }}"
                     {{ old('type', request('type', $video->type ?? '')) !== 'vimeo' ? 'required' : '' }}>
             </div>
+
+            <div class="mb-3">
+                <label for="is_featured">
+                    Is Featured <span id="isFeaturedStar" class="text-danger">*</span>
+                </label>
+                <input type="checkbox" name="is_featured" id="is_featured" class="form-check-input" value="1"
+                    {{ old('is_featured', $video->is_featured ?? 0) == 1 ? 'checked' : '' }}>
+                <label class="form-check-label" for="is_featured">Featured</label>
+            </div>
+
 
 
 
@@ -389,16 +331,8 @@
         <div class="form-step">
             <div class="mb-3">
                 <label for="character_id">Character</label>
-                {{-- <select name="character_id" id="character_id" class="form-select" required>
-                    <option value="" disabled selected>-- Select Character --</option>
-                    @foreach ($characters as $character)
-                        <option value="{{ $character->id }}"
-                            {{ old('character_id', $video->character_id ?? '') == $character->id ? 'selected' : '' }}>
-                            {{ $character->name }}
-                        </option>
-                    @endforeach
-                </select> --}}
-                <select name="character_id" id="character_id" class="form-select" required>
+
+                <select name="character_id" id="character_id" class="form-select character_id" required>
                     <option></option> <!-- empty first option for Select2 placeholder -->
                     @foreach ($characters as $character)
                         <option value="{{ $character->id }}"
@@ -411,7 +345,7 @@
                 <div id="character_error" class="invalid-feedback" style="display:none;">Please select a character.
                 </div>
             </div>
-            <div class="form-group region-flex" id="regions_group">
+            {{-- <div class="form-group region-flex" id="regions_group">
                 <label for="regions">Select Regions: <span class="text-danger">*</span></label>
                 @foreach ($regions as $region)
                     <div class="form-check form-check-inline">
@@ -429,7 +363,28 @@
                 <div id="regions_error" class="invalid-feedback d-none">
                     Please select at least one region.
                 </div>
+            </div> --}}
+            <div class="form-group region-flex" id="regions_group">
+                <label for="regions">Select Regions: <span class="text-danger">*</span></label>
+                @foreach ($regions as $region)
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"
+                            id="region_{{ $region->id }}"
+                            {{ in_array($region->id, $selectedRegions ?? []) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="region_{{ $region->id }}">
+                            {{ $region->region_name }}
+                            @if (!$region->is_active)
+                                <small class="text-danger">(Inactive)</small>
+                            @endif
+                        </label>
+                    </div>
+                @endforeach
+                <div id="regions_error" class="invalid-feedback d-none">
+                    Please select at least one region.
+                </div>
             </div>
+
+
 
             {{-- <div class="mb-3">
                 <label for="channel_id">Channel</label>
@@ -1153,6 +1108,31 @@
         const $sel = $(this).next('.select2-container').find('.select2-selection');
         if ($(this).val()) $sel.removeClass('is-invalid');
         else $sel.addClass('is-invalid');
+        const characterId = $(this).val(); // Get selected character ID
+
+        if (characterId) {
+            // Make AJAX request to fetch regions associated with the selected character
+            $.ajax({
+                url: '{{ url('admin/videos') }}/' + characterId + '/regions', // Ensure this route is correct
+                type: 'GET',
+                success: function(data) {
+                    // Uncheck all region checkboxes first
+                    $('input[name="regions[]"]').prop('checked', false);
+
+                    // Loop through the regions and check the corresponding checkboxes
+                    data.forEach(function(region) {
+                        // Check the checkbox with the matching region id
+                        $('#region_' + region.id).prop('checked', true);
+                    });
+                },
+                error: function() {
+                    alert('Error loading regions!');
+                }
+            });
+        } else {
+            // If no character is selected, uncheck all regions
+            $('input[name="regions[]"]').prop('checked', false);
+        }
     });
 
     $('#highlight_tags').select2({
@@ -1164,3 +1144,4 @@
         dropdownCssClass: 'select2-lg'
     });
 </script>
+

@@ -107,6 +107,31 @@
       placeholder: '-- Select Channel --',
       allowClear: true
     });
+    $('#channel_id').change(function() {
+      const channelId = $(this).val();
+      if (channelId) {
+        // Make AJAX request to get the regions of the selected channel
+        $.ajax({
+          url: '{{ url('admin/categories') }}/' + channelId + '/regions',
+          type: 'GET',
+          success: function(data) {
+            // Clear the previous selections
+            $('input[name="regions[]"]').prop('checked', false);
+            
+            // Select regions that belong to the selected channel
+            data.forEach(region => {
+              $('#region_' + region.id).prop('checked', true);
+            });
+          },
+          error: function() {
+            alert('Error loading regions!');
+          }
+        });
+      } else {
+        // Clear regions if no channel is selected
+        $('input[name="regions[]"]').prop('checked', false);
+      }
+    });
   });
 </script>
 @endpush

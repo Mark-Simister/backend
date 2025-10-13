@@ -18,6 +18,7 @@ class Video extends Model
         'video_type',
         'video_platforms',
         'video_url',
+        'is_featured',
         'thumbnail_url',
         'thumbnail_image',
         'youtube_id',

@@ -45,6 +45,7 @@
                                 <th>Type</th>
                                 <th>Character</th>
                                 <th>Access</th>
+                                <th>Featured</th>
                                 <th>Edit</th>
                                 <th style="width: 120px;">Actions</th>
                             </tr>
@@ -57,6 +58,15 @@
                                     <td>{{ ucfirst($video->type) }}</td>
                                     <td>{{ $video->character->name ?? '-' }}</td>
                                     <td>{{ ucfirst($video->access_level) }}</td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" class="is-featured-toggle" data-id="{{ $video->id }}"
+                                                {{ $video->is_featured ? 'checked' : '' }}>
+                                            <span class="slider round"></span>
+                                        </label>
+                                    </td>
+
+
                                     <td class="btn-flex">
                                         @can('video.edit')
                                             <a href="{{ route('admin.videos.edit.seo', $video) }}"
@@ -65,7 +75,8 @@
                                                 class="btn btn-outline-success me-1">Product</a>
                                             <a href="{{ route('admin.videos.character-insights.index', $video->id) }}"
                                                 class="btn btn-outline-secondary me-1">Character Insights</a>
-                                            <a href="{{ route('admin.similar-products.edit', $video->id) }}" class="btn btn-outline-warning me-1">Similar Products</a>
+                                            <a href="{{ route('admin.similar-products.edit', $video->id) }}"
+                                                class="btn btn-outline-warning me-1">Similar Products</a>
                                         @endcan
                                     </td>
                                     <td>
@@ -122,12 +133,36 @@
                     searchPlaceholder: "Search videos..."
                 }
             });
+
+            $('.is-featured-toggle').change(function() {
+                var videoId = $(this).data('id'); // Get the video ID
+                var newStatus = $(this).prop('checked') ? 1 : 0; // Get new status based on checked state
+
+                // Send Ajax request to update the status
+                $.ajax({
+                    url: '{{ route('admin.videos.toggleFeatured') }}', // Define your route
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}', // CSRF token for security
+                        id: videoId,
+                        is_featured: newStatus
+                    },
+                    success: function(response) {
+                        // On success, the status will already be toggled by the checkbox
+                        if (response.success) {
+                            // No need to update the text as the checkbox takes care of the toggle
+                        } else {
+                            alert('Error updating status!');
+                        }
+                    },
+                    error: function() {
+                        alert('Error communicating with the server.');
+                        $(this).prop('checked', !$(this).prop('checked'));
+                    }
+                });
+            });
         });
-    </script>
 
-
-    <!-- SweetAlert Delete Confirmation -->
-    <script>
         document.addEventListener('DOMContentLoaded', function() {
             const deleteButtons = document.querySelectorAll('.delete-btn');
 

@@ -10,6 +10,7 @@ use App\Models\CharacterRole;
 use App\Models\Subscription;
 use App\Models\CharacterTag;
 use App\Models\ProductReview;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -199,6 +200,14 @@ class CharacterController extends Controller
 
         return redirect()->route('admin.characters.index')->with('success', 'Character created successfully.');
     }
+
+    public function getRegions($categoryId)
+{
+    $category = Category::findOrFail($categoryId);
+    $regions = $category->regions;  // Assuming there's a `regions()` relationship defined in the `Category` model
+    return response()->json($regions);
+}
+
 
     public function edit(Character $character)
     {
@@ -1031,64 +1040,98 @@ class CharacterController extends Controller
                 'data' => [],
             ], 404);
         }
-        $featured_product_reviews = ProductReview::where('character_id', $character->id)
+        // $featured_product_reviews = ProductReview::where('character_id', $character->id)
+        //     ->where('is_featured', 1)
+        //     ->with('video')
+        //     ->get()
+        //     ->map(function ($review) {
+        //         $video = $review->video;
+
+        //         return [
+        //             "id" => $review->id,
+        //             "character_id" => $review->character_id,
+        //             "video_id" => $review->video_id,
+        //             "review_url" => $review->review_url,
+        //             "is_featured" => $review->is_featured,
+        //             "is_active" => $review->is_active,
+        //             "thumbnail_image" => optional($video->thumbnail_image)
+        //                 ? asset($video->thumbnail_image)
+        //                 : null,
+        //             "title" => optional($video)->title,
+        //             "description" => optional($video)->description,
+        //             "type" => optional($video)->type,
+        //             "video_url" => optional($video)->video_url,
+        //             "created_at" => $review->created_at,
+        //             "updated_at" => $review->updated_at,
+        //         ];
+        //     });
+        $featured_product_reviews = Video::where('character_id', $character->id)
             ->where('is_featured', 1)
-            ->with('video')
+            ->with('channel') // Include the related channel data
             ->get()
-            ->map(function ($review) {
-                $video = $review->video;
-
+            ->map(function ($video) {
                 return [
-                    "id" => $review->id,
-                    "character_id" => $review->character_id,
-                    "video_id" => $review->video_id,
-                    "review_url" => $review->review_url,
-                    "is_featured" => $review->is_featured,
-                    "is_active" => $review->is_active,
-                    "thumbnail_image" => optional($video->thumbnail_image)
-                        ? asset($video->thumbnail_image)
-                        : null,
-                    "title" => optional($video)->title,
-                    "description" => optional($video)->description,
-                    "type" => optional($video)->type,
-                    "video_url" => optional($video)->video_url,
-                    "created_at" => $review->created_at,
-                    "updated_at" => $review->updated_at,
+                    "id" => $video->id,
+                    "character_id" => $video->character_id,
+                    "video_id" => $video->id,
+                    "is_featured" => $video->is_featured,
+                    "is_active" => $video->status == 'published', // Assuming 'status' field defines active state
+                    "thumbnail_image" => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+                    "title" => $video->title,
+                    "description" => $video->description,
+                    "type" => $video->type,
+                    "video_url" => $video->video_url,
+                    "created_at" => $video->created_at,
+                    "updated_at" => $video->updated_at,
                 ];
             });
-        // if ($featured_product_reviews->isEmpty()) {
-        //     $featured_product_reviews = 'No featured product reviews found for this character';
-        // }
-        $product_reviews = ProductReview::where('character_id', $character->id)
+
+        // $product_reviews = ProductReview::where('character_id', $character->id)
+        //     ->where('is_featured', 0)
+        //     ->with('video')
+        //     ->get()
+        //     ->map(function ($review) {
+        //         $video = $review->video;
+
+        //         return [
+        //             "id" => $review->id,
+        //             "character_id" => $review->character_id,
+        //             "video_id" => $review->video_id,
+        //             "review_url" => $review->review_url,
+        //             "is_featured" => $review->is_featured,
+        //             "is_active" => $review->is_active,
+        //             "thumbnail_image" => optional($video->thumbnail_image)
+        //                 ? asset($video->thumbnail_image)
+        //                 : null,
+        //             "title" => optional($video)->title,
+        //             "description" => optional($video)->description,
+        //             "type" => optional($video)->type,
+        //             "video_url" => optional($video)->video_url,
+        //             "created_at" => $review->created_at,
+        //             "updated_at" => $review->updated_at,
+        //         ];
+        //     });
+
+        $product_reviews = Video::where('character_id', $character->id)
             ->where('is_featured', 0)
-            ->with('video')
+            ->with('channel') // Include the related channel data
             ->get()
-            ->map(function ($review) {
-                $video = $review->video;
-
+            ->map(function ($video) {
                 return [
-                    "id" => $review->id,
-                    "character_id" => $review->character_id,
-                    "video_id" => $review->video_id,
-                    "review_url" => $review->review_url,
-                    "is_featured" => $review->is_featured,
-                    "is_active" => $review->is_active,
-                    "thumbnail_image" => optional($video->thumbnail_image)
-                        ? asset($video->thumbnail_image)
-                        : null,
-                    "title" => optional($video)->title,
-                    "description" => optional($video)->description,
-                    "type" => optional($video)->type,
-                    "video_url" => optional($video)->video_url,
-                    "created_at" => $review->created_at,
-                    "updated_at" => $review->updated_at,
+                    "id" => $video->id,
+                    "character_id" => $video->character_id,
+                    "video_id" => $video->id,
+                    "is_featured" => $video->is_featured,
+                    "is_active" => $video->status == 'published', // Assuming 'status' field defines active state
+                    "thumbnail_image" => $video->thumbnail_image ? asset($video->thumbnail_image) : null,
+                    "title" => $video->title,
+                    "description" => $video->description,
+                    "type" => $video->type,
+                    "video_url" => $video->video_url,
+                    "created_at" => $video->created_at,
+                    "updated_at" => $video->updated_at,
                 ];
             });
-        // if ($product_reviews->isEmpty()) {
-        //     $product_reviews = 'No product reviews found for this character';
-        // }
-
-        // dd($featured_product_reviews,$product_reviews);
 
 
         $regionCode = strtoupper($region);

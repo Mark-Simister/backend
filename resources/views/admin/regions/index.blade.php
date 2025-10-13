@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    {{-- <h2 class="mb-0">Regions</h2>
-    @can('region.create')
+    <h2 class="mb-0">Regions</h2>
+    {{-- @can('region.create')
     <a href="{{ route('admin.regions.create') }}" class="btn btn-primary">
         <i class="bi bi-plus-lg"></i> Add Region
     </a>
@@ -30,6 +30,7 @@
                             <th>Name</th>
                             <th>Code</th>
                             <th>Currency</th>
+                            <th>Currency Symbol</th>
                             <th>Status</th>
                             <th style="width: 160px;" class="text-center">Actions</th>
                         </tr>
@@ -43,6 +44,7 @@
                                     <span class="badge bg-secondary">{{ $region->region_code }}</span>
                                 </td>
                                 <td>{{ $region->currency }}</td>
+                                <td>{{ $region->currency_get ? $region->currency_get->currency_symbol : 'N/A' }}</td>
                                 <td>
                                     @if($region->is_active)
                                         <span class="badge bg-success">Active</span>

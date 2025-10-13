@@ -81,6 +81,7 @@ class Character extends Model
     {
         return $this->hasMany(\App\Models\Video::class, 'character_id');
     }
+    
     public function regions()
     {
         return $this->belongsToMany(\App\Models\Region::class, 'character_region');

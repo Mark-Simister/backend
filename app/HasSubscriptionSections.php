@@ -152,7 +152,30 @@ protected function buildVideosQueryWithoutSubscription2(Request $request, string
         $query->where('region_code', $regionCode);
     });
 
-    return $q->latest();  // Ensure the query is sorted by latest videos
+    return $q->latest();  
+}
+
+// For featured videos
+protected function buildVideosQueryWithoutSubscription3(Request $request, string $regionCode, string $type): Builder
+{
+    $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+        ->where('is_featured', 1)
+        ->where('status', 'published');
+
+    
+    // Region filter
+    $q->whereHas('regions', function ($query) use ($regionCode) {
+        $query->where('region_code', $regionCode);
+    });
+
+    // Channel category filter
+        if ($type) {
+            $q->whereHas('channel', function ($query) use ($type) {
+                $query->where('channel_category', $type);
+            });
+        }
+
+    return $q->latest();  
 }
 
     

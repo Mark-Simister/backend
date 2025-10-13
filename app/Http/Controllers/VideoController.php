@@ -129,6 +129,7 @@ class VideoController extends Controller
                 'description' => 'required|string',
                 'type' => 'required|in:youtube,vimeo',
                 'video_url' => 'nullable|url',
+                'is_featured' => 'nullable|boolean',
 
                 // Step 2 fields
                 'character_id' => 'required|exists:characters,id',
@@ -204,6 +205,12 @@ class VideoController extends Controller
         }
 
         $validated = $validator->validated();
+        // Handle the 'is_featured' field
+        if ($request->has('is_featured')) {
+            $validated['is_featured'] = $request->input('is_featured');
+        } else {
+            $validated['is_featured'] = false; // default to false if not provided
+        }
 
         $character = Character::find($validated['character_id']);
 
@@ -217,21 +224,7 @@ class VideoController extends Controller
                 $validated['channel_id'] = $category->channel_id;
             }
         }
-        // if ($character) {
-        //     $validated['category_id'] = $character->category_id;
-
-        //     $category = Category::find($validated['category_id']);
-        //     if ($category) {
-        //         $channelIds = \DB::table('category_channel')
-        //             ->where('category_id', $category->id)
-        //             ->pluck('channel_id')
-        //             ->toArray();
-
-        //         $validated['channel_ids'] = $channelIds;
-        //     }
-        // }
-
-        // dd($validated['category_id'],$validated['channel_id'] );
+       
 
         if ($validated['rating_type'] === 'rating') {
             // Only store public_rating for 'rating' type
@@ -357,6 +350,14 @@ class VideoController extends Controller
             ->with('success', 'Video created successfully.');
     }
 
+    public function getRegions($characterId)
+{
+    $character = Character::findOrFail($characterId);
+    $regions = $character->regions; // Assuming you have the relationship set up in the Character model
+    return response()->json($regions);
+}
+
+
     public function edit(Video $video)
     {
         $channels = Channel::all();
@@ -433,42 +434,7 @@ class VideoController extends Controller
         ));
     }
 
-    // public function editSeo(Video $video)
-    // {
-    //     [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
-    //         $this->prepareEditData($video);
-
-    //     return view('admin.videos.edit-seo', compact(
-    //         'video',
-    //         'channels',
-    //         'characters',
-    //         'categories',
-    //         'highlight_tags',
-    //         'selectedPlatforms',
-    //         'videoHighlightTags'
-    //     ));
-    // }
-//     public function editSeo(Video $video)
-// {
-//     [$channels, $characters, $categories, $highlight_tags, $selectedPlatforms, $videoHighlightTags] =
-//         $this->prepareEditData($video);
-
-    //     $selectedRegions = $video->regions->pluck('id')->toArray();
-
-    //     $regions = \App\Models\Region::whereIn('id', $selectedRegions)->get();
-
-    //     return view('admin.videos.edit-seo', compact(
-//         'video',
-//         'channels',
-//         'characters',
-//         'categories',
-//         'highlight_tags',
-//         'selectedPlatforms',
-//         'videoHighlightTags',
-//         'regions',
-//         'selectedRegions'
-//     ));
-// }
+   
 
     public function editSeo(Video $video)
     {
@@ -500,38 +466,6 @@ class VideoController extends Controller
         ));
     }
 
-
-    // public function updateSeo(Request $request, Video $video)
-    // {
-    //     $validated = $request->validate([
-    //         'seo_title' => ['nullable', 'string', 'max:255'],
-    //         'seo_description' => ['nullable', 'string', 'max:1000'],
-    //         'hashtags' => ['nullable', 'string'],
-    //         'cta_text' => ['nullable', 'string', 'max:255'],
-    //         'og_image_url' => ['nullable', 'string', 'max:255'],
-    //         'open_graph_image' => ['nullable', 'string', 'max:255'],
-    //         'twitter_title' => ['nullable', 'string', 'max:255'],
-    //         'twitter_description' => ['nullable', 'string', 'max:280'],
-    //     ]);
-
-    //     // Only update SEO fields
-    //     $video->fill($request->only([
-    //         'seo_title',
-    //         'seo_description',
-    //         'hashtags',
-    //         'cta_text',
-    //         'og_image_url',
-    //         'open_graph_image',
-    //         'twitter_title',
-    //         'twitter_description',
-    //     ]));
-
-    //     $video->save();
-
-    //     return redirect()
-    //         ->route('admin.videos.edit.seo', $video)
-    //         ->with('success', 'SEO fields updated.');
-    // }
 
     public function updateSeo(Request $request, Video $video)
     {
@@ -777,6 +711,7 @@ class VideoController extends Controller
                 'description' => 'required|string',
                 'type' => 'required|in:youtube,vimeo',
                 'video_url' => 'nullable|url',
+                'is_featured' => 'nullable|boolean',
 
                 // Step 2
                 'character_id' => 'nullable|exists:characters,id',
@@ -847,6 +782,13 @@ class VideoController extends Controller
         }
 
         $validated = $validator->validated();
+        // Handle 'is_featured'
+        if ($request->has('is_featured')) {
+            $validated['is_featured'] = $request->input('is_featured');
+        } else {
+            // Keep the existing 'is_featured' value if it's not provided
+            $validated['is_featured'] = $video->is_featured ?? false; // Default to 'false' if not present
+        }
 
         if ($validated['character_id']) {
             $character = Character::find($validated['character_id']);
@@ -863,36 +805,7 @@ class VideoController extends Controller
             $validated['category_id'] = $video->category_id;
             $validated['channel_id'] = $video->channel_id;
         }
-        // if ($validated['character_id']) {
-        //     $character = Character::find($validated['character_id']);
-        //     if ($character) {
-        //         $validated['category_id'] = $character->category_id;
-
-        //         $category = Category::find($validated['category_id']);
-        //         if ($category) {
-        //             // Get all channel IDs linked to the category
-        //             $channelIds = \DB::table('category_channel')
-        //                 ->where('category_id', $category->id)
-        //                 ->pluck('channel_id')
-        //                 ->toArray();
-
-        //             // Store channel IDs temporarily for pivot sync
-        //             $validated['channel_ids'] = $channelIds;
-        //         }
-        //     }
-        // } else {
-        //     // Keep existing category_id
-        //     $validated['category_id'] = $video->category_id;
-
-        //     // Get all channel IDs for the existing category
-        //     $channelIds = \DB::table('category_channel')
-        //         ->where('category_id', $video->category_id)
-        //         ->pluck('channel_id')
-        //         ->toArray();
-
-        //     $validated['channel_ids'] = $channelIds;
-        // }
-
+        
 
         $tagIdsCsv = (string) $request->input('tag_ids', '');
         $tagIds = collect(explode(',', $tagIdsCsv))
@@ -998,13 +911,7 @@ class VideoController extends Controller
             $validated['caption_file'] = 'videos/captions/' . $filename;
         }
 
-        // Convert arrays into comma-separated strings instead of JSON
-        // foreach (['tags', 'highlight_tags', 'auto_tags', 'hashtags'] as $field) {
-        //     if (isset($validated[$field]) && is_array($validated[$field])) {
-        //         $validated[$field] = implode(',', $validated[$field]);
-        //     }
-        // }
-
+        
         // Convert arrays into comma-separated strings (keep tag_ids as-is)
         foreach (['highlight_tags', 'auto_tags', 'hashtags'] as $field) {
             if (isset($validated[$field]) && is_array($validated[$field])) {
@@ -1043,6 +950,22 @@ class VideoController extends Controller
 
     }
 
+    public function toggleFeatured(Request $request)
+{
+    $video = Video::find($request->id); // Find the video by ID
+
+    if ($video) {
+        // Toggle the is_featured status
+        $video->is_featured = $request->is_featured;
+        $video->save(); // Save the updated status
+
+        return response()->json(['success' => true]);
+    }
+
+    return response()->json(['success' => false], 400);
+}
+
+
 
 
     public function destroy(Video $video)
@@ -1064,21 +987,7 @@ class VideoController extends Controller
         // Paginate comments if the data is large
         $comments = $video->comments()->with(['user', 'replies.user'])->paginate(10); // Pagination added
 
-        // Alternatively, if not using pagination, load the comments as before
-        // $comments = $video->comments->map(function ($comment) {
-        //     return [
-        //         'id' => $comment->id,
-        //         'name' => $comment->user->name ?? 'Unknown',
-        //         'body' => $comment->body,
-        //         'created_at' => $comment->created_at->toDateTimeString(),
-        //         'replies' => $comment->replies->map(function ($reply) {
-        //             return [
-        //                 'name' => $reply->user->name ?? 'Unknown',
-        //                 'body' => $reply->body,
-        //             ];
-        //         }),
-        //     ];
-        // });
+        
 
         return view('admin.videos.comments', [
             'video' => $video,
@@ -1799,8 +1708,8 @@ class VideoController extends Controller
             // Build the base query using the helper method from the trait
             $q = $this->buildVideosQueryWithoutSubscription2($request, $regionCode);
 
-            // $videos = $q->get();
-            $videos = $q->limit(6)->get();
+            $videos = $q->get();
+            // $videos = $q->limit(6)->get();
 
             if ($videos->isEmpty()) {
                 return response()->json([
@@ -3163,89 +3072,6 @@ class VideoController extends Controller
         }
     }
 
-
-
-    //     public function paidVideos(Request $request)
-// {
-//     $user = $request->user(); // comes from auth:api
-
-    //     if (!$user || !$this->hasValidSubscription($user->id)) {
-//         return response()->json([
-//             'status'  => false,
-//             'message' => 'An active subscription is required to view paid videos.',
-//         ], 403);
-//     }
-
-    //     $videos = Video::with(['reviews:id,video_id,rating'])
-//         ->whereIn('type', ['youtube', 'vimeo']) // include both free + paid
-//         ->where('status', 'published')
-//         ->latest()
-//         ->get();
-
-    //     return response()->json([
-//         'status'  => true,
-//         'message' => 'Paid videos (including free) fetched successfully',
-//         'data'    => VideoResource::collection($videos),
-//     ], 200);
-// }
-
-    // GET /api/videos/paid?channel_id=&character_id=&category_id=
-    // Includes free (YouTube) + paid (Vimeo) for users with active subscription
-//     public function paidVideos(Request $request)
-// {
-//     $user = $request->user(); 
-
-    //     $request->validate([
-//         'channel_id' => 'sometimes|integer',
-//         'character_id' => 'sometimes|integer',
-//         'category_id' => 'sometimes|integer',
-//     ]);
-
-    //     $q = Video::with(['reviews:id,video_id,rating'])
-//         ->where('status', 'published');
-
-    //     if ($this->hasValidSubscription($user->id)) {
-//         // active subscription → include free + paid
-//         $q->whereIn('type', ['youtube', 'vimeo']);
-//     } else {
-//         // expired subscription → only free
-//         $q->where('type', 'youtube');
-//     }
-
-    //     foreach (['channel_id', 'character_id', 'category_id'] as $f) {
-//         if ($request->filled($f)) {
-//             $q->where($f, $request->get($f));
-//         }
-//     }
-
-    //     $videos = $q->latest()->get();
-
-    //     // Replicate the tag logic from previous functions
-//     $allTagIds = $videos->flatMap(fn($v) => $v->tag_ids_array ?? [])
-//         ->filter()
-//         ->unique();
-
-    //     $tagMap = $allTagIds->isNotEmpty()
-//         ? Tag::whereIn('id', $allTagIds)->pluck('name', 'id')
-//         : collect();
-
-    //     $videos->each(function ($v) use ($tagMap) {
-//         $ids = collect($v->tag_ids_array ?? []);
-//        
-//         $v->tag_pairs = $ids->map(function ($id) use ($tagMap) {
-//             $name = $tagMap->get($id);
-//             return $name ? ['id' => $id, 'name' => $name] : null;
-//         })->filter()->values()->all();
-//     });
-
-    //     return response()->json([
-//         'status' => true,
-//         'message' => $this->hasValidSubscription($user->id)
-//             ? 'Paid videos (including free) fetched successfully'
-//             : 'Your subscription has ended. Showing free videos only.',
-//         'data' => VideoResource::collection($videos),
-//     ], 200);
-// }
 
     public function paidVideos(Request $request, $region)
     {

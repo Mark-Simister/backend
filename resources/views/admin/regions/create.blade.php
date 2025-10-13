@@ -1,5 +1,9 @@
 @extends('layouts.admin.master')
 @section('title', 'Add Region')
+@push('styles')
+    <!-- Include Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />    
+@endpush
 
 @section('content')
 <div class="card">
@@ -17,14 +21,44 @@
 
             <div class="form-group mt-3">
                 <label>Region Code <span class="text-danger">*</span></label>
-                <input type="text" name="region_code" class="form-control" value="{{ old('region_code') }}" required>
+                <select name="region_code" class="form-control select2" required>
+                    <option value="">Select Region Code</option>
+                    @foreach ($currencies as $currency)
+                        <option value="{{ $currency->currency_code }}" 
+                            {{ old('region_code') == $currency->currency_code ? 'selected' : '' }}>
+                            {{ $currency->currency_name }} ({{ $currency->currency_code }})
+                        </option>
+                    @endforeach
+                </select>
                 @error('region_code') <span class="text-danger">{{ $message }}</span> @enderror
             </div>
 
             <div class="form-group mt-3">
                 <label>Currency <span class="text-danger">*</span></label>
-                <input type="text" name="currency" class="form-control" value="{{ old('currency') }}" required>
+                <select name="currency" class="form-control select2" required>
+                    <option value="">Select Currency</option>
+                    @foreach ($currencies as $currency)
+                        <option value="{{ $currency->currency_code }}" 
+                            {{ old('currency') == $currency->currency_code ? 'selected' : '' }}>
+                            {{ $currency->currency_name }} ({{ $currency->currency_code }})
+                        </option>
+                    @endforeach
+                </select>
                 @error('currency') <span class="text-danger">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group mt-3">
+                <label>Currency Symbol <span class="text-danger">*</span></label>
+                <select name="currency_symbol" class="form-control select2" required>
+                    <option value="">Select Currency Symbol</option>
+                    @foreach ($currencies as $currency)
+                        <option value="{{ $currency->id }}" 
+                            {{ old('currency_symbol') == $currency->id ? 'selected' : '' }}>
+                            {{ $currency->currency_symbol }} ({{ $currency->currency_name }})
+                        </option>
+                    @endforeach
+                </select>
+                @error('currency_symbol') <span class="text-danger">{{ $message }}</span> @enderror
             </div>
 
             <div class="form-group mt-3">
@@ -48,3 +82,17 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+
+
+    <!-- Include jQuery and Select2 JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2(); // Apply Select2 to all elements with the class 'select2'
+        });
+    </script>
+@endpush

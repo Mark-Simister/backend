@@ -16,6 +16,7 @@ class Region extends Model
         'description',
         'is_active',
         'currency',
+        'currency_symbol',
     ];
     public function channels()
     {
@@ -46,4 +47,10 @@ class Region extends Model
         return $this->belongsToMany(Region::class, 'subscription_region', 'subscription_id', 'region_id')
             ->withTimestamps();
     }
+    public function currency_get()
+    {
+        return $this->belongsTo(Currency::class, 'currency_symbol');
+    }
+
+
 }
