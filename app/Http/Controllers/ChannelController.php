@@ -494,6 +494,14 @@ class ChannelController extends Controller
                 ])
                 ->first();
 
+                $isFollowing = false;
+                if ($user) {
+                    $isFollowing = \App\Models\ChannelFollow::where('channel_id', $channelId)
+                        ->where('user_id', $user->id)
+                        ->exists();
+                }
+
+
             if (!$channel) {
                 return response()->json([
                     'status' => false,
@@ -645,25 +653,25 @@ class ChannelController extends Controller
 
             // === NEW: collect ALL approved reviews (one list for the whole response) ===
             $videoIds = $videos->pluck('id');
-            $allReviewRows = \App\Models\Review::with(['user:id,name,profile_image'])
-                ->whereIn('video_id', $videoIds)
-                ->where('status', 'approved')
-                ->latest()
-                ->get();
+            // $allReviewRows = \App\Models\Review::with(['user:id,name,profile_image'])
+            //     ->whereIn('video_id', $videoIds)
+            //     ->where('status', 'approved')
+            //     ->latest()
+            //     ->get();
 
-            $allReviews = $allReviewRows->map(function ($rev) {
-                return [
-                    'id' => $rev->id,
-                    'video_id' => $rev->video_id,
-                    'rating' => (int) $rev->rating,
-                    'review' => $rev->review,
-                    'created_at' => optional($rev->created_at)->toDateTimeString(),
-                    'reviewer_name' => optional($rev->user)->name,
-                    'reviewer_profile_image' => optional($rev->user)->profile_image
-                        ? asset(optional($rev->user)->profile_image)
-                        : null,
-                ];
-            })->values();
+            // $allReviews = $allReviewRows->map(function ($rev) {
+            //     return [
+            //         'id' => $rev->id,
+            //         'video_id' => $rev->video_id,
+            //         'rating' => (int) $rev->rating,
+            //         'review' => $rev->review,
+            //         'created_at' => optional($rev->created_at)->toDateTimeString(),
+            //         'reviewer_name' => optional($rev->user)->name,
+            //         'reviewer_profile_image' => optional($rev->user)->profile_image
+            //             ? asset(optional($rev->user)->profile_image)
+            //             : null,
+            //     ];
+            // })->values();
 
             // Channel top-level
             $channelPayload = [
@@ -672,6 +680,7 @@ class ChannelController extends Controller
                 'image_url' => $channel->image ? asset($channel->image) : null,
                 'created_at' => optional($channel->created_at)->toDateTimeString(),
                 'updated_at' => optional($channel->updated_at)->toDateTimeString(),
+                'is_following' => $isFollowing,
                 'regions' => $channel->regions->map(fn($r) => [
                     'id' => $r->id,
                     'region_code' => $r->region_code,
@@ -686,7 +695,7 @@ class ChannelController extends Controller
                     ];
                 })->values(),
                 // NEW: flattened reviews for all videos in this response
-                'reviews' => $allReviews,
+                // 'reviews' => $allReviews,
             ];
 
             return response()->json([

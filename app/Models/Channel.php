@@ -45,4 +45,10 @@ class Channel extends Model
     {
         return $this->belongsToMany(Region::class, 'channel_region');
     }
+
+    public function followers()
+{
+    return $this->hasMany(ChannelFollow::class, 'channel_id');
+}
+
 }
