@@ -27,22 +27,25 @@
             {{-- Existing products table --}}
             <div class="card">
                 <div class="card-body">
+                    <div id="successMessage" class="alert alert-success d-none"></div>
                     <h5 class="card-title">Existing Similar Products</h5>
-                    <table class="table table-bordered" id="existingProductsTable">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Short Description</th>
-                                <th>URL</th>
-                                <th>Image</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{-- JS will populate --}}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="existingProductsTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Short Description</th>
+                                    <th>URL</th>
+                                    <th>Image</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{-- JS will populate --}}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -209,13 +212,24 @@ document.addEventListener('DOMContentLoaded', function() {
             : `/admin/similar-products/${videoId}/create`;
 
         fetch(url, {
-            method: 'POST',
-            body: formData
-        }).then(res => res.json())
-          .then(() => {
-              bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
-              fetchSimilarProducts(regionSelect.value);
-          });
+                method: 'POST',
+                body: formData
+            }).then(res => res.json())
+            .then(() => {
+                // Hide modal
+                bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+                
+                // Refresh table
+                fetchSimilarProducts(regionSelect.value);
+
+                // Show success message
+                const msg = document.getElementById('successMessage');
+                msg.textContent = id ? 'Product updated successfully!' : 'Product added successfully!';
+                msg.classList.remove('d-none');
+
+                // Hide after 3 seconds
+                setTimeout(() => msg.classList.add('d-none'), 3000);
+            });
     });
 });
 </script>

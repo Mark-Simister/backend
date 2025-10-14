@@ -570,11 +570,12 @@ public function getRegions($channelId)
             $featuredReviews = $featuredResponse->getData()->data ?? []; //previously i was getting all the data of audio and video reviews by now updated to videos
             // dd($featuredReviews);
 
-            $mostViewedResponse = $this->fetchMostViewedReviewsByRegion($request, $regionCode, 5, $type);
+            // $mostViewedResponse = $this->fetchMostViewedReviewsByRegion($request, $regionCode, 5, $type);
+             $mostViewedResponse = $this->getProductReviewCharactersMostFollowed($request, $regionCode, $type);
             $mostViewedReviews = $mostViewedResponse->getData()->data ?? [];
-            $productReviewCharactersResponse = $this->getProductReviewCharacters2($request, $regionCode, $type);
+            // $productReviewCharactersResponse = $this->getProductReviewCharacters2($request, $regionCode, $type); // it is showing review videos but all i want is the most followed character
+            $productReviewCharactersResponse = $this->getProductReviewCharacters2($request, $regionCode, $type); // it is showing review videos but all i want is the most followed character
             $productReviewCharacters = $productReviewCharactersResponse->getData()->data ?? [];
-            
 
             return response()->json([
                 'status' => true,
@@ -717,7 +718,9 @@ public function getRegions($channelId)
             $channelsByRegion = $this->getChannelsForRegionNew($request, $region ?? $request->input('region', ''), $type);
             $featuredResponse = $this->fetchReviewsByRegion($request, $regionCode, 1, $type);
             $featuredReviews = $featuredResponse->getData()->data ?? [];
-            $mostViewedResponse = $this->fetchMostViewedReviewsByRegion($request, $regionCode, 5, $type);
+            // $mostViewedResponse = $this->fetchMostViewedReviewsByRegion($request, $regionCode, 5, $type);
+            $mostViewedResponse = $this->getProductReviewCharactersMostFollowed($request, $regionCode, $type);
+
             $mostViewedReviews = $mostViewedResponse->getData()->data ?? [];
             $productReviewCharactersResponse = $this->getProductReviewCharacters($request, $regionCode, $type);
             $productReviewCharacters = $productReviewCharactersResponse->getData()->data ?? [];
@@ -1704,6 +1707,86 @@ public function getProductReviewCharacters2(Request $request, $region, $type)
                     "is_subscribed" => $isSubscribed,
                 ];
             });
+
+        return response()->json([
+            'status' => true,
+            'message' => $characters->isEmpty()
+                ? 'No characters found for this region'
+                : 'Characters fetched successfully',
+            'data' => $characters,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to fetch characters',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+public function getProductReviewCharactersMostFollowed(Request $request, $region, $type) 
+{
+    try {
+        // Normalize region code
+        $regionCode = strtoupper($region);
+        $allowedRegions = ['AU', 'CA', 'UK', 'US'];
+        if (!in_array($regionCode, $allowedRegions)) {
+            $regionCode = 'GLOBAL';
+        }
+
+        $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+
+        // Check if the user is blocked
+        if ($user && $user->is_blocked) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your account has been blocked. Please contact support.',
+            ], 403); // Forbidden
+        }
+
+        $userId = $user?->id;
+        $isSubscribed = $user && $this->hasValidSubscription($userId);
+
+        // Step 1: Get all video IDs and unique character_ids
+        $allvideos = Video::query()
+            ->where('status', 'published')
+            ->whereHas('regions', function ($q) use ($regionCode) {
+                $q->where('region_code', $regionCode);
+            })
+            ->when($type, function ($q) use ($type) {
+                $q->whereHas('channel', function ($c) use ($type) {
+                    $c->where('channel_category', $type);
+                });
+            })
+            ->select('id', 'character_id') // Fetch only video ID and character ID
+            ->get();
+
+        // Step 2: Extract unique character_ids from videos
+        $characterIds = $allvideos->pluck('character_id')->unique();
+
+        // Step 3: Fetch character details using the unique character_ids
+
+
+        $characters = Character::query()
+        ->whereIn('id', $characterIds)
+        ->orderBy('character_popularity_score', 'desc')
+        ->get()
+        ->map(function ($character) use ($isSubscribed) {
+            $paidFlag = $character->videos->contains(fn($v) => $v->type === 'vimeo');
+
+            return [
+                "id" => $character->id,
+                "name" => $character->name,
+                "image" => $character->image ? asset($character->image) : null,
+                "character_page_url_slug" => $character->character_page_url_slug,
+                "persona" => $character->persona,
+                "details" => $character->details,
+                "category_id" => $character->category_id,
+                "paid" => $paidFlag,
+                "is_subscribed" => $isSubscribed,
+            ];
+        });
+
 
         return response()->json([
             'status' => true,
