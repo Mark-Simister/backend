@@ -29,6 +29,7 @@ use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\BlooperController;
 use App\Http\Controllers\CharacterInsightController;
 use App\Http\Controllers\SimilarProductController;
+use App\Http\Controllers\FaqController;
 use App\Http\Controllers\FormController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -89,6 +90,10 @@ Route::middleware(['auth'])
         // Characters
         Route::resource('characters', CharacterController::class)
             ->middleware('permission:character.view|character.create|character.edit|character.delete');
+
+        // Faqs
+        Route::resource('faqs', FaqController::class)
+            ->middleware('permission:faq.view|faq.create|faq.edit|faq.delete');
 
         Route::get('characters/{category}/regions', [CharacterController::class, 'getRegions'])->name('characters.getRegions');
 

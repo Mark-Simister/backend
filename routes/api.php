@@ -22,6 +22,7 @@ use App\Http\Controllers\ProductMessageController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\FormController;
+use App\Http\Controllers\FaqController;
 // use App\Http\Controllers\VimeoController;
 
 use Illuminate\Support\Facades\Http;
@@ -173,6 +174,7 @@ Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_re
 
 Route::get('global-colors', [GlobalColorController::class, 'index_api']);
 Route::post('/product-messages', [ProductMessageController::class, 'store']);
+Route::get('faqs', [FaqController::class, 'index_api']);
 
 
 Route::get(

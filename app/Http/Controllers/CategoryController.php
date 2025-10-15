@@ -793,7 +793,7 @@ public function getRegions($channelId)
                     $q->where('region_code', $regionCode); // Filter by region code
                 })
                 ->with([
-                    'channel:id,name,image,created_at,updated_at',
+                    'channel:id,name,image,channel_category,created_at,updated_at',
                     'regions:id,region_code',
                 ])
                 ->latest();

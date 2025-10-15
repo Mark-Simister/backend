@@ -179,6 +179,14 @@
                 </a>
             </li>
         @endcan
+        @can('faq.view')
+            <li class="nav-item {{ request()->is('admin/faqs*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('admin.faqs.index') }}">
+                    <i class="ti-help-alt menu-icon"></i>
+                    <span class="menu-title">FAQs</span>
+                </a>
+            </li>
+        @endcan
         @can('form.view')
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="collapse" href="#formsMenu" aria-expanded="false"
