@@ -27,6 +27,7 @@ class CommentController extends Controller
 
     public function index($videoId)
     {
+        
         // Get the video, or return an error if not found
         $video = $this->getVideoOrFail($videoId);
         if ($video instanceof \Illuminate\Http\JsonResponse) {
