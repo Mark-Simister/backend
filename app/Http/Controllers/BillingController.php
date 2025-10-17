@@ -170,9 +170,10 @@ class BillingController extends Controller
             'CA' => 'CAD',
             'UK' => 'GBP',
             'US' => 'USD',
-            // 'GLOBAL' => 'AUD',
-            'GLOBAL' => 'INR',
-            default => 'INR',
+            'GLOBAL' => 'AUD',
+            // 'GLOBAL' => 'INR',
+            // default => 'INR',
+            default => 'AUD',
         };
         $baseCurrency = 'USD';
 
