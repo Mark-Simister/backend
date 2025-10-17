@@ -156,7 +156,7 @@ class BillingController extends Controller
         $allowedRegions = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
 
         // Normalize route param
-        $routeRegion = $req->route('region');      // e.g. "US"
+        $routeRegion = $req->route('region');      
         $inputRegion = strtoupper((string) $routeRegion);
         $regionCode = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
 
@@ -172,7 +172,7 @@ class BillingController extends Controller
             'US' => 'USD',
             // 'GLOBAL' => 'AUD',
             'GLOBAL' => 'INR',
-            default => 'USD',
+            default => 'INR',
         };
         $baseCurrency = 'USD';
 
