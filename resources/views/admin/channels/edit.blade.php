@@ -65,6 +65,27 @@
                             </div>
                         @endif
                     </div>
+
+                    <div class="form-group mb-3">
+                        <label>Channel Video</label>
+                        <input type="file" name="video" class="form-control" accept="video/*">
+                        @error('video')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+
+                        @if (!empty($channel->video))
+                            <div class="mt-2">
+                                <p>Current Video:</p>
+                                <video width="320" controls>
+                                    <source src="{{ asset($channel->video) }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <div class="small text-muted">{{ $channel->video }}</div>
+                            </div>
+                        @endif
+                    </div>
+
+
                     <div class="form-group mb-3">
                         <label>Primary Color</label>
                         <input type="color" name="primary_color" class="form-control form-control-color"

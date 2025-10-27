@@ -12,6 +12,7 @@ class Channel extends Model
     protected $fillable = [
         'name',
         'image',
+        'video',
         'primary_color',
         'secondary_color',
         'accent_color',

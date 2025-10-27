@@ -51,6 +51,14 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+                    <div class="form-group mb-3">
+                        <label>Channel Video</label>
+                        <input type="file" name="video" class="form-control" accept="video/*">
+                        @error('video')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
 
                     <div class="form-group mb-3">
                         <label>Primary Color</label>

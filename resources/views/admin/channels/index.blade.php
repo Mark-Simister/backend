@@ -34,6 +34,7 @@
                             <tr>
                                 <th style="width: 60px;">#</th>
                                 <th>Image</th>
+                                <th>Video</th> 
                                 <th>Name</th>
                                 <th>Category</th>
                                 <th>Regions</th>
@@ -51,6 +52,16 @@
                                                 class="channel-img">
                                         @else
                                             <span class="text-muted">No Image</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($channel->video && file_exists(public_path($channel->video)))
+                                            <video width="120" controls>
+                                                <source src="{{ asset($channel->video) }}" type="video/mp4">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        @else
+                                            <span class="text-muted">No Video</span>
                                         @endif
                                     </td>
                                     <td>{{ $channel->name }}</td>

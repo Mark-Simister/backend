@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 
 
 
+
 class ChannelController extends Controller
 {
     public static function middleware(): array
@@ -86,6 +87,7 @@ class ChannelController extends Controller
         $request->validate([
             'name' => 'required|unique:channels,name',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
+            'video' => 'nullable|mimetypes:video/mp4,video/quicktime,video/x-msvideo,video/webm,video/ogg|max:102400', // <= ~100MB
             'regions' => 'array|nullable',
             'regions.*' => 'integer|exists:regions,id',
             'primary_color' => 'nullable|string|max:20',
@@ -105,12 +107,26 @@ class ChannelController extends Controller
             $request->image->move($folderPath, $imageName);
             $imagePath = 'channel/' . $imageName;
         }
+        $videoPath = null;
+        if ($request->hasFile('video')) {
+            $video = $request->file('video');
+            $videoName = time() . '_' . Str::random(6) . '.' . $video->getClientOriginalExtension();
 
-        DB::transaction(function () use ($request, $imagePath) {
+            $destinationPath = public_path('/channel_videos'); // no space
+            if (!File::isDirectory($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true, true);
+            }
+
+            $video->move($destinationPath, $videoName);
+            $videoPath = 'channel_videos/' . $videoName; // relative public path
+        }
+
+        DB::transaction(function () use ($request, $imagePath, $videoPath) {
             $channel = Channel::create([
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
                 'image' => $imagePath,
+                'video' => $videoPath,
                 'primary_color' => $request->primary_color,
                 'secondary_color' => $request->secondary_color,
                 'accent_color' => $request->accent_color,
@@ -156,6 +172,7 @@ class ChannelController extends Controller
         $request->validate([
             'name' => 'required|unique:channels,name,' . $channel->id,
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048',
+            'video'  => 'nullable|mimetypes:video/mp4,video/quicktime,video/x-msvideo,video/webm,video/ogg|max:102400', // ~100MB
             'regions' => 'nullable|array',
             'regions.*' => 'exists:regions,id',
             'primary_color' => 'nullable|string|max:20',
@@ -166,6 +183,7 @@ class ChannelController extends Controller
         ]);
 
         $imagePath = $channel->image;
+        $videoPath = $channel->video; 
 
         if ($request->hasFile('image')) {
             $folderPath = public_path('channel');
@@ -183,12 +201,31 @@ class ChannelController extends Controller
             $imagePath = 'channel/' . $imageName;
         }
 
-        DB::transaction(function () use ($request, $channel, $imagePath) {
+        if ($request->hasFile('video')) {
+        $video = $request->file('video');
+        $videoName = time() . '_' . Str::random(6) . '.' . $video->getClientOriginalExtension();
+
+        $destinationPath = public_path('/channel_videos');
+        if (!\Illuminate\Support\Facades\File::isDirectory($destinationPath)) {
+            \Illuminate\Support\Facades\File::makeDirectory($destinationPath, 0755, true, true);
+        }
+
+        // delete old video if exists
+        if (!empty($channel->video) && file_exists(public_path($channel->video))) {
+            @unlink(public_path($channel->video));
+        }
+
+        $video->move($destinationPath, $videoName);
+        $videoPath = 'channel_videos/' . $videoName; // relative public path
+    }
+
+        DB::transaction(function () use ($request, $channel, $imagePath, $videoPath) {
 
             $channel->update([
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
                 'image' => $imagePath,
+                'video' => $videoPath,
                 'primary_color' => $request->primary_color,
                 'secondary_color' => $request->secondary_color,
                 'accent_color' => $request->accent_color,
@@ -449,7 +486,7 @@ class ChannelController extends Controller
             $filterCategoryId = $request->integer('category_id');
 
             //$channel = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
-            $channel = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+            $channel = Channel::select('id', 'name', 'image', 'video', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
                 ->where('id', $channelId)
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
@@ -678,6 +715,7 @@ class ChannelController extends Controller
                 'id' => $channel->id,
                 'name' => $channel->name,
                 'image_url' => $channel->image ? asset($channel->image) : null,
+                'video_url' => $channel->video ? asset($channel->video) : null,
                 'created_at' => optional($channel->created_at)->toDateTimeString(),
                 'updated_at' => optional($channel->updated_at)->toDateTimeString(),
                 'is_following' => $isFollowing,
