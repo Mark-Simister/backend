@@ -43,32 +43,73 @@ class VideoController extends Controller
 
         ];
     }
+    // private function hasValidSubscription(int $userId): bool
+    // {
+    //     $sub = Subscription::where('user_id', $userId)
+    //         ->latest('subscription_end_date')
+    //         ->first();
+
+
+    //     if (!$sub || $sub->trashed()) {
+    //         return false;
+    //     }
+
+    //     $now = now();
+
+    //     $statusOkay = in_array($sub->subscription_status, ['active', 'trialing'], true);
+    //     $notCanceled = $sub->subscription_status !== 'canceled' && is_null($sub->canceled_at);
+
+    //     $withinPaidPeriod = $sub->subscription_end_date && $now->lte($sub->subscription_end_date);
+    //     $withinTrial = $sub->trial_end_date && $now->lte($sub->trial_end_date);
+
+    //     $timeOkay = $withinPaidPeriod || $withinTrial;
+
+    //     $paymentOkay = ($sub->payment_status === 'succeeded') || ($sub->subscription_status === 'trialing');
+    //     // dd($sub, $statusOkay, $notCanceled, $withinPaidPeriod, $withinTrial, $paymentOkay);
+
+    //     return $statusOkay && $notCanceled && $timeOkay && $paymentOkay;
+    // }
     private function hasValidSubscription(int $userId): bool
-    {
-        $sub = Subscription::where('user_id', $userId)
-            ->latest('subscription_end_date')
-            ->first();
+{
+    $now = now();
 
+    // Pick the most recent VALID row only
+    $sub = Subscription::where('user_id', $userId)
+        ->whereNull('deleted_at') // if using SoftDeletes; or ->withoutTrashed()
+        ->where(function ($q) use ($now) {
+            // Still within access window (paid period or trial)
+            $q->where(function ($q2) use ($now) {
+                $q2->whereNotNull('subscription_end_date')
+                   ->whereDate('subscription_end_date', '>=', $now->toDateString());
+            })
+            ->orWhere(function ($q2) use ($now) {
+                $q2->whereNotNull('trial_end_date')
+                   ->whereDate('trial_end_date', '>=', $now->toDateString());
+            });
+        })
+        ->where(function ($q) {
+            // Status/payment must be okay
+            $q->whereIn('subscription_status', ['active', 'trialing'])
+              ->where(function ($q2) {
+                  // payment succeeded OR trialing (no payment needed yet)
+                  $q2->where('payment_status', 'succeeded')
+                     ->orWhere('subscription_status', 'trialing');
+              });
+        })
+        // Being canceled at period end is still valid until the end date
+        // Exclude fully canceled that already has canceled_at in the past
+        ->where(function ($q) {
+            $q->whereNull('canceled_at')
+              ->orWhere('cancel_at_period_end', 1);
+        })
+        // Resolve ties: same end date exists for many rows -> take newest row
+        ->orderByDesc('subscription_end_date')
+        ->orderByDesc('id')
+        ->first();
 
-        if (!$sub || $sub->trashed()) {
-            return false;
-        }
+    return (bool) $sub;
+}
 
-        $now = now();
-
-        $statusOkay = in_array($sub->subscription_status, ['active', 'trialing'], true);
-        $notCanceled = $sub->subscription_status !== 'canceled' && is_null($sub->canceled_at);
-
-        $withinPaidPeriod = $sub->subscription_end_date && $now->lte($sub->subscription_end_date);
-        $withinTrial = $sub->trial_end_date && $now->lte($sub->trial_end_date);
-
-        $timeOkay = $withinPaidPeriod || $withinTrial;
-
-        $paymentOkay = ($sub->payment_status === 'succeeded') || ($sub->subscription_status === 'trialing');
-        // dd($sub, $statusOkay, $notCanceled, $withinPaidPeriod, $withinTrial, $paymentOkay);
-
-        return $statusOkay && $notCanceled && $timeOkay && $paymentOkay;
-    }
     private function getSeoData(Video $video, $regionCode)
     {
 
