@@ -479,3 +479,12 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(26px);
 }
+
+
+
+
+/* Select2 style for character page */
+.select2-selection--multiple .select2-selection__choice__remove {
+    position: static !important;
+    padding-left: 0 !important;
+}

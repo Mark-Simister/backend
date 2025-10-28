@@ -49,14 +49,6 @@
                 <div class="collapse {{ request()->is('admin/characters*') || request()->is('admin/character_tags*') || request()->is('admin/character_roles*') ? 'show' : '' }}"
                     id="characterMenu">
                     <ul class="nav flex-column sub-menu">
-                        @can('character.view')
-                            <li class="nav-item {{ request()->is('admin/characters*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.characters.index') }}">
-                                    <i class="ti-user menu-icon"></i>
-                                    <span class="menu-title">Characters</span>
-                                </a>
-                            </li>
-                        @endcan
                         @can('character_tag.view')
                             <li class="nav-item {{ request()->is('admin/character_tags*') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('admin.character_tags.index') }}">
@@ -73,6 +65,15 @@
                                 </a>
                             </li>
                         @endcan
+                        @can('character.view')
+                            <li class="nav-item {{ request()->is('admin/characters*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.characters.index') }}">
+                                    <i class="ti-user menu-icon"></i>
+                                    <span class="menu-title">Characters</span>
+                                </a>
+                            </li>
+                        @endcan
+                        
                         
                     </ul>
                 </div>

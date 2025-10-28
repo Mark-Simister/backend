@@ -516,12 +516,12 @@
                     <div class="form-group mt-3">
                         <label for="public_private_toggle">Public/Private</label>
                         <div class="form-check">
-                            <input type="radio" name="public_private_toggle" id="public_toggle" value="1"
+                            <input type="radio" name="public_private_toggle" id="public_toggle" value="0"
                                 class="form-check-input" {{ old('public_private_toggle', 0) == '1' ? 'checked' : '' }}>
                             <label class="form-check-label" for="public_toggle">Public</label>
                         </div>
                         <div class="form-check">
-                            <input type="radio" name="public_private_toggle" id="private_toggle" value="0"
+                            <input type="radio" name="public_private_toggle" id="private_toggle" value="1"
                                 class="form-check-input" {{ old('public_private_toggle', 0) == '0' ? 'checked' : '' }}>
                             <label class="form-check-label" for="private_toggle">Private</label>
                         </div>

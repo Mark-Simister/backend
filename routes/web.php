@@ -117,13 +117,13 @@ Route::middleware(['auth'])
         Route::get('/videos/{videoId}/affiliate-links', [VideoController::class, 'manageLinks'])->name('videos.affiliate-links');
 
         // Route for storing a new affiliate link (POST method)
-// Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link');
-    
+        // Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link');
+
         // Route for deleting an affiliate link (DELETE method)
         Route::delete('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'destroy'])->name('videos.affiliateLinks.destroy');
 
         // Route for updating an existing affiliate link (PATCH method)
-// Route::patch('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
+        // Route::patch('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
         Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link');
         Route::post('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
 
@@ -160,7 +160,7 @@ Route::middleware(['auth'])
 
         //     Route::get('videos/{video}/seo/{region}', [VideoSeoController::class, 'regionData'])
         //  ->name('videos.seo.region');
-    
+
         Route::get('videos/{video}/seo/{region}', [VideoController::class, 'getSeoByRegion'])
             ->name('videos.seo.by-region')
             ->middleware('permission:video.edit');
@@ -216,8 +216,10 @@ Route::middleware(['auth'])
 
         Route::get('characters/{character}/bloopers', [BlooperController::class, 'index'])->name('bloopers.index');
         Route::get('characters/{character}/bloopers/create', [BlooperController::class, 'create'])->name('bloopers.create');
-        Route::get('characters/{character}/bloopers/edit', [BlooperController::class, 'edit'])->name('bloopers.edit');
+        Route::get('characters/{character}/bloopers/{blooper}/edit', [BlooperController::class, 'edit'])->name('bloopers.edit');
         Route::post('characters/{character}/bloopers', [BlooperController::class, 'store'])->name('bloopers.store');
+    Route::match(['put','patch'], 'characters/{character}/bloopers/{blooper}', [BlooperController::class, 'update'])
+    ->name('bloopers.update');
         Route::delete('bloopers/{blooper}', [BlooperController::class, 'destroy'])->name('bloopers.destroy');
 
 

@@ -57,46 +57,51 @@ class BlooperController extends Controller
 
         return redirect()->route('admin.bloopers.index', $character)->with('success', 'Blooper added successfully!');
     }
-    public function update(Request $request, Blooper $blooper)
-    {
-        $request->validate([
-            'video' => 'nullable|mimes:mp4,mov,avi|max:51200',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'stars' => 'nullable|integer|min:0|max:5',
-        ]);
+    public function edit(Character $character, Blooper $blooper)
+{
+    return view('admin.bloopers.edit', compact('character','blooper'));
+}
 
-        // Replace video if uploaded
-        if ($request->hasFile('video')) {
-            if ($blooper->video && file_exists(public_path($blooper->video))) {
-                unlink(public_path($blooper->video));
-            }
-            $video = $request->file('video');
-            $videoName = time() . '_' . $video->getClientOriginalName();
-            $video->move(public_path('bloopers'), $videoName);
-            $blooper->video = 'bloopers/' . $videoName;
+    public function update(Request $request, Character $character, Blooper $blooper)
+{
+    $request->validate([
+        'video' => 'nullable|mimes:mp4,mov,avi|max:51200',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+        'name'  => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'stars' => 'nullable|integer|min:0|max:5',
+    ]);
+
+    // Replace video if uploaded
+    if ($request->hasFile('video')) {
+        if ($blooper->video && file_exists(public_path($blooper->video))) {
+            @unlink(public_path($blooper->video));
         }
-
-        // Replace image if uploaded
-        if ($request->hasFile('image')) {
-            if ($blooper->image && file_exists(public_path($blooper->image))) {
-                unlink(public_path($blooper->image));
-            }
-            $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
-            $image->move(public_path('bloopers'), $imageName);
-            $blooper->image = 'bloopers/' . $imageName;
-        }
-
-        $blooper->name = $request->name;
-        $blooper->description = $request->description;
-        $blooper->stars = $request->stars ?? 0;
-
-        $blooper->save();
-
-        return redirect()->route('admin.bloopers.index', $blooper->character)->with('success', 'Blooper updated successfully!');
+        $video = $request->file('video');
+        $videoName = time().'_'.$video->getClientOriginalName();
+        $video->move(public_path('bloopers'), $videoName);
+        $blooper->video = 'bloopers/'.$videoName;
     }
+
+    // Replace image if uploaded
+    if ($request->hasFile('image')) {
+        if ($blooper->image && file_exists(public_path($blooper->image))) {
+            @unlink(public_path($blooper->image));
+        }
+        $image = $request->file('image');
+        $imageName = time().'_'.$image->getClientOriginalName();
+        $image->move(public_path('bloopers'), $imageName);
+        $blooper->image = 'bloopers/'.$imageName;
+    }
+
+    $blooper->name = $request->name;
+    $blooper->description = $request->description;
+    $blooper->stars = $request->stars ?? 0;
+    $blooper->save();
+
+    return redirect()->route('admin.bloopers.index', $character)
+        ->with('success', 'Blooper updated successfully!');
+}
 
 
     public function destroy(Blooper $blooper)

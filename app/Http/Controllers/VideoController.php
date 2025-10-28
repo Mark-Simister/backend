@@ -2755,8 +2755,8 @@ class VideoController extends Controller
 
     public function allVideosDetail(Request $request, $region, $id)
     {
-        try {
-
+        // try {
+            
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
             // Check if the user is blocked
             if ($user && $user->is_blocked) {
@@ -2768,21 +2768,22 @@ class VideoController extends Controller
             $userId = $user?->id;
             $isPaidUser = $user && $this->hasValidSubscription($userId);
             // dd($user,$userId,$isPaidUser);
-
+            
             $regionCode = strtoupper($region);
             $allowedRegions = ['AU', 'CA', 'UK', 'US'];
             if (!in_array($regionCode, $allowedRegions)) {
                 $regionCode = 'GLOBAL';
             }
-
+            
             $video = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
-                ->where('status', 'published')
-                ->where('id', $id)
-                ->whereHas('regions', function ($query) use ($regionCode) {
-                    $query->where('region_code', $regionCode);
-                })
-                ->first();
-
+            ->where('status', 'published')
+            ->where('id', $id)
+            ->whereHas('regions', function ($query) use ($regionCode) {
+                $query->where('region_code', $regionCode);
+            })
+            ->first();
+            
+            dd($region, $id,$isPaidUser, $userId, $allowedRegions, $regionCode, $video);
             if (!$video) {
                 return response()->json([
                     'status' => false,
@@ -3104,13 +3105,13 @@ class VideoController extends Controller
                 'data' => $data,
             ], 200);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to fetch video detail',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        // } catch (\Exception $e) {
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Failed to fetch video detail',
+        //         'error' => $e->getMessage(),
+        //     ], 500);
+        // }
     }
 
 

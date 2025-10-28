@@ -64,7 +64,7 @@
                                     </td>
                                     <td class="text-center">
                                         @can('bloopers.edit')
-                                            <a href="{{ route('admin.bloopers.edit', $blooper) }}"
+                                            <a href="{{ route('admin.bloopers.edit', ['character' => $character, 'blooper' => $blooper]) }}"
                                                 class="btn btn-sm btn-warning" title="Edit">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>

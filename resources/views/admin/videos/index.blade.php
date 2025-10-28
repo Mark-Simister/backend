@@ -44,7 +44,7 @@
                                 <th>Title</th>
                                 <th>Type</th>
                                 <th>Character</th>
-                                <th>Access</th>
+                                <th>Status</th>
                                 <th>Featured</th>
                                 <th>Edit</th>
                                 <th style="width: 120px;">Actions</th>
@@ -57,7 +57,7 @@
                                     <td>{{ $video->title }}</td>
                                     <td>{{ ucfirst($video->type) }}</td>
                                     <td>{{ $video->character->name ?? '-' }}</td>
-                                    <td>{{ ucfirst($video->access_level) }}</td>
+                                    <td>{{ ucfirst($video->status) }}</td>
                                     <td>
                                         <label class="switch">
                                             <input type="checkbox" class="is-featured-toggle" data-id="{{ $video->id }}"
@@ -86,7 +86,7 @@
                                             </a>
                                             <!-- Button to manage affiliate links -->
                                             <a href="{{ route('admin.videos.affiliate-links', $video->id) }}"
-                                                class="btn btn-info me-1">
+                                                class="btn btn-info me-1" style="pointer-events: none;">
                                                 <i class="bi bi-link-45deg"></i> Manage Affiliate Links
                                             </a>
                                         @endcan

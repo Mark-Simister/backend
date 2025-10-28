@@ -876,7 +876,8 @@ class ChannelController extends Controller
         $hasTagOrHlOrTagIds = !empty($tagsFilter) || !empty($hlFilter) || !empty($tagIdsFilter);
 
         $videoWhere = function ($q) use ($regionCode, $applyVideoTagFilter, $applyVideoHighlightFilter, $tagsFilter, $hlFilter, $matchAll, $tagIdsFilter) {
-            $q->whereHas('regions', fn($r) => $r->where('region_code', $regionCode));
+            $q->whereHas('regions', fn($r) => $r->where('region_code', $regionCode))
+            ->where('status', 'published');
             $applyVideoTagFilter($q, $tagsFilter, $matchAll);
             $applyVideoHighlightFilter($q, $hlFilter, $matchAll);
 
@@ -1000,6 +1001,7 @@ class ChannelController extends Controller
         ])
             ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
             ->when(!empty($characterIdsForChildren), fn($q) => $q->whereIn('character_id', $characterIdsForChildren))
+            ->where('status', 'published')
             ->latest();
 
         $applyVideoTagFilter($videosQuery, $tagsFilter, $matchAll);
@@ -1284,6 +1286,7 @@ class ChannelController extends Controller
 
         $sidebarVideos = Video::select('id', 'title', 'thumbnail_image')
             ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+            ->where('status', 'published')
             ->latest()
             ->get()
             ->each(function ($v) {
@@ -1307,7 +1310,8 @@ class ChannelController extends Controller
          * ---------------------------
          */
         $videoWhere = function ($q) use ($regionCode, $applyVideoTagFilter, $applyVideoHighlightFilter, $tagsFilter, $hlFilter, $matchAll, $tagIdsFilter) {
-            $q->whereHas('regions', fn($r) => $r->where('region_code', $regionCode));
+            $q->whereHas('regions', fn($r) => $r->where('region_code', $regionCode))
+            ->where('status', 'published');
             $applyVideoTagFilter($q, $tagsFilter, $matchAll);
             $applyVideoHighlightFilter($q, $hlFilter, $matchAll);
 
@@ -1460,6 +1464,7 @@ class ChannelController extends Controller
             ])
                 ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
                 ->when(!empty($characterIdsForChildren), fn($q) => $q->whereIn('character_id', $characterIdsForChildren))
+                ->where('status', 'published')
                 ->latest();
 
             $applyVideoTagFilter($videosQuery, $tagsFilter, $matchAll);
