@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
+use App\Models\VideoLike;
 
 class VideoEngagementController extends Controller
 {
@@ -74,6 +75,54 @@ class VideoEngagementController extends Controller
             'likes_count' => $count,
         ]);
     }
+
+
+
+
+    public function listLikedVideos()
+    {
+        $user = Auth::user();
+        $likes = VideoLike::with('video')
+            ->where('user_id', $user->id)
+            ->latest() 
+            ->get();
+
+        // Map to a clean payload (skip rows where the related video is missing)
+        $likedVideos = $likes->filter(fn($like) => $like->video)->map(function ($like) {
+            $v = $like->video;
+
+            $thumbnail = $v->thumbnail_url
+                ?: ($v->thumbnail_image ? asset($v->thumbnail_image) : null);
+
+            return [
+                'video_id'        => $v->id,
+                'title'           => $v->title,
+                'description'     => $v->description,
+                'type'            => $v->type,
+                'video_type'      => $v->video_type,
+                'video_platforms' => $v->video_platforms,
+                'video_url'       => $v->video_url,
+                'youtube_id'      => $v->youtube_id,
+                'wistia_id'       => $v->wistia_id,
+                'thumbnail'       => $thumbnail,
+                'likes'           => $v->likes,          
+                'liked_at'        => optional($like->created_at)->toIso8601String(),
+            ];
+        })->values();
+
+        if ($likedVideos->isEmpty()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'You have not saved any videos yet.',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'data'   => $likedVideos,
+        ]);
+    }
+
 
     public function favorite(Video $video)
     {
@@ -418,7 +467,4 @@ class VideoEngagementController extends Controller
             'views' => $productReview->views,
         ]);
     }
-
-
-
 }

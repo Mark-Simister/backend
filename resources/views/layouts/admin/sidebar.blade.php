@@ -170,7 +170,7 @@
                 </a>
             </li>
         @endcan
-        @can('product-reviews.view')
+        {{-- @can('product-reviews.view')
             <li
                 class="nav-item {{ request()->is('admin/product-reviews*') && request()->is('admin/product-reviews/*/characters') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.product-reviews.index') }}">
@@ -178,7 +178,7 @@
                     <span class="menu-title">Product Review</span>
                 </a>
             </li>
-        @endcan
+        @endcan --}}
         @can('faq.view')
             <li class="nav-item {{ request()->is('admin/faqs*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.faqs.index') }}">

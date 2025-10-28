@@ -126,6 +126,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::post('videos/{video}/like', [VideoEngagementController::class, 'like'])->name('api.videos.like');
     Route::delete('videos/{video}/unlike', [VideoEngagementController::class, 'unlike'])->name('api.videos.unlike');
     Route::get('/videos-check/{video}/likes-count', [VideoEngagementController::class, 'likesCount']);
+    Route::get('/liked-videos', [VideoEngagementController::class, 'listLikedVideos']);
 
     // Favourites
     Route::post('videos/{video}/favorite', [VideoEngagementController::class, 'favorite'])->name('api.videos.favorite');
