@@ -2783,7 +2783,7 @@ class VideoController extends Controller
             })
             ->first();
             
-            dd($region, $id,$isPaidUser, $userId, $allowedRegions, $regionCode, $video);
+            // dd($region, $id,$isPaidUser, $userId, $allowedRegions, $regionCode, $video);
             if (!$video) {
                 return response()->json([
                     'status' => false,
