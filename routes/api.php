@@ -140,9 +140,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     //categories follow
     Route::post('/categories/{categoryId}/follow', [VideoEngagementController::class, 'followCategory']);
     Route::get('/followed-categories', [VideoEngagementController::class, 'listFollowedCategories']);
-    Route::delete('/categories/{categoryId}/unfollow', [VideoEngagementController::class, 'unfollowCategory'])
-    ->middleware('auth:sanctum')
-    ->name('categories.unfollow');
+    Route::delete('/categories/{categoryId}/unfollow', [VideoEngagementController::class, 'unfollowCategory'])->name('categories.unfollow');
 
     Route::post('/product-review/{id}/view', [VideoEngagementController::class, 'trackView']);
 
