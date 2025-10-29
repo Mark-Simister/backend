@@ -218,6 +218,7 @@ class SearchController extends Controller
                         ->orWhereRaw('LOWER(likes) LIKE ?', ['%' . strtolower($searchTerm) . '%'])
                         ->orWhereRaw('LOWER(sale_end_date) LIKE ?', ['%' . strtolower($searchTerm) . '%']);
                 })
+                ->where('status', 'published')
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 });
