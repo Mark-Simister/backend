@@ -1776,19 +1776,19 @@ class ChannelController extends Controller
     // Unfollow
 
 
-    // public function unfollow($channelId)
-    // {
-    //     $user = Auth::user();
+    public function unfollow($channelId)
+    {
+        $user = Auth::user();
 
-    //     ChannelFollow::where('user_id', $user->id)
-    //         ->where('channel_id', $channelId)
-    //         ->delete();
+        ChannelFollow::where('user_id', $user->id)
+            ->where('channel_id', $channelId)
+            ->delete();
 
-    //     return response()->json([
-    //         'status' => 'ok',
-    //         'message' => 'Channel unfollowed successfully',
-    //     ]);
-    // }
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Channel unfollowed successfully',
+        ]);
+    }
 
     // public function listFollows()
     // {
