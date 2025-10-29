@@ -1790,21 +1790,65 @@ class ChannelController extends Controller
     //     ]);
     // }
 
-    public function listFollows()
-    {
-        $follows = ChannelFollow::with('channel')
-            ->get()
-            ->map(function ($follow) {
-                return [
-                    'channel_id' => $follow->channel->id,
-                    'channel_name' => $follow->channel->name,
-                    // 'user_id'      => $follow->user_id,
-                ];
-            });
+    // public function listFollows()
+    // {
+    //     $follows = ChannelFollow::with('channel')
+    //         ->get()
+    //         ->map(function ($follow) {
+    //             return [
+    //                 'channel_id' => $follow->channel->id,
+    //                 'channel_name' => $follow->channel->name,
+    //                 // 'user_id'      => $follow->user_id,
+    //             ];
+    //         });
+
+    //     return response()->json([
+    //         'status' => 'ok',
+    //         'data' => $follows,
+    //     ]);
+    // }
+    public function listFollows(Request $request)
+{
+    try {
+        $user = Auth::user();
+
+        // All channel IDs this user follows
+        $channelIds = ChannelFollow::where('user_id', $user->id)
+            ->pluck('channel_id');
+
+        // Load channels in the same shape as index_by_region_api (but without regions)
+        $channels = Channel::select(
+                'id',
+                'name',
+                'image',
+                'primary_color',
+                'secondary_color',
+                'accent_color',
+                'background_color',
+                'created_at',
+                'updated_at'
+            )
+            ->whereIn('id', $channelIds)
+            ->latest()
+            ->get();
+
+        // Transform: add image_url, hide raw image (same as your region endpoint)
+        $channels->each(function ($channel) {
+            $channel->image_url = $channel->image ? asset($channel->image) : null;
+            $channel->makeHidden(['image']);
+        });
 
         return response()->json([
-            'status' => 'ok',
-            'data' => $follows,
+            'status'  => true,
+            'message' => 'Followed channels fetched successfully',
+            'data'    => $channels,
         ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Failed to fetch followed channels',
+            'error'   => $e->getMessage(),
+        ], 500);
     }
+}
 }

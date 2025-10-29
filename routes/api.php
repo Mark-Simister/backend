@@ -148,7 +148,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
 
     //  Route::delete('/channels/{id}/unfollow', [FollowChannelController::class, 'unfollow'])->name('channels.unfollow');
 
-    Route::get('/follows', [ChannelController::class, 'listFollows'])->name('channels.follows');
+    Route::get('/channel/follows', [ChannelController::class, 'listFollows'])->name('channels.follows');
 
     // Lists (paginated)
     Route::get('me/likes', [VideoEngagementController::class, 'myLikes'])->name('api.me.likes');
