@@ -146,7 +146,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::post('/channels/{id}/follow', [ChannelController::class, 'follow'])->name('channels.follow');
     Route::get('recommended-channels/{region?}', [CategoryController::class, 'recommendedChannels']);
 
-     Route::delete('/channels/{id}/unfollow', [FollowChannelController::class, 'unfollow'])->name('channels.unfollow');
+     Route::delete('/channels/{id}/unfollow', [ChannelController::class, 'unfollow'])->name('channels.unfollow');
 
     Route::get('/channel/follows', [ChannelController::class, 'listFollows'])->name('channels.follows');
 
