@@ -140,6 +140,9 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     //categories follow
     Route::post('/categories/{categoryId}/follow', [VideoEngagementController::class, 'followCategory']);
     Route::get('/followed-categories', [VideoEngagementController::class, 'listFollowedCategories']);
+    Route::delete('/categories/{categoryId}/unfollow', [VideoEngagementController::class, 'unfollowCategory'])
+    ->middleware('auth:sanctum')
+    ->name('categories.unfollow');
 
     Route::post('/product-review/{id}/view', [VideoEngagementController::class, 'trackView']);
 
@@ -156,7 +159,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::get('me/last-watched', [VideoEngagementController::class, 'myLastWatched'])->name('api.me.last_watched');
 
     // Likes
-    Route::get('/me/likes', [VideoEngagementController::class, 'myLikes'])->name('api.me.likes');
+    // Route::get('/me/likes', [VideoEngagementController::class, 'myLikes'])->name('api.me.likes');
 
     // Favourites
     Route::get('/me/favourites', [VideoEngagementController::class, 'myFavourites'])->name('api.me.favourites');

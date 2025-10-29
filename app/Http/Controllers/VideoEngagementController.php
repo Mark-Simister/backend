@@ -84,7 +84,7 @@ class VideoEngagementController extends Controller
         $user = Auth::user();
         $likes = VideoLike::with('video')
             ->where('user_id', $user->id)
-            ->latest() 
+            ->latest()
             ->get();
 
         // Map to a clean payload (skip rows where the related video is missing)
@@ -105,7 +105,7 @@ class VideoEngagementController extends Controller
                 'youtube_id'      => $v->youtube_id,
                 'wistia_id'       => $v->wistia_id,
                 'thumbnail'       => $thumbnail,
-                'likes'           => $v->likes,          
+                'likes'           => $v->likes,
                 'liked_at'        => optional($like->created_at)->toIso8601String(),
             ];
         })->values();
@@ -420,6 +420,24 @@ class VideoEngagementController extends Controller
         return response()->json([
             'status' => 'ok',
             'data' => $followedCategories,
+        ]);
+    }
+
+    public function unfollowCategory($categoryId)
+    {
+        $user = Auth::user();
+
+        CategoryFollow::where('user_id', $user->id)
+            ->where('category_id', $categoryId)
+            ->delete();
+
+        return response()->json([
+            'status'  => 'ok',
+            'message' => 'Category unfollowed successfully.',
+            'data'    => [
+                'category_id' => (int) $categoryId,
+                'followed'    => false,
+            ],
         ]);
     }
 
