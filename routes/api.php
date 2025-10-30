@@ -164,6 +164,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
 
     // Last watched videos
     Route::get('/my-watch-histories', [VideoEngagementController::class, 'myWatchHistories'])->name('videos.watch_histories');
+    Route::get('/watch-history/continue', [VideoEngagementController::class, 'myWatchHistoriesContinueWatching'])->name('videos.watch.continue');
     Route::get('video/{id}/watch-history', [VideoEngagementController::class, 'getWatchHistory']);
 
 });

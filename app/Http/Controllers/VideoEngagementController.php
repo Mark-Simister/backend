@@ -482,6 +482,35 @@ public function getWatchHistory($videoId)
 
         $data = VideoWatchHistory::with('video')
             ->where('user_id', $user->id)
+            ->where('is_completed',1)
+            ->get();
+
+        if ($data->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No watch history found for this user',
+            ], 404);
+        }
+
+        // Modify the response to include full URLs using asset() helper
+        $data->each(function ($history) {
+            $history->video->product_thumbnail = $history->video->product_thumbnail ? asset($history->video->product_thumbnail) : null;
+            $history->video->thumbnail_image = $history->video->thumbnail_image ? asset($history->video->thumbnail_image) : null;
+        });
+
+        return response()->json([
+            'status' => 'ok',
+            'user_id' => $user->id,
+            'watch_history' => $data,
+        ]);
+    }
+    public function myWatchHistoriesContinueWatching()
+    {
+        $user = Auth::user();
+
+        $data = VideoWatchHistory::with('video')
+            ->where('user_id', $user->id)
+            ->where('is_completed',0)
             ->get();
 
         if ($data->isEmpty()) {
