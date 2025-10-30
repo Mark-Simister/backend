@@ -173,8 +173,8 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
 Route::get('regions', [RegionController::class, 'index_api']);
 Route::get('channels', [ChannelController::class, 'index_api']);
 Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
-// Route::get('/channels-people/region/{region?}', [ChannelController::class, 'index_people_by_region_api']);
-// Route::get('/channels-pets/region/{region?}', [ChannelController::class, 'index_pets_by_region_api']);
+ Route::get('/channels-people/region/{region?}', [ChannelController::class, 'index_people_by_region_api']);
+ Route::get('/channels-pets/region/{region?}', [ChannelController::class, 'index_pets_by_region_api']);
 
 Route::get('global-colors', [GlobalColorController::class, 'index_api']);
 Route::post('/product-messages', [ProductMessageController::class, 'store']);
