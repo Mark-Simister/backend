@@ -14,6 +14,8 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
 use App\Models\VideoLike;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class VideoEngagementController extends Controller
 {
@@ -219,83 +221,168 @@ class VideoEngagementController extends Controller
     }
 
 
+    // public function updateWatchHistory(Request $request, $videoId)
+    // {
+    //     $video = Video::find($videoId);
+
+    //     if (!$video) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Video not found',
+    //         ], 404);
+    //     }
+
+    //     $user = Auth::user();
+
+    //     if (!$user) {
+    //         return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+    //     }
+
+    //     // Check if the user has already watched the video
+    //     $watchHistory = VideoWatchHistory::where('user_id', $user->id)
+    //         ->where('video_id', $video->id)
+    //         ->first();
+
+    //     if ($watchHistory) {
+    //         // update the watch time, position, and completion status
+    //         $watchHistory->update([
+    //             'last_position_seconds' => $request->last_position_seconds,
+    //             'is_completed' => $request->is_completed,
+    //             'watched_at' => now(),
+    //         ]);
+
+    //         // If video is completed, reset last_position_seconds to 0
+    //         if ($request->is_completed) {
+    //             $watchHistory->update([
+    //                 'last_position_seconds' => 0,
+    //             ]);
+    //         }
+
+    //         $updatedWatchHistory = VideoWatchHistory::where('user_id', $user->id)
+    //             ->where('video_id', $video->id)
+    //             ->first();
+
+    //         return response()->json([
+    //             'status' => 'ok',
+    //             'message' => 'Watch history updated',
+    //             'data' => [
+    //                 'video_id' => $updatedWatchHistory->video_id,
+    //                 'last_position_seconds' => $updatedWatchHistory->last_position_seconds,
+    //                 'is_completed' => $updatedWatchHistory->is_completed,
+    //                 'watched_at' => $updatedWatchHistory->watched_at,
+    //             ]
+    //         ], 200);
+    //     }
+
+    //     // If the user has not watched this video before, create a new record
+    //     $newWatchHistory = VideoWatchHistory::create([
+    //         'user_id' => $user->id,
+    //         'video_id' => $video->id,
+    //         'last_position_seconds' => $request->last_position_seconds,
+    //         'is_completed' => $request->is_completed,
+    //         'watched_at' => now(),
+    //     ]);
+
+    //     $newWatchHistory = VideoWatchHistory::where('user_id', $user->id)
+    //         ->where('video_id', $video->id)
+    //         ->first();
+
+    //     return response()->json([
+    //         'status' => 'ok',
+    //         'message' => 'Watch history created',
+    //         'data' => [
+    //             'video_id' => $newWatchHistory->video_id,
+    //             'last_position_seconds' => $newWatchHistory->last_position_seconds,
+    //             'is_completed' => $newWatchHistory->is_completed,
+    //             'watched_at' => $newWatchHistory->watched_at,
+    //         ]
+    //     ], 200);
+    // }
+
     public function updateWatchHistory(Request $request, $videoId)
-    {
-        $video = Video::find($videoId);
+{
+    $video = Video::find($videoId);
+    if (!$video) {
+        return response()->json(['status' => 'error', 'message' => 'Video not found'], 404);
+    }
 
-        if (!$video) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Video not found',
-            ], 404);
-        }
+    $user = Auth::user();
+    if (!$user) {
+        return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+    }
 
-        $user = Auth::user();
+    // Accept either client-style or DB-style field names
+    $data = $request->validate([
+        'position_seconds'        => ['nullable','numeric','min:0'],
+        'last_position_seconds'   => ['nullable','numeric','min:0'],
+        'watched_seconds'         => ['nullable','numeric','min:0'],
+        'total_watched_seconds'   => ['nullable','numeric','min:0'],
+        'is_completed'            => ['sometimes','boolean'],
+        'reason'                  => ['sometimes','in:start,progress,pause,ended,close'],
+    ]);
 
-        if (!$user) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
-        }
+    $now         = now();
+    $isCompleted = (bool)($data['is_completed'] ?? false);
 
-        // Check if the user has already watched the video
-        $watchHistory = VideoWatchHistory::where('user_id', $user->id)
+    // Coalesce names -> internal variables
+    $position     = (int)($data['position_seconds'] ?? $data['last_position_seconds'] ?? 0);
+    $sessionDelta = (int)($data['watched_seconds'] ?? $data['total_watched_seconds'] ?? 0);
+    $reason       = $data['reason'] ?? 'progress';
+
+    $history = DB::transaction(function () use ($user, $video, $now, $isCompleted, $position, $sessionDelta, $reason) {
+        $history = VideoWatchHistory::where('user_id', $user->id)
             ->where('video_id', $video->id)
+            ->lockForUpdate()
             ->first();
 
-        if ($watchHistory) {
-            // update the watch time, position, and completion status
-            $watchHistory->update([
-                'last_position_seconds' => $request->last_position_seconds,
-                'is_completed' => $request->is_completed,
-                'watched_at' => now(),
+        if (!$history) {
+            $history = VideoWatchHistory::create([
+                'user_id'               => $user->id,
+                'video_id'              => $video->id,
+                'last_position_seconds' => 0,
+                'total_watched_seconds' => 0,
+                'is_completed'          => false,
+                'watched_at'            => $now,
+                'completed_at'          => null,
             ]);
 
-            // If video is completed, reset last_position_seconds to 0
-            if ($request->is_completed) {
-                $watchHistory->update([
-                    'last_position_seconds' => 0,
-                ]);
+            if ($reason === 'start') {
+                $video->increment('views');
             }
-
-            $updatedWatchHistory = VideoWatchHistory::where('user_id', $user->id)
-                ->where('video_id', $video->id)
-                ->first();
-
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Watch history updated',
-                'data' => [
-                    'video_id' => $updatedWatchHistory->video_id,
-                    'last_position_seconds' => $updatedWatchHistory->last_position_seconds,
-                    'is_completed' => $updatedWatchHistory->is_completed,
-                    'watched_at' => $updatedWatchHistory->watched_at,
-                ]
-            ], 200);
         }
 
-        // If the user has not watched this video before, create a new record
-        $newWatchHistory = VideoWatchHistory::create([
-            'user_id' => $user->id,
-            'video_id' => $video->id,
-            'last_position_seconds' => $request->last_position_seconds,
-            'is_completed' => $request->is_completed,
-            'watched_at' => now(),
-        ]);
+        // Accumulate forward time
+        $history->total_watched_seconds = max(0, (int)$history->total_watched_seconds) + max(0, $sessionDelta);
 
-        $newWatchHistory = VideoWatchHistory::where('user_id', $user->id)
-            ->where('video_id', $video->id)
-            ->first();
+        // Update position (zero out on completion)
+        $history->last_position_seconds = $isCompleted ? 0 : max(0, $position);
 
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Watch history created',
-            'data' => [
-                'video_id' => $newWatchHistory->video_id,
-                'last_position_seconds' => $newWatchHistory->last_position_seconds,
-                'is_completed' => $newWatchHistory->is_completed,
-                'watched_at' => $newWatchHistory->watched_at,
-            ]
-        ], 200);
-    }
+        // Completion fields
+        $history->is_completed = $isCompleted;
+        $history->completed_at = $isCompleted ? ($history->completed_at ?? $now) : null;
+
+        // Touch last watched
+        $history->watched_at = $now;
+
+        $history->save();
+
+        return $history;
+    });
+
+    return response()->json([
+        'status'  => 'ok',
+        'message' => 'Watch history upserted',
+        'data'    => [
+            'video_id'               => $history->video_id,
+            'last_position_seconds'  => (int)$history->last_position_seconds,
+            'total_watched_seconds'  => (int)$history->total_watched_seconds,
+            'is_completed'           => (bool)$history->is_completed,
+            'completed_at'           => $history->completed_at,
+            'watched_at'             => $history->watched_at,
+            'resume_at'              => (int)$history->last_position_seconds,
+        ],
+    ], 200);
+}
 
 
 
