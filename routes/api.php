@@ -108,13 +108,13 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::get('paid-trending-characters/{region}', [VideoController::class, 'charactersFromPaidVideos']);
     // Route::get('/paid-videos/{region}/{id}', [VideoController::class, 'paidVideosDetail']);
     Route::get('/paid-videos/{region}/{id}', [VideoController::class, 'paidVideosDetail'])
-    ->name('paidVideosDetail');
+        ->name('paidVideosDetail');
     Route::get('recommended-videos/{region?}', [VideoController::class, 'recommendedVideos']);
 
 
 
     Route::post('reviews', [ReviewController::class, 'store_api']);
-    Route::get('my-reviews', [ReviewController::class, 'myReviews']);    
+    Route::get('my-reviews', [ReviewController::class, 'myReviews']);
 
     Route::get('users/{id}', [UserController::class, 'show_api'])->whereNumber('id');
     Route::get('me/profile', [UserController::class, 'me_api']);
@@ -134,7 +134,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
 
     // Watch history 
     Route::post('videos/{video}/watch', [VideoEngagementController::class, 'recordWatch'])->name('api.videos.watch');
-    Route::post('video/{videoId}/update-watch-history', [VideoEngagementController::class, 'updateWatchHistory']); 
+    Route::post('video/{videoId}/update-watch-history', [VideoEngagementController::class, 'updateWatchHistory']);
 
 
     //categories follow
@@ -147,7 +147,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::post('/channels/{id}/follow', [ChannelController::class, 'follow'])->name('channels.follow');
     Route::get('recommended-channels/{region?}', [CategoryController::class, 'recommendedChannels']);
 
-     Route::delete('/channels/{id}/unfollow', [ChannelController::class, 'unfollow'])->name('channels.unfollow');
+    Route::delete('/channels/{id}/unfollow', [ChannelController::class, 'unfollow'])->name('channels.unfollow');
 
     Route::get('/channel/follows', [ChannelController::class, 'listFollows'])->name('channels.follows');
 
@@ -164,6 +164,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
 
     // Last watched videos
     Route::get('/my-watch-histories', [VideoEngagementController::class, 'myWatchHistories'])->name('videos.watch_histories');
+    Route::get('video/{id}/watch-history', [VideoEngagementController::class, 'getWatchHistory']);
 
 });
 

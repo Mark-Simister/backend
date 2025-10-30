@@ -384,6 +384,54 @@ class VideoEngagementController extends Controller
     ], 200);
 }
 
+public function getWatchHistory($videoId)
+{
+    $video = \App\Models\Video::find($videoId);
+    if (!$video) {
+        return response()->json(['status' => 'error', 'message' => 'Video not found'], 404);
+    }
+
+    $user = \Illuminate\Support\Facades\Auth::user();
+    if (!$user) {
+        return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+    }
+
+    $history = \App\Models\VideoWatchHistory::where('user_id', $user->id)
+        ->where('video_id', $video->id)
+        ->first();
+
+    if (!$history) {
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'No watch history found',
+            'data' => [
+                'video_id' => (int)$video->id,
+                'last_position_seconds' => 0,
+                'total_watched_seconds' => 0,
+                'is_completed' => false,
+                'completed_at' => null,
+                'watched_at' => null,
+                'resume_at' => 0,
+            ]
+        ], 200);
+    }
+
+    return response()->json([
+        'status' => 'ok',
+        'message' => 'Watch history fetched successfully',
+        'data' => [
+            'video_id' => (int)$history->video_id,
+            'last_position_seconds' => (int)$history->last_position_seconds,
+            'total_watched_seconds' => (int)$history->total_watched_seconds,
+            'is_completed' => (bool)$history->is_completed,
+            'completed_at' => $history->completed_at,
+            'watched_at' => $history->watched_at,
+            'resume_at' => (int)$history->last_position_seconds,
+        ],
+    ], 200);
+}
+
+
 
 
     public function myLastWatched(Request $request)
