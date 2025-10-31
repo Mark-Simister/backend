@@ -122,6 +122,42 @@
                         @enderror
                     </div>
 
+                    <div class="form-group mb-3">
+                        <label>Text Color</label>
+                        <input type="color" name="text_color" class="form-control form-control-color"
+                            value="{{ old('text_color', $channel->text_color ?? '#000000') }}">
+                        @error('text_color')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>Hover Color</label>
+                        <input type="color" name="hover_color" class="form-control form-control-color"
+                            value="{{ old('hover_color', $channel->hover_color ?? '#000000') }}">
+                        @error('hover_color')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>Highlight Color</label>
+                        <input type="color" name="highlight_color" class="form-control form-control-color"
+                            value="{{ old('highlight_color', $channel->highlight_color ?? '#000000') }}">
+                        @error('highlight_color')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>CTA (Call To Action) Color</label>
+                        <input type="color" name="cta" class="form-control form-control-color"
+                            value="{{ old('cta', $channel->cta ?? '#000000') }}">
+                        @error('cta')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
                     <button class="btn btn-primary mt-3">Update</button>
                 </form>
             @endcan
