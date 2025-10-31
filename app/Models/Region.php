@@ -17,6 +17,12 @@ class Region extends Model
         'is_active',
         'currency',
         'currency_symbol',
+        'motif_color',
+        'motif_type',
+        'opacity',
+    ];
+    protected $casts = [
+        'motif_color' => 'array',
     ];
     public function channels()
     {
@@ -51,6 +57,4 @@ class Region extends Model
     {
         return $this->belongsTo(Currency::class, 'currency_symbol');
     }
-
-
 }

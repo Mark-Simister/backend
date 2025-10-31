@@ -17,7 +17,7 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
-                    
+
                     <div class="form-group mb-3">
                         <label>Channel Category <span class="text-danger">*</span></label>
                         <select name="channel_category" class="form-control" required>

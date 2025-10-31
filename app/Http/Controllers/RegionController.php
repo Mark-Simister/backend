@@ -38,22 +38,70 @@ class RegionController extends Controller
         return view('admin.regions.create', compact('currencies'));
     }
 
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'region_name' => 'required|string|max:255',
+    //         'region_code' => 'required|string|max:50|unique:regions,region_code',
+    //         'currency' => 'required|string|max:10',
+    //         'currency_symbol' => 'required|string|max:10',
+    //         'description' => 'nullable|string',
+    //         'is_active' => 'boolean',
+    //         'motif_color' => 'nullable|string|max:20',
+    //         'motif_type'  => 'nullable|string|max:50',
+    //         'opacity'     => 'nullable|numeric|min:0|max:1',
+    //     ]);
+
+    //     Region::create($request->all());
+
+    //     return redirect()->route('admin.regions.index')
+    //         ->with('success', 'Region created successfully!');
+    // }
     public function store(Request $request)
-    {
-        $request->validate([
-            'region_name' => 'required|string|max:255',
-            'region_code' => 'required|string|max:50|unique:regions,region_code',
-            'currency' => 'required|string|max:10',
-            'currency_symbol' => 'required|string|max:10',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
+{
+    $request->validate([
+        'region_name' => 'required|string|max:255',
+        'region_code' => 'required|string|max:50|unique:regions,region_code',
+        'currency' => 'required|string|max:10',
+        'currency_symbol' => 'required|string|max:10',
+        'description' => 'nullable|string',
+        'is_active' => 'boolean',
+        'motif_color' => 'nullable|string|max:20',
+        'motif_type'  => 'nullable|string|max:50',
+        'opacity'     => 'nullable|numeric|min:0|max:1',
+        'motif_color_1' => 'nullable|string|max:20',
+        'motif_color_2' => 'nullable|string|max:20',
+        'motif_color_3' => 'nullable|string|max:20',
+    ]);
+
+    // Handle motif color logic
+    $motifColor = $request->motif_color;
+
+    if (in_array($request->motif_type, ['gradient', 'pattern'])) {
+        $colors = array_filter([
+            $request->motif_color_1,
+            $request->motif_color_2,
+            $request->motif_color_3,
         ]);
-
-        Region::create($request->all());
-
-        return redirect()->route('admin.regions.index')
-            ->with('success', 'Region created successfully!');
+        $motifColor = implode(',', $colors); // store as comma-separated string
     }
+
+    Region::create([
+        'region_name'     => $request->region_name,
+        'region_code'     => $request->region_code,
+        'currency'        => $request->currency,
+        'currency_symbol' => $request->currency_symbol,
+        'description'     => $request->description,
+        'is_active'       => $request->is_active,
+        'motif_color'     => $motifColor,
+        'motif_type'      => $request->motif_type,
+        'opacity'         => $request->opacity,
+    ]);
+
+    return redirect()->route('admin.regions.index')
+        ->with('success', 'Region created successfully!');
+}
+
 
     public function edit(Region $region)
     {
@@ -62,22 +110,70 @@ class RegionController extends Controller
     }
 
 
+    // public function update(Request $request, Region $region)
+    // {
+    //     $request->validate([
+    //         'region_name' => 'required|string|max:255',
+    //         'region_code' => 'required|string|max:50|unique:regions,region_code,' . $region->id,
+    //         'currency' => 'required|string|max:10',
+    //         'currency_symbol' => 'required|string|max:10',
+    //         'description' => 'nullable|string',
+    //         'is_active' => 'boolean',
+    //         'motif_color' => 'nullable|string|max:20',
+    //         'motif_type'  => 'nullable|string|max:50',
+    //         'opacity'     => 'nullable|numeric|min:0|max:1',
+    //     ]);
+
+    //     $region->update($request->all());
+
+    //     return redirect()->route('admin.regions.index')
+    //         ->with('success', 'Region updated successfully!');
+    // }
     public function update(Request $request, Region $region)
-    {
-        $request->validate([
-            'region_name' => 'required|string|max:255',
-            'region_code' => 'required|string|max:50|unique:regions,region_code,' . $region->id,
-            'currency' => 'required|string|max:10',
-            'currency_symbol' => 'required|string|max:10',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
+{
+    $request->validate([
+        'region_name' => 'required|string|max:255',
+        'region_code' => 'required|string|max:50|unique:regions,region_code,' . $region->id,
+        'currency' => 'required|string|max:10',
+        'currency_symbol' => 'required|string|max:10',
+        'description' => 'nullable|string',
+        'is_active' => 'boolean',
+        'motif_color' => 'nullable|string|max:20',
+        'motif_type'  => 'nullable|string|max:50',
+        'opacity'     => 'nullable|numeric|min:0|max:1',
+        'motif_color_1' => 'nullable|string|max:20',
+        'motif_color_2' => 'nullable|string|max:20',
+        'motif_color_3' => 'nullable|string|max:20',
+    ]);
+
+    // Handle motif color logic
+    $motifColor = $request->motif_color;
+
+    if (in_array($request->motif_type, ['gradient', 'pattern'])) {
+        $colors = array_filter([
+            $request->motif_color_1,
+            $request->motif_color_2,
+            $request->motif_color_3,
         ]);
-
-        $region->update($request->all());
-
-        return redirect()->route('admin.regions.index')
-            ->with('success', 'Region updated successfully!');
+        $motifColor = implode(',', $colors); // store multiple colors as comma-separated string
     }
+
+    $region->update([
+        'region_name'     => $request->region_name,
+        'region_code'     => $request->region_code,
+        'currency'        => $request->currency,
+        'currency_symbol' => $request->currency_symbol,
+        'description'     => $request->description,
+        'is_active'       => $request->is_active,
+        'motif_color'     => $motifColor,
+        'motif_type'      => $request->motif_type,
+        'opacity'         => $request->opacity,
+    ]);
+
+    return redirect()->route('admin.regions.index')
+        ->with('success', 'Region updated successfully!');
+}
+
 
     public function destroy(Region $region)
     {
@@ -99,35 +195,49 @@ class RegionController extends Controller
     //     ]);
     // }
     public function index_api()
-    {
+{
+    $regions = Region::where('is_active', 1)
+        ->with('currency_get')
+        ->latest()
+        ->get();
 
-        // $regions = Region::with('currency_get')->latest()->get();
-        $regions = Region::where('is_active', 1)
-                ->with('currency_get')
-                ->latest()
-                ->get();
+    $regionsData = $regions->map(function ($region) {
+        $motifColors = $region->motif_color;
 
+        if ($region->motif_type !== 'solid') {
+            if (is_string($motifColors)) {
+                $decoded = json_decode($motifColors, true);
+                $motifColors = is_array($decoded) ? $decoded : [$motifColors];
+            } elseif (is_array($motifColors)) {
+                $motifColors = $motifColors;
+            } else {
+                $motifColors = [$motifColors];
+            }
+        }
 
-        $regionsData = $regions->map(function ($region) {
-            return [
-                'id' => $region->id,
-                'region_name' => $region->region_name,
-                'region_code' => $region->region_code,
-                'description' => $region->description,
-                'is_active' => $region->is_active,
-                'currency' => $region->currency,
-                'created_at' => $region->created_at,
-                'updated_at' => $region->updated_at,
-                'currency_symbol' => $region->currency_get ? $region->currency_get->currency_symbol : null,
-            ];
-        });
+        return [
+            'id' => $region->id,
+            'region_name' => $region->region_name,
+            'region_code' => $region->region_code,
+            'description' => $region->description,
+            'is_active' => $region->is_active,
+            'currency' => $region->currency,
+            'motif_type' => $region->motif_type,
+            'motif_color' => $motifColors, // array if not solid
+            'opacity' => $region->opacity,
+            'created_at' => $region->created_at,
+            'updated_at' => $region->updated_at,
+            'currency_symbol' => $region->currency_get ? $region->currency_get->currency_symbol : null,
+        ];
+    });
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Regions fetched successfully',
-            'data' => $regionsData,
-        ]);
-    }
+    return response()->json([
+        'status' => true,
+        'message' => 'Regions fetched successfully',
+        'data' => $regionsData,
+    ]);
+}
+
 
 
     public function store_api(Request $request)
@@ -229,6 +339,4 @@ class RegionController extends Controller
             'message' => 'Region deleted successfully'
         ]);
     }
-
-
 }

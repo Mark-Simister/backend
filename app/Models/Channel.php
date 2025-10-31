@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,10 @@ class Channel extends Model
         'secondary_color',
         'accent_color',
         'background_color',
+        'text_color',
+        'hover_color',
+        'highlight_color',
+        'cta',
         'channel_category',
     ];
 
@@ -48,8 +53,7 @@ class Channel extends Model
     }
 
     public function followers()
-{
-    return $this->hasMany(ChannelFollow::class, 'channel_id');
-}
-
+    {
+        return $this->hasMany(ChannelFollow::class, 'channel_id');
+    }
 }

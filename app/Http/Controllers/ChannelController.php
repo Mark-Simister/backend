@@ -94,6 +94,10 @@ class ChannelController extends Controller
             'secondary_color' => 'nullable|string|max:20',
             'accent_color' => 'nullable|string|max:20',
             'background_color' => 'nullable|string|max:20',
+            'text_color' => 'nullable|string|max:20',
+            'hover_color' => 'nullable|string|max:20',
+            'highlight_color' => 'nullable|string|max:20',
+            'cta' => 'nullable|string|max:20',
             'channel_category' => 'required|in:pet,people',
         ]);
 
@@ -131,6 +135,10 @@ class ChannelController extends Controller
                 'secondary_color' => $request->secondary_color,
                 'accent_color' => $request->accent_color,
                 'background_color' => $request->background_color,
+                'text_color' => $request->text_color,
+                'hover_color' => $request->hover_color,
+                'highlight_color' => $request->highlight_color,
+                'cta' => $request->cta,
                 'channel_category' => $request->channel_category,
             ]);
 
@@ -179,11 +187,15 @@ class ChannelController extends Controller
             'secondary_color' => 'nullable|string|max:20',
             'accent_color' => 'nullable|string|max:20',
             'background_color' => 'nullable|string|max:20',
+            'text_color' => 'nullable|string|max:20',
+            'hover_color' => 'nullable|string|max:20',
+            'highlight_color' => 'nullable|string|max:20',
+            'cta' => 'nullable|string|max:20',
             'channel_category' => 'required|in:pet,people',
         ]);
 
         $imagePath = $channel->image;
-        $videoPath = $channel->video; 
+        $videoPath = $channel->video;
 
         if ($request->hasFile('image')) {
             $folderPath = public_path('channel');
@@ -202,22 +214,22 @@ class ChannelController extends Controller
         }
 
         if ($request->hasFile('video')) {
-        $video = $request->file('video');
-        $videoName = time() . '_' . Str::random(6) . '.' . $video->getClientOriginalExtension();
+            $video = $request->file('video');
+            $videoName = time() . '_' . Str::random(6) . '.' . $video->getClientOriginalExtension();
 
-        $destinationPath = public_path('/channel_videos');
-        if (!\Illuminate\Support\Facades\File::isDirectory($destinationPath)) {
-            \Illuminate\Support\Facades\File::makeDirectory($destinationPath, 0755, true, true);
+            $destinationPath = public_path('/channel_videos');
+            if (!\Illuminate\Support\Facades\File::isDirectory($destinationPath)) {
+                \Illuminate\Support\Facades\File::makeDirectory($destinationPath, 0755, true, true);
+            }
+
+            // delete old video if exists
+            if (!empty($channel->video) && file_exists(public_path($channel->video))) {
+                @unlink(public_path($channel->video));
+            }
+
+            $video->move($destinationPath, $videoName);
+            $videoPath = 'channel_videos/' . $videoName; // relative public path
         }
-
-        // delete old video if exists
-        if (!empty($channel->video) && file_exists(public_path($channel->video))) {
-            @unlink(public_path($channel->video));
-        }
-
-        $video->move($destinationPath, $videoName);
-        $videoPath = 'channel_videos/' . $videoName; // relative public path
-    }
 
         DB::transaction(function () use ($request, $channel, $imagePath, $videoPath) {
 
@@ -230,6 +242,11 @@ class ChannelController extends Controller
                 'secondary_color' => $request->secondary_color,
                 'accent_color' => $request->accent_color,
                 'background_color' => $request->background_color,
+                'text_color' => $request->text_color,
+                'hover_color' => $request->hover_color,
+                'highlight_color' => $request->highlight_color,
+                'cta' => $request->cta,
+
                 'channel_category' => $request->channel_category,
             ]);
 
@@ -279,7 +296,24 @@ class ChannelController extends Controller
         try {
             // Eager-load only what you need
             // $channels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
-            $channels = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+            $channels =
+                // Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+                Channel::select(
+                    'id',
+                    'name',
+                    'image',
+                    'primary_color',
+                    'secondary_color',
+                    'accent_color',
+                    'background_color',
+                    'text_color',
+                    'hover_color',
+                    'highlight_color',
+                    'cta',
+                    'created_at',
+                    'updated_at'
+                )
+
                 ->with([
                     'regions:id,region_code'
                 ])
@@ -325,7 +359,23 @@ class ChannelController extends Controller
 
             // Only channels that have the requested region
             // $channels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
-            $channels = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+            $channels =
+                // Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+                Channel::select(
+                    'id',
+                    'name',
+                    'image',
+                    'primary_color',
+                    'secondary_color',
+                    'accent_color',
+                    'background_color',
+                    'text_color',
+                    'hover_color',
+                    'highlight_color',
+                    'cta',
+                    'created_at',
+                    'updated_at'
+                )
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 })
@@ -376,6 +426,10 @@ class ChannelController extends Controller
                 'secondary_color',
                 'accent_color',
                 'background_color',
+                'text_color',
+                'hover_color',
+                'highlight_color',
+                'cta',
                 'channel_category',
                 'created_at',
                 'updated_at'
@@ -427,6 +481,10 @@ class ChannelController extends Controller
                 'secondary_color',
                 'accent_color',
                 'background_color',
+                'text_color',
+                'hover_color',
+                'highlight_color',
+                'cta',
                 'channel_category',
                 'created_at',
                 'updated_at'
@@ -486,7 +544,24 @@ class ChannelController extends Controller
             $filterCategoryId = $request->integer('category_id');
 
             //$channel = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
-            $channel = Channel::select('id', 'name', 'image', 'video', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+            // $channel = Channel::select('id', 'name', 'image', 'video', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+            $channel = Channel::select(
+                'id',
+                'name',
+                'image',
+                'video',
+                'primary_color',
+                'secondary_color',
+                'accent_color',
+                'background_color',
+                'text_color',
+                'hover_color',
+                'highlight_color',
+                'cta',
+                'created_at',
+                'updated_at'
+            )
+
                 ->where('id', $channelId)
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
@@ -531,12 +606,12 @@ class ChannelController extends Controller
                 ])
                 ->first();
 
-                $isFollowing = false;
-                if ($user) {
-                    $isFollowing = \App\Models\ChannelFollow::where('channel_id', $channelId)
-                        ->where('user_id', $user->id)
-                        ->exists();
-                }
+            $isFollowing = false;
+            if ($user) {
+                $isFollowing = \App\Models\ChannelFollow::where('channel_id', $channelId)
+                    ->where('user_id', $user->id)
+                    ->exists();
+            }
 
 
             if (!$channel) {
@@ -716,6 +791,14 @@ class ChannelController extends Controller
                 'name' => $channel->name,
                 'image_url' => $channel->image ? asset($channel->image) : null,
                 'video_url' => $channel->video ? asset($channel->video) : null,
+                'primary_color'   => $channel->primary_color,
+                'secondary_color' => $channel->secondary_color,
+                'accent_color'    => $channel->accent_color,
+                'background_color' => $channel->background_color,
+                'text_color'      => $channel->text_color,
+                'hover_color'     => $channel->hover_color,
+                'highlight_color' => $channel->highlight_color,
+                'cta'             => $channel->cta,
                 'created_at' => optional($channel->created_at)->toDateTimeString(),
                 'updated_at' => optional($channel->updated_at)->toDateTimeString(),
                 'is_following' => $isFollowing,
@@ -877,7 +960,7 @@ class ChannelController extends Controller
 
         $videoWhere = function ($q) use ($regionCode, $applyVideoTagFilter, $applyVideoHighlightFilter, $tagsFilter, $hlFilter, $matchAll, $tagIdsFilter) {
             $q->whereHas('regions', fn($r) => $r->where('region_code', $regionCode))
-            ->where('status', 'published');
+                ->where('status', 'published');
             $applyVideoTagFilter($q, $tagsFilter, $matchAll);
             $applyVideoHighlightFilter($q, $hlFilter, $matchAll);
 
@@ -898,7 +981,23 @@ class ChannelController extends Controller
         };
 
         //$channelsQuery = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
-        $channelsQuery = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+        $channelsQuery =
+            // Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+            Channel::select(
+                'id',
+                'name',
+                'image',
+                'primary_color',
+                'secondary_color',
+                'accent_color',
+                'background_color',
+                'text_color',
+                'hover_color',
+                'highlight_color',
+                'cta',
+                'created_at',
+                'updated_at'
+            )
             ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
             ->with(['regions:id,region_code'])
             ->latest();
@@ -1311,7 +1410,7 @@ class ChannelController extends Controller
          */
         $videoWhere = function ($q) use ($regionCode, $applyVideoTagFilter, $applyVideoHighlightFilter, $tagsFilter, $hlFilter, $matchAll, $tagIdsFilter) {
             $q->whereHas('regions', fn($r) => $r->where('region_code', $regionCode))
-            ->where('status', 'published');
+                ->where('status', 'published');
             $applyVideoTagFilter($q, $tagsFilter, $matchAll);
             $applyVideoHighlightFilter($q, $hlFilter, $matchAll);
 
@@ -1339,7 +1438,23 @@ class ChannelController extends Controller
          * 
          */
 
-        $channelsQuery = Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+        $channelsQuery =
+            // Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+            Channel::select(
+                'id',
+                'name',
+                'image',
+                'primary_color',
+                'secondary_color',
+                'accent_color',
+                'background_color',
+                'text_color',
+                'hover_color',
+                'highlight_color',
+                'cta',
+                'created_at',
+                'updated_at'
+            )
             ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
             ->with(['regions:id,region_code'])
             ->latest();
@@ -1646,9 +1761,9 @@ class ChannelController extends Controller
             ], 404);
         }
 
-        if ($channel->image) {
-            $channel->image_url = asset('channel/' . $channel->image);
-        }
+        // if ($channel->image) {
+        //     $channel->image_url = asset('channel/' . $channel->image);
+        // }
 
         return response()->json([
             'status' => true,
@@ -1808,16 +1923,16 @@ class ChannelController extends Controller
     //     ]);
     // }
     public function listFollows(Request $request)
-{
-    try {
-        $user = Auth::user();
+    {
+        try {
+            $user = Auth::user();
 
-        // All channel IDs this user follows
-        $channelIds = ChannelFollow::where('user_id', $user->id)
-            ->pluck('channel_id');
+            // All channel IDs this user follows
+            $channelIds = ChannelFollow::where('user_id', $user->id)
+                ->pluck('channel_id');
 
-        // Load channels in the same shape as index_by_region_api (but without regions)
-        $channels = Channel::select(
+            // Load channels in the same shape as index_by_region_api (but without regions)
+            $channels = Channel::select(
                 'id',
                 'name',
                 'image',
@@ -1825,30 +1940,34 @@ class ChannelController extends Controller
                 'secondary_color',
                 'accent_color',
                 'background_color',
+                'text_color',
+                'hover_color',
+                'highlight_color',
+                'cta',
                 'created_at',
                 'updated_at'
             )
-            ->whereIn('id', $channelIds)
-            ->latest()
-            ->get();
+                ->whereIn('id', $channelIds)
+                ->latest()
+                ->get();
 
-        // Transform: add image_url, hide raw image (same as your region endpoint)
-        $channels->each(function ($channel) {
-            $channel->image_url = $channel->image ? asset($channel->image) : null;
-            $channel->makeHidden(['image']);
-        });
+            // Transform: add image_url, hide raw image (same as your region endpoint)
+            $channels->each(function ($channel) {
+                $channel->image_url = $channel->image ? asset($channel->image) : null;
+                $channel->makeHidden(['image']);
+            });
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Followed channels fetched successfully',
-            'data'    => $channels,
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'status'  => false,
-            'message' => 'Failed to fetch followed channels',
-            'error'   => $e->getMessage(),
-        ], 500);
+            return response()->json([
+                'status'  => true,
+                'message' => 'Followed channels fetched successfully',
+                'data'    => $channels,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Failed to fetch followed channels',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
-}
 }

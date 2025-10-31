@@ -22,7 +22,7 @@
                         @enderror
                     </div>
 
-                     <div class="form-group mt-3">
+                    <div class="form-group mt-3">
                         <label>Region Code <span class="text-danger">*</span></label>
                         <input name="region_code" class="form-control" value="{{ old('region_code', $region->region_code) }}"
                             required readonly="">
@@ -88,6 +88,51 @@
                         @enderror
                     </div>
 
+                    <div class="form-group mt-3" id="motif_type_field">
+                        <label>Motif Type</label>
+                        <select name="motif_type" id="motif_type" class="form-control">
+                            {{-- <option value="">Select Motif Type</option> --}}
+                            <option value="solid" {{ old('motif_type', $region->motif_type) == 'solid' ? 'selected' : '' }}>
+                                Solid</option>
+                            <option value="gradient"
+                                {{ old('motif_type', $region->motif_type) == 'gradient' ? 'selected' : '' }}>Gradient</option>
+                            <option value="pattern"
+                                {{ old('motif_type', $region->motif_type) == 'pattern' ? 'selected' : '' }}>Pattern</option>
+                        </select>
+                        @error('motif_type')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-group mt-3 motif-color-field" id="motif_color_single">
+                        <label>Motif Color</label>
+                        <input type="color" name="motif_color" class="form-control form-control-color"
+                            value="{{ old('motif_color', $region->motif_color ?? '#ffffff') }}">
+                        @error('motif_color')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-group mt-3 motif-color-field" id="motif_color_multiple" style="display:none;">
+                        <label>Motif Colors (for gradient or pattern)</label>
+                        <div class="d-flex gap-2">
+                            <input type="color" name="motif_color_1" class="form-control form-control-color"
+                                value="{{ old('motif_color_1', '#ffffff') }}">
+                            <input type="color" name="motif_color_2" class="form-control form-control-color"
+                                value="{{ old('motif_color_2', '#000000') }}">
+                            <input type="color" name="motif_color_3" class="form-control form-control-color"
+                                value="{{ old('motif_color_3', '#ff0000') }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label>Opacity</label>
+                        <input type="number" name="opacity" class="form-control" min="0" max="1" step="0.1"
+                            value="{{ old('opacity', $region->opacity ?? 1) }}">
+                        @error('opacity')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
 
                     <div class="form-group mt-3">
                         <label>Status</label>
@@ -117,6 +162,25 @@
     <script>
         $(document).ready(function() {
             $('.select2').select2(); // Apply Select2 to all elements with the class 'select2'
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const motifType = document.getElementById('motif_type');
+            const singleColor = document.getElementById('motif_color_single');
+            const multipleColors = document.getElementById('motif_color_multiple');
+
+            function toggleMotifFields() {
+                const type = motifType.value;
+                if (type === 'gradient' || type === 'pattern') {
+                    singleColor.style.display = 'none';
+                    multipleColors.style.display = 'block';
+                } else {
+                    singleColor.style.display = 'block';
+                    multipleColors.style.display = 'none';
+                }
+            }
+
+            motifType.addEventListener('change', toggleMotifFields);
+            toggleMotifFields(); // initial state on load
         });
     </script>
 @endpush
