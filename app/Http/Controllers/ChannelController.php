@@ -1905,23 +1905,6 @@ class ChannelController extends Controller
         ]);
     }
 
-    // public function listFollows()
-    // {
-    //     $follows = ChannelFollow::with('channel')
-    //         ->get()
-    //         ->map(function ($follow) {
-    //             return [
-    //                 'channel_id' => $follow->channel->id,
-    //                 'channel_name' => $follow->channel->name,
-    //                 // 'user_id'      => $follow->user_id,
-    //             ];
-    //         });
-
-    //     return response()->json([
-    //         'status' => 'ok',
-    //         'data' => $follows,
-    //     ]);
-    // }
     public function listFollows(Request $request)
     {
         try {

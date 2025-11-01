@@ -568,12 +568,7 @@ public function getWatchHistory($videoId)
                 ];
             });
 
-        if ($followedCategories->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'You have not followed any categories yet.',
-            ], 404);
-        }
+        
 
         return response()->json([
             'status' => 'ok',
