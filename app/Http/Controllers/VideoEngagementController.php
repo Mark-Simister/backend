@@ -300,136 +300,136 @@ class VideoEngagementController extends Controller
     // }
 
     public function updateWatchHistory(Request $request, $videoId)
-{
-    $video = Video::find($videoId);
-    if (!$video) {
-        return response()->json(['status' => 'error', 'message' => 'Video not found'], 404);
-    }
-
-    $user = Auth::user();
-    if (!$user) {
-        return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
-    }
-
-    // Accept either client-style or DB-style field names
-    $data = $request->validate([
-        'position_seconds'        => ['nullable','numeric','min:0'],
-        'last_position_seconds'   => ['nullable','numeric','min:0'],
-        'watched_seconds'         => ['nullable','numeric','min:0'],
-        'total_watched_seconds'   => ['nullable','numeric','min:0'],
-        'is_completed'            => ['sometimes','boolean'],
-        'reason'                  => ['sometimes','in:start,progress,pause,ended,close'],
-    ]);
-
-    $now         = now();
-    $isCompleted = (bool)($data['is_completed'] ?? false);
-
-    // Coalesce names -> internal variables
-    $position     = (int)($data['position_seconds'] ?? $data['last_position_seconds'] ?? 0);
-    $sessionDelta = (int)($data['watched_seconds'] ?? $data['total_watched_seconds'] ?? 0);
-    $reason       = $data['reason'] ?? 'progress';
-
-    $history = DB::transaction(function () use ($user, $video, $now, $isCompleted, $position, $sessionDelta, $reason) {
-        $history = VideoWatchHistory::where('user_id', $user->id)
-            ->where('video_id', $video->id)
-            ->lockForUpdate()
-            ->first();
-
-        if (!$history) {
-            $history = VideoWatchHistory::create([
-                'user_id'               => $user->id,
-                'video_id'              => $video->id,
-                'last_position_seconds' => 0,
-                'total_watched_seconds' => 0,
-                'is_completed'          => false,
-                'watched_at'            => $now,
-                'completed_at'          => null,
-            ]);
-
-            if ($reason === 'start') {
-                $video->increment('views');
-            }
+    {
+        $video = Video::find($videoId);
+        if (!$video) {
+            return response()->json(['status' => 'error', 'message' => 'Video not found'], 404);
         }
 
-        // Accumulate forward time
-        $history->total_watched_seconds = max(0, (int)$history->total_watched_seconds) + max(0, $sessionDelta);
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+        }
 
-        // Update position (zero out on completion)
-        $history->last_position_seconds = $isCompleted ? 0 : max(0, $position);
+        // Accept either client-style or DB-style field names
+        $data = $request->validate([
+            'position_seconds'        => ['nullable', 'numeric', 'min:0'],
+            'last_position_seconds'   => ['nullable', 'numeric', 'min:0'],
+            'watched_seconds'         => ['nullable', 'numeric', 'min:0'],
+            'total_watched_seconds'   => ['nullable', 'numeric', 'min:0'],
+            'is_completed'            => ['sometimes', 'boolean'],
+            'reason'                  => ['sometimes', 'in:start,progress,pause,ended,close'],
+        ]);
 
-        // Completion fields
-        $history->is_completed = $isCompleted;
-        $history->completed_at = $isCompleted ? ($history->completed_at ?? $now) : null;
+        $now         = now();
+        $isCompleted = (bool)($data['is_completed'] ?? false);
 
-        // Touch last watched
-        $history->watched_at = $now;
+        // Coalesce names -> internal variables
+        $position     = (int)($data['position_seconds'] ?? $data['last_position_seconds'] ?? 0);
+        $sessionDelta = (int)($data['watched_seconds'] ?? $data['total_watched_seconds'] ?? 0);
+        $reason       = $data['reason'] ?? 'progress';
 
-        $history->save();
+        $history = DB::transaction(function () use ($user, $video, $now, $isCompleted, $position, $sessionDelta, $reason) {
+            $history = VideoWatchHistory::where('user_id', $user->id)
+                ->where('video_id', $video->id)
+                ->lockForUpdate()
+                ->first();
 
-        return $history;
-    });
+            if (!$history) {
+                $history = VideoWatchHistory::create([
+                    'user_id'               => $user->id,
+                    'video_id'              => $video->id,
+                    'last_position_seconds' => 0,
+                    'total_watched_seconds' => 0,
+                    'is_completed'          => false,
+                    'watched_at'            => $now,
+                    'completed_at'          => null,
+                ]);
 
-    return response()->json([
-        'status'  => 'ok',
-        'message' => 'Watch history upserted',
-        'data'    => [
-            'video_id'               => $history->video_id,
-            'last_position_seconds'  => (int)$history->last_position_seconds,
-            'total_watched_seconds'  => (int)$history->total_watched_seconds,
-            'is_completed'           => (bool)$history->is_completed,
-            'completed_at'           => $history->completed_at,
-            'watched_at'             => $history->watched_at,
-            'resume_at'              => (int)$history->last_position_seconds,
-        ],
-    ], 200);
-}
+                if ($reason === 'start') {
+                    $video->increment('views');
+                }
+            }
 
-public function getWatchHistory($videoId)
-{
-    $video = \App\Models\Video::find($videoId);
-    if (!$video) {
-        return response()->json(['status' => 'error', 'message' => 'Video not found'], 404);
-    }
+            // Accumulate forward time
+            $history->total_watched_seconds = max(0, (int)$history->total_watched_seconds) + max(0, $sessionDelta);
 
-    $user = \Illuminate\Support\Facades\Auth::user();
-    if (!$user) {
-        return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
-    }
+            // Update position (zero out on completion)
+            $history->last_position_seconds = $isCompleted ? 0 : max(0, $position);
 
-    $history = \App\Models\VideoWatchHistory::where('user_id', $user->id)
-        ->where('video_id', $video->id)
-        ->first();
+            // Completion fields
+            $history->is_completed = $isCompleted;
+            $history->completed_at = $isCompleted ? ($history->completed_at ?? $now) : null;
 
-    if (!$history) {
+            // Touch last watched
+            $history->watched_at = $now;
+
+            $history->save();
+
+            return $history;
+        });
+
         return response()->json([
-            'status' => 'ok',
-            'message' => 'No watch history found',
-            'data' => [
-                'video_id' => (int)$video->id,
-                'last_position_seconds' => 0,
-                'total_watched_seconds' => 0,
-                'is_completed' => false,
-                'completed_at' => null,
-                'watched_at' => null,
-                'resume_at' => 0,
-            ]
+            'status'  => 'ok',
+            'message' => 'Watch history upserted',
+            'data'    => [
+                'video_id'               => $history->video_id,
+                'last_position_seconds'  => (int)$history->last_position_seconds,
+                'total_watched_seconds'  => (int)$history->total_watched_seconds,
+                'is_completed'           => (bool)$history->is_completed,
+                'completed_at'           => $history->completed_at,
+                'watched_at'             => $history->watched_at,
+                'resume_at'              => (int)$history->last_position_seconds,
+            ],
         ], 200);
     }
 
-    return response()->json([
-        'status' => 'ok',
-        'message' => 'Watch history fetched successfully',
-        'data' => [
-            'video_id' => (int)$history->video_id,
-            'last_position_seconds' => (int)$history->last_position_seconds,
-            'total_watched_seconds' => (int)$history->total_watched_seconds,
-            'is_completed' => (bool)$history->is_completed,
-            'completed_at' => $history->completed_at,
-            'watched_at' => $history->watched_at,
-            'resume_at' => (int)$history->last_position_seconds,
-        ],
-    ], 200);
-}
+    public function getWatchHistory($videoId)
+    {
+        $video = \App\Models\Video::find($videoId);
+        if (!$video) {
+            return response()->json(['status' => 'error', 'message' => 'Video not found'], 404);
+        }
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+        }
+
+        $history = \App\Models\VideoWatchHistory::where('user_id', $user->id)
+            ->where('video_id', $video->id)
+            ->first();
+
+        if (!$history) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'No watch history found',
+                'data' => [
+                    'video_id' => (int)$video->id,
+                    'last_position_seconds' => 0,
+                    'total_watched_seconds' => 0,
+                    'is_completed' => false,
+                    'completed_at' => null,
+                    'watched_at' => null,
+                    'resume_at' => 0,
+                ]
+            ], 200);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Watch history fetched successfully',
+            'data' => [
+                'video_id' => (int)$history->video_id,
+                'last_position_seconds' => (int)$history->last_position_seconds,
+                'total_watched_seconds' => (int)$history->total_watched_seconds,
+                'is_completed' => (bool)$history->is_completed,
+                'completed_at' => $history->completed_at,
+                'watched_at' => $history->watched_at,
+                'resume_at' => (int)$history->last_position_seconds,
+            ],
+        ], 200);
+    }
 
 
 
@@ -483,7 +483,7 @@ public function getWatchHistory($videoId)
 
         $data = VideoWatchHistory::with('video')
             ->where('user_id', $user->id)
-            ->where('is_completed',1)
+            ->where('is_completed', 1)
             ->get();
 
         // Modify the response to include full URLs using asset() helper
@@ -504,7 +504,7 @@ public function getWatchHistory($videoId)
 
         $data = VideoWatchHistory::with('video')
             ->where('user_id', $user->id)
-            ->where('is_completed',0)
+            ->where('is_completed', 0)
             ->get();
 
         if ($data->isEmpty()) {
@@ -557,24 +557,44 @@ public function getWatchHistory($videoId)
     {
         $user = Auth::user();
 
-        $followedCategories = CategoryFollow::with('category')
+        $followedCategories = CategoryFollow::with('category.channel') // 👈 include the related channel
             ->where('user_id', $user->id)
             ->get()
             ->map(function ($follow) {
+                $category = $follow->category;
+                $channel = $category?->channel;
+
                 return [
-                    'category_id' => $follow->category->id,
-                    'category_name' => $follow->category->name,
-                    'image' => asset($follow->category->image),
+                    'category_id'   => $category->id,
+                    'category_name' => $category->name,
+                    'image'         => asset($category->image),
+
+                    // 👇 include related channel data (if exists)
+                    'channel' => $channel ? [
+                        'id'                => $channel->id,
+                        'name'              => $channel->name,
+                        'image_url'         => $channel->image_url,
+                        'primary_color'     => $channel->primary_color,
+                        'secondary_color'   => $channel->secondary_color,
+                        'accent_color'      => $channel->accent_color,
+                        'background_color'  => $channel->background_color,
+                        'text_color'        => $channel->text_color,
+                        'hover_color'       => $channel->hover_color,
+                        'highlight_color'   => $channel->highlight_color,
+                        'cta'               => $channel->cta,
+                        'channel_category'  => $channel->channel_category,
+                        'created_at'        => optional($channel->created_at)?->toDateTimeString(),
+                        'updated_at'        => optional($channel->updated_at)?->toDateTimeString(),
+                    ] : null,
                 ];
             });
 
-        
-
         return response()->json([
             'status' => 'ok',
-            'data' => $followedCategories,
+            'data'   => $followedCategories,
         ]);
     }
+
 
     public function unfollowCategory($categoryId)
     {
