@@ -552,19 +552,63 @@ class CategoryController extends Controller
             $recommended = collect();
 
             if ($user) {
+                //     $recommended = Channel::query()
+                //         ->leftJoin('videos', 'videos.channel_id', '=', 'channels.id')
+                //         ->leftJoin('video_watch_histories as vwh', function ($join) use ($user) {
+                //             $join->on('vwh.video_id', '=', 'videos.id')
+                //                 ->where('vwh.user_id', '=', $user->id);
+                //         })
+
+                //         ->leftJoin('channel_region as cr', 'cr.channel_id', '=', 'channels.id')
+                //         ->leftJoin('regions as rr', 'rr.id', '=', 'cr.region_id')
+                //         ->when($regionCode !== 'GLOBAL', fn($q) => $q->where('rr.region_code', $regionCode))
+                //         ->when($type, fn($q) => $q->where('channels.channel_category', $type))
+                //         ->whereNotNull('channels.id')
+                //         // ->groupBy('channels.id', 'channels.name', 'channels.image', 'channels.created_at', 'channels.updated_at')
+                //         ->groupBy(
+                //             'channels.id',
+                //             'channels.name',
+                //             'channels.image',
+                //             'channels.primary_color',
+                //             'channels.secondary_color',
+                //             'channels.accent_color',
+                //             'channels.background_color',
+                //             'channels.created_at',
+                //             'channels.updated_at',
+                //             'channels.channel_category'
+                //         )
+                //         ->select(
+                //             'channels.*',
+                //             DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
+                //             DB::raw('MAX(vwh.created_at) as last_watched_at')
+                //         )
+                //         ->orderByDesc('watch_count')
+                //         ->orderByDesc('last_watched_at')
+                //         ->limit(20)
+                //         ->get()
+
+                //         ->map(function ($ch) {
+                //             return [
+                //                 'id' => $ch->id,
+                //                 'name' => $ch->name,
+                //                 'image_url' => $ch->image_url,
+                //                 'created_at' => optional($ch->created_at)?->toDateTimeString(),
+                //                 'updated_at' => optional($ch->updated_at)?->toDateTimeString(),
+                //                 'watch_count' => (int) $ch->watch_count,
+                //             ];
+                //         });
+                // }
                 $recommended = Channel::query()
                     ->leftJoin('videos', 'videos.channel_id', '=', 'channels.id')
                     ->leftJoin('video_watch_histories as vwh', function ($join) use ($user) {
                         $join->on('vwh.video_id', '=', 'videos.id')
                             ->where('vwh.user_id', '=', $user->id);
                     })
-
                     ->leftJoin('channel_region as cr', 'cr.channel_id', '=', 'channels.id')
                     ->leftJoin('regions as rr', 'rr.id', '=', 'cr.region_id')
                     ->when($regionCode !== 'GLOBAL', fn($q) => $q->where('rr.region_code', $regionCode))
                     ->when($type, fn($q) => $q->where('channels.channel_category', $type))
                     ->whereNotNull('channels.id')
-                    // ->groupBy('channels.id', 'channels.name', 'channels.image', 'channels.created_at', 'channels.updated_at')
                     ->groupBy(
                         'channels.id',
                         'channels.name',
@@ -573,12 +617,29 @@ class CategoryController extends Controller
                         'channels.secondary_color',
                         'channels.accent_color',
                         'channels.background_color',
+                        'channels.text_color',
+                        'channels.hover_color',
+                        'channels.highlight_color',
+                        'channels.cta',
+                        'channels.channel_category',
                         'channels.created_at',
-                        'channels.updated_at',
-                        'channels.channel_category'
+                        'channels.updated_at'
                     )
                     ->select(
-                        'channels.*',
+                        'channels.id',
+                        'channels.name',
+                        'channels.image',
+                        'channels.primary_color',
+                        'channels.secondary_color',
+                        'channels.accent_color',
+                        'channels.background_color',
+                        'channels.text_color',
+                        'channels.hover_color',
+                        'channels.highlight_color',
+                        'channels.cta',
+                        'channels.channel_category',
+                        'channels.created_at',
+                        'channels.updated_at',
                         DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
                         DB::raw('MAX(vwh.created_at) as last_watched_at')
                     )
@@ -586,12 +647,20 @@ class CategoryController extends Controller
                     ->orderByDesc('last_watched_at')
                     ->limit(20)
                     ->get()
-
                     ->map(function ($ch) {
                         return [
                             'id' => $ch->id,
                             'name' => $ch->name,
                             'image_url' => $ch->image_url,
+                            'primary_color' => $ch->primary_color,
+                            'secondary_color' => $ch->secondary_color,
+                            'accent_color' => $ch->accent_color,
+                            'background_color' => $ch->background_color,
+                            'text_color' => $ch->text_color,
+                            'hover_color' => $ch->hover_color,
+                            'highlight_color' => $ch->highlight_color,
+                            'cta' => $ch->cta,
+                            'channel_category' => $ch->channel_category,
                             'created_at' => optional($ch->created_at)?->toDateTimeString(),
                             'updated_at' => optional($ch->updated_at)?->toDateTimeString(),
                             'watch_count' => (int) $ch->watch_count,
@@ -712,19 +781,62 @@ class CategoryController extends Controller
             $recommended = collect();
 
             if ($user) {
+                // $recommended = Channel::query()
+                //     ->leftJoin('videos', 'videos.channel_id', '=', 'channels.id')
+                //     ->leftJoin('video_watch_histories as vwh', function ($join) use ($user) {
+                //         $join->on('vwh.video_id', '=', 'videos.id')
+                //             ->where('vwh.user_id', '=', $user->id);
+                //     })
+
+                //     ->leftJoin('channel_region as cr', 'cr.channel_id', '=', 'channels.id')
+                //     ->leftJoin('regions as rr', 'rr.id', '=', 'cr.region_id')
+                //     ->when($regionCode !== 'GLOBAL', fn($q) => $q->where('rr.region_code', $regionCode))
+                //     ->when($type, fn($q) => $q->where('channels.channel_category', $type))
+                //     ->whereNotNull('channels.id')
+                //     // ->groupBy('channels.id', 'channels.name', 'channels.image', 'channels.created_at', 'channels.updated_at')
+                //     ->groupBy(
+                //         'channels.id',
+                //         'channels.name',
+                //         'channels.image',
+                //         'channels.primary_color',
+                //         'channels.secondary_color',
+                //         'channels.accent_color',
+                //         'channels.background_color',
+                //         'channels.created_at',
+                //         'channels.updated_at',
+                //         'channels.channel_category'
+                //     )
+                //     ->select(
+                //         'channels.*',
+                //         DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
+                //         DB::raw('MAX(vwh.created_at) as last_watched_at')
+                //     )
+                //     ->orderByDesc('watch_count')
+                //     ->orderByDesc('last_watched_at')
+                //     ->limit(20)
+                //     ->get()
+
+                //     ->map(function ($ch) {
+                //         return [
+                //             'id' => $ch->id,
+                //             'name' => $ch->name,
+                //             'image_url' => $ch->image_url,
+                //             'created_at' => optional($ch->created_at)?->toDateTimeString(),
+                //             'updated_at' => optional($ch->updated_at)?->toDateTimeString(),
+                //             'watch_count' => (int) $ch->watch_count,
+                //         ];
+                //     });
                 $recommended = Channel::query()
                     ->leftJoin('videos', 'videos.channel_id', '=', 'channels.id')
                     ->leftJoin('video_watch_histories as vwh', function ($join) use ($user) {
                         $join->on('vwh.video_id', '=', 'videos.id')
                             ->where('vwh.user_id', '=', $user->id);
                     })
-
                     ->leftJoin('channel_region as cr', 'cr.channel_id', '=', 'channels.id')
                     ->leftJoin('regions as rr', 'rr.id', '=', 'cr.region_id')
                     ->when($regionCode !== 'GLOBAL', fn($q) => $q->where('rr.region_code', $regionCode))
                     ->when($type, fn($q) => $q->where('channels.channel_category', $type))
                     ->whereNotNull('channels.id')
-                    // ->groupBy('channels.id', 'channels.name', 'channels.image', 'channels.created_at', 'channels.updated_at')
                     ->groupBy(
                         'channels.id',
                         'channels.name',
@@ -733,12 +845,29 @@ class CategoryController extends Controller
                         'channels.secondary_color',
                         'channels.accent_color',
                         'channels.background_color',
+                        'channels.text_color',
+                        'channels.hover_color',
+                        'channels.highlight_color',
+                        'channels.cta',
+                        'channels.channel_category',
                         'channels.created_at',
-                        'channels.updated_at',
-                        'channels.channel_category'
+                        'channels.updated_at'
                     )
                     ->select(
-                        'channels.*',
+                        'channels.id',
+                        'channels.name',
+                        'channels.image',
+                        'channels.primary_color',
+                        'channels.secondary_color',
+                        'channels.accent_color',
+                        'channels.background_color',
+                        'channels.text_color',
+                        'channels.hover_color',
+                        'channels.highlight_color',
+                        'channels.cta',
+                        'channels.channel_category',
+                        'channels.created_at',
+                        'channels.updated_at',
                         DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
                         DB::raw('MAX(vwh.created_at) as last_watched_at')
                     )
@@ -746,12 +875,20 @@ class CategoryController extends Controller
                     ->orderByDesc('last_watched_at')
                     ->limit(20)
                     ->get()
-
                     ->map(function ($ch) {
                         return [
                             'id' => $ch->id,
                             'name' => $ch->name,
                             'image_url' => $ch->image_url,
+                            'primary_color' => $ch->primary_color,
+                            'secondary_color' => $ch->secondary_color,
+                            'accent_color' => $ch->accent_color,
+                            'background_color' => $ch->background_color,
+                            'text_color' => $ch->text_color,
+                            'hover_color' => $ch->hover_color,
+                            'highlight_color' => $ch->highlight_color,
+                            'cta' => $ch->cta,
+                            'channel_category' => $ch->channel_category,
                             'created_at' => optional($ch->created_at)?->toDateTimeString(),
                             'updated_at' => optional($ch->updated_at)?->toDateTimeString(),
                             'watch_count' => (int) $ch->watch_count,
@@ -894,6 +1031,46 @@ class CategoryController extends Controller
             $recommended = collect();
 
             if ($user) {
+                // $recommended = Channel::query()
+                //     ->leftJoin('videos', 'videos.channel_id', '=', 'channels.id')
+                //     ->leftJoin('video_watch_histories as vwh', function ($join) use ($user) {
+                //         $join->on('vwh.video_id', '=', 'videos.id')
+                //             ->where('vwh.user_id', '=', $user->id);
+                //     })
+                //     ->leftJoin('channel_region as cr', 'cr.channel_id', '=', 'channels.id')
+                //     ->leftJoin('regions as rr', 'rr.id', '=', 'cr.region_id')
+                //     ->when($regionCode !== 'GLOBAL', fn($q) => $q->where('rr.region_code', $regionCode))
+                //     ->whereNotNull('channels.id')
+                //     ->groupBy(
+                //         'channels.id',
+                //         'channels.name',
+                //         'channels.image',
+                //         'channels.primary_color',
+                //         'channels.secondary_color',
+                //         'channels.accent_color',
+                //         'channels.background_color',
+                //         'channels.created_at',
+                //         'channels.updated_at'
+                //     )
+                //     ->select(
+                //         'channels.*',
+                //         DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
+                //         DB::raw('MAX(vwh.created_at) as last_watched_at')
+                //     )
+                //     ->orderByDesc('watch_count')
+                //     ->orderByDesc('last_watched_at')
+                //     ->limit(20)
+                //     ->get()
+                //     ->map(function ($ch) {
+                //         return [
+                //             'id' => $ch->id,
+                //             'name' => $ch->name,
+                //             'image_url' => $ch->image_url,
+                //             'created_at' => optional($ch->created_at)?->toDateTimeString(),
+                //             'updated_at' => optional($ch->updated_at)?->toDateTimeString(),
+                //             'watch_count' => (int) $ch->watch_count,
+                //         ];
+                //     });
                 $recommended = Channel::query()
                     ->leftJoin('videos', 'videos.channel_id', '=', 'channels.id')
                     ->leftJoin('video_watch_histories as vwh', function ($join) use ($user) {
@@ -912,11 +1089,29 @@ class CategoryController extends Controller
                         'channels.secondary_color',
                         'channels.accent_color',
                         'channels.background_color',
+                        'channels.text_color',
+                        'channels.hover_color',
+                        'channels.highlight_color',
+                        'channels.cta',
+                        'channels.channel_category',
                         'channels.created_at',
                         'channels.updated_at'
                     )
                     ->select(
-                        'channels.*',
+                        'channels.id',
+                        'channels.name',
+                        'channels.image',
+                        'channels.primary_color',
+                        'channels.secondary_color',
+                        'channels.accent_color',
+                        'channels.background_color',
+                        'channels.text_color',
+                        'channels.hover_color',
+                        'channels.highlight_color',
+                        'channels.cta',
+                        'channels.channel_category',
+                        'channels.created_at',
+                        'channels.updated_at',
                         DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
                         DB::raw('MAX(vwh.created_at) as last_watched_at')
                     )
@@ -929,6 +1124,15 @@ class CategoryController extends Controller
                             'id' => $ch->id,
                             'name' => $ch->name,
                             'image_url' => $ch->image_url,
+                            'primary_color' => $ch->primary_color,
+                            'secondary_color' => $ch->secondary_color,
+                            'accent_color' => $ch->accent_color,
+                            'background_color' => $ch->background_color,
+                            'text_color' => $ch->text_color,
+                            'hover_color' => $ch->hover_color,
+                            'highlight_color' => $ch->highlight_color,
+                            'cta' => $ch->cta,
+                            'channel_category' => $ch->channel_category,
                             'created_at' => optional($ch->created_at)?->toDateTimeString(),
                             'updated_at' => optional($ch->updated_at)?->toDateTimeString(),
                             'watch_count' => (int) $ch->watch_count,
