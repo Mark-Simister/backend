@@ -238,6 +238,74 @@ class RegionController extends Controller
     ]);
 }
 
+public function showByCode(Request $request, ?string $code = null)
+{
+    // Accept from path OR query/body; normalize case
+    $input = strtoupper($code ?? $request->query('region', $request->input('region', '')));
+
+    // Map GB -> UK
+    if ($input === 'GB') {
+        $input = 'UK';
+    }
+
+    // Try the requested region first (active only)
+    $region = Region::with('currency_get')
+        ->where('is_active', 1)
+        ->where('region_code', $input)
+        ->first();
+
+    // Fallback to GLOBAL when missing/invalid
+    if (!$region) {
+        $region = Region::with('currency_get')
+            ->where('is_active', 1)
+            ->where('region_code', 'GLOBAL')
+            ->first();
+    }
+
+    if (!$region) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Region not found',
+            'data' => null,
+        ], 404);
+    }
+
+    // Handle motif_color like your index_api
+    $motifColors = $region->motif_color;
+    if ($region->motif_type !== 'solid') {
+        if (is_string($motifColors)) {
+            $decoded = json_decode($motifColors, true);
+            $motifColors = is_array($decoded) ? $decoded : [$motifColors];
+        } elseif (is_array($motifColors)) {
+            // keep as-is
+        } else {
+            $motifColors = [$motifColors];
+        }
+    }
+
+    // Return only requested fields
+    $data = [
+        'id'              => $region->id,
+        'region_name'     => $region->region_name,
+        'region_code'     => $region->region_code,
+        'description'     => $region->description,
+        'is_active'       => $region->is_active,
+        'currency'        => $region->currency,
+        'created_at'      => $region->created_at,
+        'updated_at'      => $region->updated_at,
+        'currency_symbol' => $region->currency_get ? $region->currency_get->currency_symbol : null,
+        'motif_color'     => $motifColors,
+        'motif_type'      => $region->motif_type,
+        'opacity'         => $region->opacity,
+    ];
+
+    return response()->json([
+        'status'  => true,
+        'message' => 'Region fetched successfully',
+        'data'    => $data,
+    ]);
+}
+
 
 
     public function store_api(Request $request)

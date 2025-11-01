@@ -171,6 +171,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
 
 // API's For Guest User
 Route::get('regions', [RegionController::class, 'index_api']);
+Route::get('/region/{code?}', [RegionController::class, 'showByCode']); 
 Route::get('channels', [ChannelController::class, 'index_api']);
 Route::get('/channels/region/{region?}', [ChannelController::class, 'index_by_region_api']);
  Route::get('/channels-people/region/{region?}', [ChannelController::class, 'index_people_by_region_api']);
