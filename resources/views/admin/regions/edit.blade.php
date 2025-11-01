@@ -125,14 +125,14 @@
                         </div>
                     </div>
 
-                    <div class="form-group mt-3">
+                    {{-- <div class="form-group mt-3">
                         <label>Opacity</label>
                         <input type="number" name="opacity" class="form-control" min="0" max="1" step="0.1"
                             value="{{ old('opacity', $region->opacity ?? 1) }}">
                         @error('opacity')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
-                    </div>
+                    </div> --}}
 
                     <div class="form-group mt-3">
                         <label>Status</label>
