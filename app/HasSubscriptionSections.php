@@ -320,7 +320,7 @@ protected function buildVideosQueryWithoutSubscription3(Request $request, string
         ->with(['regions:id,region_code'])
         ->latest();
 }
-protected function buildChannelByRegionQueryNew(string $regionCode, ?string $channelCategory = null)
+protected function buildChannelByRegionQueryNew(string $regionCode, ?string $channelCategory = null) 
 {
     $query = Channel::select(
             'id',
@@ -330,6 +330,11 @@ protected function buildChannelByRegionQueryNew(string $regionCode, ?string $cha
             'secondary_color',
             'accent_color',
             'background_color',
+            'text_color',
+            'hover_color',
+            'highlight_color',
+            'cta',
+            'channel_category',
             'created_at',
             'updated_at'
         )
@@ -337,7 +342,6 @@ protected function buildChannelByRegionQueryNew(string $regionCode, ?string $cha
         ->with(['regions:id,region_code'])
         ->latest();
 
-    // Filter by channel_category if provided
     if ($channelCategory) {
         $query->where('channel_category', $channelCategory);
     }
@@ -345,10 +349,11 @@ protected function buildChannelByRegionQueryNew(string $regionCode, ?string $cha
     return $query;
 }
 
+
 protected function mapChannel($channel): array
 {
-    // expose image_url and hide raw image
     $imageUrl = $channel->image ? asset($channel->image) : null;
+
     if ($channel->relationLoaded('regions')) {
         $channel->regions->each->makeHidden(['pivot']);
     }
@@ -357,6 +362,15 @@ protected function mapChannel($channel): array
         'id' => $channel->id,
         'name' => $channel->name,
         'image_url' => $imageUrl,
+        'primary_color' => $channel->primary_color,
+        'secondary_color' => $channel->secondary_color,
+        'accent_color' => $channel->accent_color,
+        'background_color' => $channel->background_color,
+        'text_color' => $channel->text_color,
+        'hover_color' => $channel->hover_color,
+        'highlight_color' => $channel->highlight_color,
+        'cta' => $channel->cta,
+        'channel_category' => $channel->channel_category,
         'created_at' => optional($channel->created_at)?->toDateTimeString(),
         'updated_at' => optional($channel->updated_at)?->toDateTimeString(),
         'regions' => $channel->regions->map(fn($r) => [
@@ -365,6 +379,7 @@ protected function mapChannel($channel): array
         ]),
     ];
 }
+
 protected function getChannelsForRegion(Request $request, string $region): array
 {
     $regionCode = $this->resolveRegionCode($region);

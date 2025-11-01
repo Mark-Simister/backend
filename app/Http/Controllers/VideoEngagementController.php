@@ -479,18 +479,12 @@ public function getWatchHistory($videoId)
     public function myWatchHistories()
     {
         $user = Auth::user();
+        // dd($user);
 
         $data = VideoWatchHistory::with('video')
             ->where('user_id', $user->id)
             ->where('is_completed',1)
             ->get();
-
-        if ($data->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No watch history found for this user',
-            ], 404);
-        }
 
         // Modify the response to include full URLs using asset() helper
         $data->each(function ($history) {
