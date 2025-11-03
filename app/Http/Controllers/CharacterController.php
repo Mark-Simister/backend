@@ -202,11 +202,11 @@ class CharacterController extends Controller
     }
 
     public function getRegions($categoryId)
-{
-    $category = Category::findOrFail($categoryId);
-    $regions = $category->regions;  // Assuming there's a `regions()` relationship defined in the `Category` model
-    return response()->json($regions);
-}
+    {
+        $category = Category::findOrFail($categoryId);
+        $regions = $category->regions;  // Assuming there's a `regions()` relationship defined in the `Category` model
+        return response()->json($regions);
+    }
 
 
     public function edit(Character $character)
@@ -381,8 +381,8 @@ class CharacterController extends Controller
         $i = 1;
         while (
             Character::where('character_page_url_slug', $uniqueSlug)
-                ->where('id', '!=', $character->id)
-                ->exists()
+            ->where('id', '!=', $character->id)
+            ->exists()
         ) {
             $uniqueSlug = $baseSlug . '-' . $i++;
         }
@@ -685,7 +685,6 @@ class CharacterController extends Controller
                 'message' => 'Character created successfully',
                 'data' => $character
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -1067,7 +1066,8 @@ class CharacterController extends Controller
         //     });
         $featured_product_reviews = Video::where('character_id', $character->id)
             ->where('is_featured', 1)
-            ->with('channel') // Include the related channel data
+            // ->with('channel') // Include the related channel data
+            ->with(['channel:id,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta']) // add this
             ->get()
             ->map(function ($video) {
                 return [
@@ -1083,6 +1083,14 @@ class CharacterController extends Controller
                     "video_url" => $video->video_url,
                     "created_at" => $video->created_at,
                     "updated_at" => $video->updated_at,
+                    "primary_color"    => optional($video->channel)->primary_color,
+                    "secondary_color"  => optional($video->channel)->secondary_color,
+                    "accent_color"     => optional($video->channel)->accent_color,
+                    "background_color" => optional($video->channel)->background_color,
+                    "text_color"       => optional($video->channel)->text_color,
+                    "hover_color"      => optional($video->channel)->hover_color,
+                    "highlight_color"  => optional($video->channel)->highlight_color,
+                    "cta"              => optional($video->channel)->cta,
                 ];
             });
 
@@ -1114,7 +1122,8 @@ class CharacterController extends Controller
 
         $product_reviews = Video::where('character_id', $character->id)
             ->where('is_featured', 0)
-            ->with('channel') // Include the related channel data
+            // ->with('channel') // Include the related channel data
+            ->with(['channel:id,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta']) // add this
             ->get()
             ->map(function ($video) {
                 return [
@@ -1130,6 +1139,14 @@ class CharacterController extends Controller
                     "video_url" => $video->video_url,
                     "created_at" => $video->created_at,
                     "updated_at" => $video->updated_at,
+                    "primary_color"    => optional($video->channel)->primary_color,
+                    "secondary_color"  => optional($video->channel)->secondary_color,
+                    "accent_color"     => optional($video->channel)->accent_color,
+                    "background_color" => optional($video->channel)->background_color,
+                    "text_color"       => optional($video->channel)->text_color,
+                    "hover_color"      => optional($video->channel)->hover_color,
+                    "highlight_color"  => optional($video->channel)->highlight_color,
+                    "cta"              => optional($video->channel)->cta,
                 ];
             });
 
@@ -1149,6 +1166,7 @@ class CharacterController extends Controller
                     ->latest();
             },
             'reviews.user_api:id,name,profile_image',
+            'channel:id,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta',
         ])
             ->withCount([
                 'reviews as rating_count' => function ($q) {
@@ -1294,6 +1312,14 @@ class CharacterController extends Controller
                 'rating_count' => (int) ($video->rating_count ?? 0),
                 'paid' => $paidFlag,
                 'is_subscribed' => $isSubscribed,
+                'primary_color'    => optional($video->channel)->primary_color,
+                'secondary_color'  => optional($video->channel)->secondary_color,
+                'accent_color'     => optional($video->channel)->accent_color,
+                'background_color' => optional($video->channel)->background_color,
+                'text_color'       => optional($video->channel)->text_color,
+                'hover_color'      => optional($video->channel)->hover_color,
+                'highlight_color'  => optional($video->channel)->highlight_color,
+                'cta'              => optional($video->channel)->cta,
             ];
         });
 
@@ -1496,7 +1522,6 @@ class CharacterController extends Controller
                     : ($isFeatured ? 'Featured product reviews fetched successfully' : 'All product reviews fetched successfully'),
                 'data' => $reviews,
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -1573,7 +1598,6 @@ class CharacterController extends Controller
                     : 'Latest product reviews fetched successfully',
                 'data' => $reviews,
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -1651,7 +1675,6 @@ class CharacterController extends Controller
                     : 'Most viewed product reviews fetched successfully',
                 'data' => $reviews,
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -1723,7 +1746,6 @@ class CharacterController extends Controller
                     : 'Characters fetched successfully',
                 'data' => $characters,
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -1880,8 +1902,8 @@ class CharacterController extends Controller
             $i = 1;
             while (
                 Character::where('character_page_url_slug', $slug)
-                    ->where('id', '!=', $character->id)
-                    ->exists()
+                ->where('id', '!=', $character->id)
+                ->exists()
             ) {
                 $slug = $baseSlug . '-' . $i++;
             }
@@ -1964,13 +1986,4 @@ class CharacterController extends Controller
             ], 500);
         }
     }
-
-
-
-
-
-
-
-
 }
-
