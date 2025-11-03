@@ -96,6 +96,11 @@ class VideoEngagementController extends Controller
             $thumbnail = $v->thumbnail_url
                 ?: ($v->thumbnail_image ? asset($v->thumbnail_image) : null);
 
+                $finalBeastieScore = null;
+        if (!is_null($v->final_beastie_score)) {
+            $finalBeastieScore = round($v->final_beastie_score / 2, 1);
+        }
+
             return [
                 'video_id'        => $v->id,
                 'title'           => $v->title,
@@ -109,6 +114,7 @@ class VideoEngagementController extends Controller
                 'thumbnail'       => $thumbnail,
                 'likes'           => $v->likes,
                 'liked_at'        => optional($like->created_at)->toIso8601String(),
+                'final_beastie_score' => $finalBeastieScore,
             ];
         })->values();
 
@@ -487,10 +493,31 @@ class VideoEngagementController extends Controller
             ->get();
 
         // Modify the response to include full URLs using asset() helper
+        // $data->each(function ($history) {
+        //     $history->video->product_thumbnail = $history->video->product_thumbnail ? asset($history->video->product_thumbnail) : null;
+        //     $history->video->thumbnail_image = $history->video->thumbnail_image ? asset($history->video->thumbnail_image) : null;
+        // });
         $data->each(function ($history) {
-            $history->video->product_thumbnail = $history->video->product_thumbnail ? asset($history->video->product_thumbnail) : null;
-            $history->video->thumbnail_image = $history->video->thumbnail_image ? asset($history->video->thumbnail_image) : null;
-        });
+        $video = $history->video;
+        if (!$video) {
+            return;
+        }
+
+        //  Convert final_beastie_score from 1–10 → 1–5
+        $video->final_beastie_score = !is_null($video->final_beastie_score)
+            ? round($video->final_beastie_score / 2, 1)
+            : null;
+
+        //  Make image URLs absolute
+        $video->product_thumbnail = $video->product_thumbnail
+            ? asset($video->product_thumbnail)
+            : null;
+
+        $video->thumbnail_image = $video->thumbnail_image
+            ? asset($video->thumbnail_image)
+            : null;
+    });
+        
 
         return response()->json([
             'status' => 'ok',

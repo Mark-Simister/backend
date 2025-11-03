@@ -447,6 +447,8 @@ class CategoryController extends Controller
             });
 
 
+
+
             return response()->json([
                 'status' => true,
                 'message' => 'Categories fetched successfully',
@@ -680,6 +682,37 @@ class CategoryController extends Controller
             $productReviewCharactersResponse = $this->getProductReviewCharacters2($request, $regionCode, $type); // it is showing review videos but all i want is the most followed character
             $productReviewCharacters = $productReviewCharactersResponse->getData()->data ?? [];
 
+
+            $scaleFinalScore = function ($row) {
+                if (is_array($row)) {
+                    if (array_key_exists('final_beastie_score', $row) && $row['final_beastie_score'] !== null) {
+                        $row['final_beastie_score'] = round($row['final_beastie_score'] / 2, 1);
+                    }
+                    // if payload nests video like ['video' => [...]]
+                    if (isset($row['video']['final_beastie_score'])) {
+                        $row['video']['final_beastie_score'] = round($row['video']['final_beastie_score'] / 2, 1);
+                    }
+                } elseif (is_object($row)) {
+                    if (isset($row->final_beastie_score) && $row->final_beastie_score !== null) {
+                        $row->final_beastie_score = round($row->final_beastie_score / 2, 1);
+                    }
+                    if (isset($row->video) && isset($row->video->final_beastie_score)) {
+                        $row->video->final_beastie_score = round($row->video->final_beastie_score / 2, 1);
+                    }
+                }
+                return $row;
+            };
+
+            // Apply to blocks that contain review/video cards
+            $featuredReviews   = collect($featuredReviews ?? [])->map($scaleFinalScore)->values();
+            $mostViewedReviews = collect($mostViewedReviews ?? [])->map($scaleFinalScore)->values();
+
+            if (isset($sections['top_deals'])) {
+                $sections['top_deals'] = collect($sections['top_deals'])->map($scaleFinalScore)->values();
+            }
+            if (isset($sections['trending_products'])) {
+                $sections['trending_products'] = collect($sections['trending_products'])->map($scaleFinalScore)->values();
+            }
             return response()->json([
                 'status' => true,
                 'message' => 'Categories fetched successfully',
@@ -931,6 +964,68 @@ class CategoryController extends Controller
             //     ];
             // });
             // dd($productReviewCharacters);
+
+            // 🔁 REPLACE your $scaleFinalScore + mappings with this
+
+            $scaleFinalScore = function ($row) {
+                $to5 = function ($v) {
+                    if ($v === null || $v === '') return null;
+                    if (!is_numeric($v)) return null;
+                    return (int) round(((float) $v) / 2, 0); // 1–10 → 1–5 rounded
+                };
+
+                if (is_array($row)) {
+                    if (array_key_exists('final_beastie_score', $row)) {
+                        $row['final_beastie_score'] = $to5($row['final_beastie_score']);
+                    }
+                    // support alt spelling just in case
+                    if (array_key_exists('final_beastiescore', $row)) {
+                        $row['final_beastie_score'] = $to5($row['final_beastiescore']);
+                    }
+                    // handle common nested shape: video => {...}
+                    if (isset($row['video']) && is_array($row['video'])) {
+                        if (array_key_exists('final_beastie_score', $row['video'])) {
+                            $row['video']['final_beastie_score'] = $to5($row['video']['final_beastie_score']);
+                        }
+                        if (array_key_exists('final_beastiescore', $row['video'])) {
+                            $row['video']['final_beastie_score'] = $to5($row['video']['final_beastiescore']);
+                        }
+                    }
+                    return $row;
+                }
+
+                if (is_object($row)) {
+                    if (isset($row->final_beastie_score)) {
+                        $row->final_beastie_score = $to5($row->final_beastie_score);
+                    }
+                    if (isset($row->final_beastiescore)) {
+                        $row->final_beastie_score = $to5($row->final_beastiescore);
+                    }
+                    if (isset($row->video) && is_object($row->video)) {
+                        if (isset($row->video->final_beastie_score)) {
+                            $row->video->final_beastie_score = $to5($row->video->final_beastie_score);
+                        }
+                        if (isset($row->video->final_beastiescore)) {
+                            $row->video->final_beastie_score = $to5($row->video->final_beastiescore);
+                        }
+                    }
+                    return $row;
+                }
+
+                return $row;
+            };
+
+            // apply (unchanged)
+            $featuredReviews   = collect($featuredReviews ?? [])->map($scaleFinalScore)->values();
+            $mostViewedReviews = collect($mostViewedReviews ?? [])->map($scaleFinalScore)->values();
+
+            if (isset($sections['top_deals'])) {
+                $sections['top_deals'] = collect($sections['top_deals'] ?? [])->map($scaleFinalScore)->values();
+            }
+            if (isset($sections['trending_products'])) {
+                $sections['trending_products'] = collect($sections['trending_products'] ?? [])->map($scaleFinalScore)->values();
+            }
+
 
 
             return response()->json([
@@ -1579,6 +1674,11 @@ class CategoryController extends Controller
                 $paidFlag = $isPaidVideo;
                 $isSubscribed = $isPaidUser;
 
+                $finalBeastieScore = null;
+                if (!is_null($video->final_beastie_score)) {
+                    $finalBeastieScore = round($video->final_beastie_score / 2, 1);
+                }
+
                 return [
                     'id' => $video->id,
                     'title' => $video->title,
@@ -1602,6 +1702,7 @@ class CategoryController extends Controller
                     ]),
                     'paid' => $paidFlag,
                     'is_subscribed' => $isSubscribed,
+                    'final_beastie_score' => $finalBeastieScore,
                 ];
             });
 

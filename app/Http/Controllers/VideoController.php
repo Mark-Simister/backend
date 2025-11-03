@@ -161,7 +161,7 @@ class VideoController extends Controller
 
     public function store(Request $request)
     {
-        // dd($request);
+        // dd($request->all());
         //  Use Validator instead of request->validate
         $validator = \Validator::make(
             $request->all(),
@@ -225,9 +225,9 @@ class VideoController extends Controller
 
                 'product_name' => 'nullable|string|max:255',
                 'product_asin_sku' => 'nullable|string|max:255',
-                'character_score' => 'nullable|numeric',
-                'editorial_score' => 'nullable|numeric',
-                'final_beastiescore' => 'nullable|string|max:255',
+                'character_score' => ['nullable', 'numeric', 'min:0', 'max:10'],
+                'editorial_score' => ['nullable', 'numeric', 'min:0', 'max:10'],
+                'final_beastie_score' => ['nullable', 'numeric', 'min:0', 'max:10'],
                 'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120', // For thumbnail image
             ],
             [
@@ -1677,6 +1677,11 @@ class VideoController extends Controller
 
                 $isSubscribed = $isPaidUser;
 
+                $finalBeastieScore = null;
+                if (!is_null($video->final_beastie_score)) {
+                    $finalBeastieScore = round($video->final_beastie_score / 2, 1);
+                }
+
                 return [
                     'id' => $video->id,
                     'title' => $video->title,
@@ -1700,6 +1705,7 @@ class VideoController extends Controller
                     ]),
                     'paid' => $paidFlag,  // Set the 'paid' flag 
                     'is_subscribed' => $isSubscribed,  // 'is_subscribed' indicating whether the user has a valid subscription
+                    'final_beastie_score' => $finalBeastieScore,
                 ];
             });
 
@@ -1768,6 +1774,11 @@ class VideoController extends Controller
                 $paidFlag = $isPaidVideo;
                 $isSubscribed = $isPaidUser;
 
+                $finalBeastieScore = null;
+                if (!is_null($video->final_beastie_score)) {
+                    $finalBeastieScore = round($video->final_beastie_score / 2, 1);
+                }
+
                 return [
                     'id' => $video->id,
                     'title' => $video->title,
@@ -1791,6 +1802,7 @@ class VideoController extends Controller
                     ]),
                     'paid' => $paidFlag,
                     'is_subscribed' => $isSubscribed,
+                    'final_beastie_score' => $finalBeastieScore,
                 ];
             });
 
@@ -1892,7 +1904,10 @@ class VideoController extends Controller
 
                 $isPaidVideo = in_array($video->type, ['vimeo']);
                 $isPaidUser = $userId && $this->hasValidSubscription($userId);
-
+                $finalBeastieScore = null;
+                if (!is_null($video->final_beastie_score)) {
+                    $finalBeastieScore = round($video->final_beastie_score / 2, 1);
+                }
                 return [
                     'id' => $video->id,
                     'title' => $video->title,
@@ -1918,6 +1933,7 @@ class VideoController extends Controller
                     'is_subscribed' => $isPaidUser,
                     'views' => $video->watch ?? 0,
                     'weekly_views' => $video->weekly_views ?? 0,
+                    'final_beastie_score' => $finalBeastieScore,
                 ];
             });
 
@@ -2140,12 +2156,20 @@ class VideoController extends Controller
                 $isPaidVideo = in_array($video->type, ['vimeo']);
                 $isPaidUser = $userId && $this->hasValidSubscription($userId);
                 // dd($isPaidVideo);
+                $finalBeastieScore = null;
+                if (!is_null($video->final_beastie_score)) {
+                    $finalBeastieScore = round($video->final_beastie_score / 2, 1);
+                }
 
 
 
                 $paidFlag = $isPaidVideo;
 
                 $isSubscribed = $isPaidUser;
+                $finalBeastieScore = null;
+                if (!is_null($video->final_beastie_score)) {
+                    $finalBeastieScore = round($video->final_beastie_score / 2, 1);
+                }
 
                 return [
                     'id' => $video->id,
@@ -2170,6 +2194,7 @@ class VideoController extends Controller
                     ]),
                     'paid' => $paidFlag,
                     'is_subscribed' => $isSubscribed,
+                    'final_beastie_score' => $finalBeastieScore,
                 ];
             });
 
@@ -2265,6 +2290,10 @@ class VideoController extends Controller
                 $isPaidVideo = in_array($video->type, ['vimeo']);
                 $isPaidUser = $userId && $this->hasValidSubscription($userId);
                 // dd($isPaidVideo);
+                $finalBeastieScore = null;
+                if (!is_null($video->final_beastie_score)) {
+                    $finalBeastieScore = round($video->final_beastie_score / 2, 1);
+                }
 
 
 
@@ -2296,6 +2325,7 @@ class VideoController extends Controller
                     ]),
                     'paid' => $paidFlag,
                     'is_subscribed' => $isSubscribed,
+                    'final_beastie_score' => $finalBeastieScore,
                 ];
             });
 
@@ -2763,11 +2793,13 @@ class VideoController extends Controller
             $regionCode = 'GLOBAL';
         }
 
-        $video = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code',
-        'channel:id,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta', 
+        $video = Video::with([
+            'reviews:id,video_id,rating',
+            'regions:id,region_code',
+            'channel:id,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta',
         ])
             ->where('status', 'published')
-            
+
             ->where('id', $id)
             ->whereHas('regions', function ($query) use ($regionCode) {
                 $query->where('region_code', $regionCode);
@@ -3110,13 +3142,13 @@ class VideoController extends Controller
                 'watched_at' => $watchedAt,
 
                 'primary_color'    => optional($video->channel)->primary_color,
-'secondary_color'  => optional($video->channel)->secondary_color,
-'accent_color'     => optional($video->channel)->accent_color,
-'background_color' => optional($video->channel)->background_color,
-'text_color'       => optional($video->channel)->text_color,
-'hover_color'      => optional($video->channel)->hover_color,
-'highlight_color'  => optional($video->channel)->highlight_color,
-'cta'              => optional($video->channel)->cta,
+                'secondary_color'  => optional($video->channel)->secondary_color,
+                'accent_color'     => optional($video->channel)->accent_color,
+                'background_color' => optional($video->channel)->background_color,
+                'text_color'       => optional($video->channel)->text_color,
+                'hover_color'      => optional($video->channel)->hover_color,
+                'highlight_color'  => optional($video->channel)->highlight_color,
+                'cta'              => optional($video->channel)->cta,
 
             ],
             'related_products' => $related,

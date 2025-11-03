@@ -1,6 +1,6 @@
 <section class="container py-4">
     <div class="mb-3">
-        <p class="text-muted">{{ __("Update your account's profile information and email address.") }}</p>
+        <p class="text-muted">{{ __("Update your account's profile information.") }}</p>
     </div>
 
     <!-- Email Verification Resend Form -->

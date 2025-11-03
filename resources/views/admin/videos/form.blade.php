@@ -527,6 +527,7 @@
                     tag</button>
             </div>
 
+            {{-- Rating Type --}}
             <div class="mb-3">
                 <label for="rating_type">Rating Type</label>
                 <select name="rating_type" id="rating_type" class="form-select">
@@ -540,7 +541,7 @@
                 </select>
             </div>
 
-            <!-- Rating Input Fields (will be displayed when "rating" is selected) -->
+            {{-- Shown when rating_type = rating --}}
             <div id="rating_fields" class="form-group"
                 style="{{ old('rating_type', $video->rating_type ?? '') === 'rating' ? '' : 'display:none;' }}">
                 <div class="mb-3">
@@ -551,7 +552,7 @@
                 </div>
             </div>
 
-            <!-- Review Input Fields (will be displayed when "review" is selected) -->
+            {{-- Shown when rating_type = review --}}
             <div id="review_fields" class="form-group"
                 style="{{ old('rating_type', $video->rating_type ?? '') === 'review' ? '' : 'display:none;' }}">
                 <div class="mb-3">
@@ -559,6 +560,34 @@
                     <textarea name="review_details" id="review_details" class="form-control" placeholder="Enter review details">{{ old('review_details', $video->review_details ?? '') }}</textarea>
                 </div>
             </div>
+
+            <hr class="my-4">
+
+            {{-- ===== Scores (optional) ===== --}}
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="character_score" class="form-label">Character Score</label>
+                    <input type="number" name="character_score" id="character_score" class="form-control"
+                        step="1" min="0" max="10"
+                        value="{{ old('character_score', $video->character_score ?? '') }}" placeholder="e.g. 4">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="editorial_score" class="form-label">Editorial Score</label>
+                    <input type="number" name="editorial_score" id="editorial_score" class="form-control"
+                        step="1" min="0" max="10"
+                        value="{{ old('editorial_score', $video->editorial_score ?? '') }}" placeholder="e.g. 4">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="final_beastie_score" class="form-label">Final Beastie Score</label>
+                    <input type="number" name="final_beastie_score" id="final_beastie_score" class="form-control"
+                        value="{{ old('final_beastie_score', $video->final_beastie_score ?? '') }}"
+                        placeholder="Auto/Manual e.g. 4" step="0.1" min="0" max="5">
+
+                </div>
+            </div>
+
 
 
             <div class="mb-3">
@@ -602,7 +631,7 @@
 
             <div class="mb-3">
                 <label for="video_type">Video Type</label>
-                <select name="video_type" id="video_type" class="form-select">
+                <select name="video_type" id="video_type" class="form-select" required>
                     <option value="" disabled selected>-- Select Video Type --</option>
                     <option value="short"
                         {{ old('video_type', $video->video_type ?? '') == 'short' ? 'selected' : '' }}>Short</option>
@@ -1113,7 +1142,8 @@
         if (characterId) {
             // Make AJAX request to fetch regions associated with the selected character
             $.ajax({
-                url: '{{ url('admin/videos') }}/' + characterId + '/regions', // Ensure this route is correct
+                url: '{{ url('admin/videos') }}/' + characterId +
+                '/regions', // Ensure this route is correct
                 type: 'GET',
                 success: function(data) {
                     // Uncheck all region checkboxes first
@@ -1144,4 +1174,48 @@
         dropdownCssClass: 'select2-lg'
     });
 </script>
+<script>
+    (function() {
+        const rtSel = document.getElementById('rating_type');
+        const ratingBox = document.getElementById('rating_fields');
+        const reviewBox = document.getElementById('review_fields');
 
+        function toggleRatingBlocks() {
+            const v = (rtSel?.value || '').toLowerCase();
+            if (!ratingBox || !reviewBox) return;
+            ratingBox.style.display = v === 'rating' ? '' : 'none';
+            reviewBox.style.display = v === 'review' ? '' : 'none';
+            // Clear mutually exclusive field to avoid accidental submission
+            if (v === 'rating') {
+                const rd = document.getElementById('review_details');
+                if (rd) rd.value = '';
+            } else if (v === 'review') {
+                const pr = document.getElementById('public_rating');
+                if (pr) pr.value = '';
+            }
+        }
+        if (rtSel) {
+            rtSel.addEventListener('change', toggleRatingBlocks);
+        }
+
+        const ch = document.getElementById('character_score');
+        const ed = document.getElementById('editorial_score');
+        const fn = document.getElementById('final_beastiescore');
+
+        function recalcFinal() {
+            if (!ch || !ed || !fn) return;
+            const a = parseFloat(ch.value);
+            const b = parseFloat(ed.value);
+            if (!isNaN(a) && !isNaN(b)) {
+                fn.value = ((a + b) / 2).toFixed(2);
+            }
+        }
+        ['input', 'change'].forEach(evt => {
+            if (ch) ch.addEventListener(evt, recalcFinal);
+            if (ed) ed.addEventListener(evt, recalcFinal);
+        });
+
+        // init on load
+        toggleRatingBlocks();
+    })();
+</script>
