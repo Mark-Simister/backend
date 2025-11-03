@@ -2763,8 +2763,11 @@ class VideoController extends Controller
             $regionCode = 'GLOBAL';
         }
 
-        $video = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+        $video = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code',
+        'channel:id,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta', 
+        ])
             ->where('status', 'published')
+            
             ->where('id', $id)
             ->whereHas('regions', function ($query) use ($regionCode) {
                 $query->where('region_code', $regionCode);
@@ -3105,6 +3108,16 @@ class VideoController extends Controller
                 'last_position_seconds' => $lastPositionSeconds,
                 'is_completed' => $isCompleted,
                 'watched_at' => $watchedAt,
+
+                'primary_color'    => optional($video->channel)->primary_color,
+'secondary_color'  => optional($video->channel)->secondary_color,
+'accent_color'     => optional($video->channel)->accent_color,
+'background_color' => optional($video->channel)->background_color,
+'text_color'       => optional($video->channel)->text_color,
+'hover_color'      => optional($video->channel)->hover_color,
+'highlight_color'  => optional($video->channel)->highlight_color,
+'cta'              => optional($video->channel)->cta,
+
             ],
             'related_products' => $related,
             'local_available_products' => $localProducts,
