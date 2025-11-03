@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Newsletter Subscriptions</h2>
+    <h2 class="mb-0">Newsletter Subscribers</h2>
 </div>
 
 @if(session('success'))
@@ -41,7 +41,7 @@
 </div>
 @else
 <div class="alert alert-info text-center mt-4">
-    <strong>No newsletter subscriptions found.</strong> Start by having users subscribe.
+    <strong>No newsletter subscribers found.</strong> Start by having users subscribe.
 </div>
 @endif
 @endsection

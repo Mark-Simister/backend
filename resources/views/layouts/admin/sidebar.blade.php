@@ -167,7 +167,7 @@
             <li class="nav-item {{ request()->is('admin/newsletter*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.newsletter') }}">
                     <i class="ti-email menu-icon"></i>
-                    <span class="menu-title">Newsletter Subscriptions</span>
+                    <span class="menu-title">Newsletter Subscribers</span>
                 </a>
             </li>
         @endcan

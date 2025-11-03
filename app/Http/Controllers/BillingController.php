@@ -696,13 +696,30 @@ class BillingController extends Controller
 
         try {
             // Stop renewing after the current period
+            // $stripeSub = \Stripe\Subscription::update($sub->stripe_subscription_id, [
+            //     'cancel_at_period_end' => true,
+            // ]);
+
+            // // Align local end date with Stripe
+            // $periodEnd = \Carbon\Carbon::createFromTimestamp($stripeSub->current_period_end)->toDateString();
+
             $stripeSub = \Stripe\Subscription::update($sub->stripe_subscription_id, [
-                'cancel_at_period_end' => true,
-            ]);
+    'cancel_at_period_end' => true,
+]);
 
-            // Align local end date with Stripe
-            $periodEnd = \Carbon\Carbon::createFromTimestamp($stripeSub->current_period_end)->toDateString();
+// Re-fetch to ensure all timestamps are populated
+$stripeSub = \Stripe\Subscription::retrieve($sub->stripe_subscription_id);
 
+// Pick a safe timestamp (some statuses may not set current_period_end on update)
+$periodEndTs = $stripeSub->current_period_end
+    ?? $stripeSub->cancel_at
+    ?? $stripeSub->trial_end
+    ?? null;
+
+$periodEnd = $periodEndTs
+    ? \Carbon\Carbon::createFromTimestamp($periodEndTs)->toDateString()
+    : ($sub->subscription_end_date ?: now()->toDateString());
+    
             // Still active until period end
             $sub->update([
                 'auto_renew' => false,

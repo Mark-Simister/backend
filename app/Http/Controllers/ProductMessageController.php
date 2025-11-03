@@ -10,10 +10,11 @@ class ProductMessageController extends Controller
 {
     // Show list of all product messages
     public function index()
-    {
-        $productMessages = ProductMessage::all();
-        return view('admin.product-messages.index', compact('productMessages'));
-    }
+{
+    $productMessages = ProductMessage::orderBy('created_at', 'desc')->get();
+    return view('admin.product-messages.index', compact('productMessages'));
+}
+
 
     // Show a specific product message
     public function show($id)
