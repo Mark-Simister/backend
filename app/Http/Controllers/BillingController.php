@@ -719,16 +719,22 @@ $periodEndTs = $stripeSub->current_period_end
 $periodEnd = $periodEndTs
     ? \Carbon\Carbon::createFromTimestamp($periodEndTs)->toDateString()
     : ($sub->subscription_end_date ?: now()->toDateString());
-    
+
             // Still active until period end
+            // $sub->update([
+            //     'auto_renew' => false,
+            //     'subscription_end_date' => $periodEnd,
+            //     'subscription_status' => $sub->subscription_status === 'active'
+            //         ? 'cancels_at_period_end'
+            //         : $sub->subscription_status,
+            //     'cancel_at_period_end' => true,
+            // ]);
             $sub->update([
-                'auto_renew' => false,
-                'subscription_end_date' => $periodEnd,
-                'subscription_status' => $sub->subscription_status === 'active'
-                    ? 'cancels_at_period_end'
-                    : $sub->subscription_status,
-                'cancel_at_period_end' => true,
-            ]);
+    'auto_renew' => false,
+    'subscription_end_date' => $periodEnd,
+    'cancel_at_period_end' => true,
+]);
+
 
             return response()->json([
                 'status' => true,
