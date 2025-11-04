@@ -348,65 +348,129 @@ class ChannelController extends Controller
         }
     }
 
+    // public function index_by_region_api(Request $request, $region = null)
+    // {
+    //     try {
+    //         // region can come from URL or body/query
+    //         $input = strtoupper($region ?? $request->input('region', ''));
+
+    //         $allowed = ['AU', 'CA', 'UK', 'US'];
+    //         $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
+
+    //         // Only channels that have the requested region
+    //         // $channels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
+    //         $channels =
+    //             // Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+    //             Channel::select(
+    //                 'id',
+    //                 'name',
+    //                 'image',
+    //                 'primary_color',
+    //                 'secondary_color',
+    //                 'accent_color',
+    //                 'background_color',
+    //                 'text_color',
+    //                 'hover_color',
+    //                 'highlight_color',
+    //                 'cta',
+    //                 'created_at',
+    //                 'updated_at'
+    //             )
+    //             ->whereHas('regions', function ($q) use ($regionCode) {
+    //                 $q->where('region_code', $regionCode);
+    //             })
+    //             ->with([
+    //                 'regions:id,region_code' // keep full regions list in payload (unchanged shape)
+    //             ])
+    //             ->latest()
+    //             ->get();
+
+    //         // enrich + hide fields (same as your index_api)
+    //         $channels->each(function ($channel) {
+    //             $channel->image_url = $channel->image ? asset($channel->image) : null;
+    //             $channel->makeHidden(['image']);
+    //             if ($channel->relationLoaded('regions')) {
+    //                 $channel->regions->each->makeHidden(['pivot']);
+    //             }
+    //         });
+
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => 'Channels fetched successfully',
+    //             'data' => $channels,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Failed to fetch channels',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
     public function index_by_region_api(Request $request, $region = null)
-    {
-        try {
-            // region can come from URL or body/query
-            $input = strtoupper($region ?? $request->input('region', ''));
+{
+    try {
+        // region can come from URL or body/query
+        $input = strtoupper($region ?? $request->input('region', ''));
 
-            $allowed = ['AU', 'CA', 'UK', 'US'];
-            $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
+        $allowed = ['AU', 'CA', 'UK', 'US'];
+        $regionCode = in_array($input, $allowed, true) ? $input : 'GLOBAL';
 
-            // Only channels that have the requested region
-            // $channels = Channel::select('id', 'name', 'image', 'created_at', 'updated_at')
-            $channels =
-                // Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
-                Channel::select(
-                    'id',
-                    'name',
-                    'image',
-                    'primary_color',
-                    'secondary_color',
-                    'accent_color',
-                    'background_color',
-                    'text_color',
-                    'hover_color',
-                    'highlight_color',
-                    'cta',
-                    'created_at',
-                    'updated_at'
-                )
-                ->whereHas('regions', function ($q) use ($regionCode) {
-                    $q->where('region_code', $regionCode);
-                })
-                ->with([
-                    'regions:id,region_code' // keep full regions list in payload (unchanged shape)
-                ])
-                ->latest()
-                ->get();
+        //  read optional limit (e.g., ?limit=6). null or <=0 means no limit
+        $limit = (int) $request->query('limit', 0);
+        $limit = $limit > 0 ? $limit : null;
 
-            // enrich + hide fields (same as your index_api)
-            $channels->each(function ($channel) {
-                $channel->image_url = $channel->image ? asset($channel->image) : null;
-                $channel->makeHidden(['image']);
-                if ($channel->relationLoaded('regions')) {
-                    $channel->regions->each->makeHidden(['pivot']);
-                }
-            });
+        $query = Channel::select(
+                'id',
+                'name',
+                'image',
+                'primary_color',
+                'secondary_color',
+                'accent_color',
+                'background_color',
+                'text_color',
+                'hover_color',
+                'highlight_color',
+                'cta',
+                'created_at',
+                'updated_at'
+            )
+            ->whereHas('regions', function ($q) use ($regionCode) {
+                $q->where('region_code', $regionCode);
+            })
+            ->with(['regions:id,region_code'])
+            ->latest();
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Channels fetched successfully',
-                'data' => $channels,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to fetch channels',
-                'error' => $e->getMessage()
-            ], 500);
+        // apply limit only if provided
+        if ($limit !== null) {
+            $query->limit($limit);
         }
+
+        $channels = $query->get();
+
+        // enrich + hide fields
+        $channels->each(function ($channel) {
+            $channel->image_url = $channel->image ? asset($channel->image) : null;
+            $channel->makeHidden(['image']);
+            if ($channel->relationLoaded('regions')) {
+                $channel->regions->each->makeHidden(['pivot']);
+            }
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Channels fetched successfully',
+            'data' => $channels,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to fetch channels',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
+
     public function index_people_by_region_api(Request $request, $region = null)
     {
         try {

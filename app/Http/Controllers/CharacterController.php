@@ -1539,12 +1539,21 @@ class CharacterController extends Controller
         }
     }
 
+    // public function getLatestProductReviews(Request $request, $region)
+    // {
+    //     return $this->fetchLatestReviewsByRegion($request, $region, 5); // limit 5
+    // }
     public function getLatestProductReviews(Request $request, $region)
     {
-        return $this->fetchLatestReviewsByRegion($request, $region, 5); // limit 5
+        // ?limit=6  (omit or <=0 => no limit i.e., return all)
+    $limit = (int) $request->query('limit', 5);
+    $limit = $limit > 0 ? min($limit, 50) : null; // cap to 50 for safety, null = no limit
+
+    return $this->fetchLatestReviewsByRegion($request, $region, $limit);
+        
     }
 
-    protected function fetchLatestReviewsByRegion(Request $request, $region, $limit = 5)
+    protected function fetchLatestReviewsByRegion(Request $request, $region, $limit = 6)
     {
         try {
             // Normalize region code
