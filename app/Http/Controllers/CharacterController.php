@@ -1070,6 +1070,9 @@ class CharacterController extends Controller
             ->with(['channel:id,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta']) // add this
             ->get()
             ->map(function ($video) {
+                $finalBeastieScore = $video->final_beastie_score
+            ? round($video->final_beastie_score / 2, 2)
+            : null;
                 return [
                     "id" => $video->id,
                     "character_id" => $video->character_id,
@@ -1081,6 +1084,7 @@ class CharacterController extends Controller
                     "description" => $video->description,
                     "type" => $video->type,
                     "video_url" => $video->video_url,
+                    "final_beastie_score" => $finalBeastieScore,
                     "created_at" => $video->created_at,
                     "updated_at" => $video->updated_at,
                     "primary_color"    => optional($video->channel)->primary_color,
@@ -1126,6 +1130,9 @@ class CharacterController extends Controller
             ->with(['channel:id,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta']) // add this
             ->get()
             ->map(function ($video) {
+                $finalBeastieScore = $video->final_beastie_score
+            ? round($video->final_beastie_score / 2, 2)
+            : null;
                 return [
                     "id" => $video->id,
                     "character_id" => $video->character_id,
@@ -1137,6 +1144,7 @@ class CharacterController extends Controller
                     "description" => $video->description,
                     "type" => $video->type,
                     "video_url" => $video->video_url,
+                    "final_beastie_score" => $finalBeastieScore,
                     "created_at" => $video->created_at,
                     "updated_at" => $video->updated_at,
                     "primary_color"    => optional($video->channel)->primary_color,
