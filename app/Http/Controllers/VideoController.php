@@ -2861,11 +2861,15 @@ class VideoController extends Controller
             ->limit(2)
             ->get()
             ->map(function ($v) {
+                $finalBeastieScore = $v->final_beastie_score
+            ? round($v->final_beastie_score / 2, 2)
+            : null;
                 return [
                     'id' => $v->id,
                     'title' => $v->title,
                     'description' => $v->description,
                     'thumbnail_image' => $v->thumbnail_image ? asset($v->thumbnail_image) : null,
+                    'final_beastie_score' => $finalBeastieScore,
                 ];
             });
 
@@ -2981,7 +2985,7 @@ class VideoController extends Controller
         }
 
         $related = Video::query()
-            ->select(['id', 'title', 'thumbnail_image', 'description', 'product_name', 'product_asin_sku', 'product_thumbnail', 'review_details', 'character_id', 'created_at'])
+            ->select(['id', 'title', 'thumbnail_image', 'description', 'product_name', 'product_asin_sku', 'product_thumbnail', 'review_details', 'character_id', 'final_beastie_score', 'created_at'])
             ->where('status', 'published')
             ->where('type', 'youtube') // keep as-is; change/remove if you want paid types to show here too
             ->where('character_id', $video->character_id)
@@ -2993,6 +2997,9 @@ class VideoController extends Controller
             ->limit(12)
             ->get()
             ->map(function ($v) {
+                $finalBeastieScore = $v->final_beastie_score
+            ? round($v->final_beastie_score / 2, 2)
+            : null;
                 return [
                     'id' => $v->id,
                     'name' => $v->title,
@@ -3002,6 +3009,7 @@ class VideoController extends Controller
                     'product_asin_sku' => $v->product_asin_sku,
                     'product_thumbnail' => $v->product_thumbnail ? asset($v->product_thumbnail) : null,
                     'review_details' => $v->review_details,
+                    'final_beastie_score' => $finalBeastieScore,
                 ];
             })
             ->values();
