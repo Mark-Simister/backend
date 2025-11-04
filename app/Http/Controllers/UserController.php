@@ -277,15 +277,69 @@ class UserController extends Controller
         ], 200);
     }
 
-    public function me_api(Request $request)
+//     public function me_api(Request $request)
+// {
+//     $user = $request->user(); // ApiUser via auth:api
+//     $user->load([
+//         'subscriptions_api' => fn ($q) => $q->with('listing')->latest(),
+//         'roles',
+//     ]);
+
+//     $data = $this->shapeUser($user);
+
+//     // Add phone and profile image URL
+//     $data['phone'] = $user->phone;
+//     $data['profile_image'] = $user->profile_image ? asset($user->profile_image) : null;
+
+//     return response()->json([
+//         'status'  => true,
+//         'message' => 'Profile fetched successfully',
+//         'data'    => $data,
+//     ], 200);
+// }
+public function me_api(Request $request)
 {
-    $user = $request->user(); // ApiUser via auth:api
+    $user = $request->user(); // Authenticated API user
+
+    // Load relationships
     $user->load([
-        'subscriptions_api' => fn ($q) => $q->with('listing')->latest(),
+        'subscriptions_api' => fn($q) => $q->with('listing')->latest(),
         'roles',
     ]);
 
+    // Shape base user data
     $data = $this->shapeUser($user);
+
+    // Handle subscriptions and their currencies
+    if (!empty($data['subscriptions']) && count($data['subscriptions']) > 0) {
+        // Collect unique currency codes (in uppercase)
+        $currencyCodes = collect($data['subscriptions'])
+            ->pluck('currency')
+            ->filter()
+            ->map(fn($code) => strtoupper($code))
+            ->unique()
+            ->values();
+
+        // Fetch all currency details at once
+        $currencies = \App\Models\Currency::whereIn('currency_code', $currencyCodes)
+            ->select('id', 'currency_code', 'currency_name', 'currency_symbol', 'created_at', 'updated_at')
+            ->get()
+            ->keyBy(fn($c) => strtoupper($c->currency_code));
+
+        // Attach currency info to each subscription
+        $data['subscriptions'] = collect($data['subscriptions'])->map(function ($sub) use ($currencies) {
+            $code = strtoupper($sub['currency']);
+            if ($currencies->has($code)) {
+                $currency = $currencies->get($code);
+                $sub['currency_symbol'] = $currency->currency_symbol;
+                $sub['currency_details'] = $currency;
+            } else {
+                $sub['currency_symbol'] = null;
+                $sub['currency_details'] = null;
+            }
+            return $sub;
+        })->values();
+    }
 
     // Add phone and profile image URL
     $data['phone'] = $user->phone;
@@ -297,6 +351,7 @@ class UserController extends Controller
         'data'    => $data,
     ], 200);
 }
+
 
 
 
