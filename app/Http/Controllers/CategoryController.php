@@ -1238,7 +1238,8 @@ class CategoryController extends Controller
                         'channels.created_at',
                         'channels.updated_at',
                         DB::raw('COUNT(DISTINCT vwh.id) as watch_count'),
-                        DB::raw('MAX(vwh.created_at) as last_watched_at')
+                        DB::raw('MAX(vwh.created_at) as last_watched_at'),
+                        DB::raw('AVG(videos.final_beastie_score) as avg_final_beastie_score')
                     )
                     ->orderByDesc('watch_count')
                     ->orderByDesc('last_watched_at')
@@ -1261,6 +1262,7 @@ class CategoryController extends Controller
                             'created_at' => optional($ch->created_at)?->toDateTimeString(),
                             'updated_at' => optional($ch->updated_at)?->toDateTimeString(),
                             'watch_count' => (int) $ch->watch_count,
+                            'final_beastie_score' => round((float)$ch->avg_final_beastie_score, 2),
                         ];
                     });
             }
