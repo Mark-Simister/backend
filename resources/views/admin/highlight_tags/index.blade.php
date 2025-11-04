@@ -39,7 +39,7 @@
                                             <img src="{{ asset($highlightTag->emoji) }}" alt="{{ $highlightTag->label }}"
                                                 width="40" height="40" style="object-fit:contain;">
                                         @else
-                                            —
+                                            No Image
                                         @endif
                                     </td>
                                     <td>{{ $highlightTag->label }}</td>

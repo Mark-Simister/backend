@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\NewsletterSubscription;
 use Illuminate\Http\Request;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 class NewsletterController extends Controller
 {
     public function index()
     {
-        $emails = NewsletterSubscription::all();
+        $emails = NewsletterSubscription::orderBy('created_at', 'desc')->get();
         return view('admin.newsletter.index', compact('emails'));
     }
 
@@ -46,7 +46,7 @@ class NewsletterController extends Controller
     
     public function index_api()
     {
-        $emails = NewsletterSubscription::all();
+        $emails = NewsletterSubscription::latest()->get();
         return response()->json($emails);
     }
 }

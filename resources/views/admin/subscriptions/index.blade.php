@@ -61,10 +61,15 @@
                                                 class="badge bg-danger">{{ ucfirst($subscription->subscription_status) }}</span>
                                         @endif
                                     </td>
-                                    <td>{{ \Carbon\Carbon::parse($subscription->subscription_start_date)->format('Y-m-d') }}
+                                    {{-- <td>{{ \Carbon\Carbon::parse($subscription->subscription_start_date)->format('Y-m-d') }}
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($subscription->subscription_end_date)->format('Y-m-d') }}
+                                    </td> --}}
+                                    <td>{{ \Carbon\Carbon::parse($subscription->subscription_start_date)->format('d M Y') }}
                                     </td>
+                                    <td>{{ \Carbon\Carbon::parse($subscription->subscription_end_date)->format('d M Y') }}
+                                    </td>
+
                                     {{-- <td>
                                     <a href="{{ route('admin.subscriptions.show', $subscription->id) }}"
                                         class="btn btn-info btn-sm">

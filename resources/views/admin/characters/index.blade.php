@@ -45,8 +45,13 @@
                                     <td>{{ $character->name }}</td>
                                     <td>{{ Str::limit($character->persona, 50) }}</td>
                                     <td>
-                                        <img src="{{ asset($character->image) }}" alt="{{ $character->name }}"
+                                        @if ($character->image)
+                                            <img src="{{ asset($character->image) }}" alt="{{ $character->name }}"
                                             style="max-width: 200px; height: auto;">
+                                        @else
+                                            <span>No Image</span>
+                                        @endif
+                                        
                                     </td>
                                     <td>
                                         {{ $character->public_private_toggle == 0 ? 'Public' : 'Private' }}

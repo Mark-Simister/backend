@@ -52,8 +52,9 @@
                                     </td>
                                     <td>{{ $user->created_at }}</td>
                                     <td>
-                                        @if ($user->image)
-                                            <img src="{{ asset($user->image) }}" alt="User Image" width="60"
+                                            
+                                        @if ($user->profile_image)
+                                            <img src="{{ asset($user->profile_image) }}" alt="User Image" width="60"
                                                 height="60" class="rounded-circle">
                                         @else
                                             <span>No Image</span>
