@@ -1071,8 +1071,8 @@ class CharacterController extends Controller
             ->get()
             ->map(function ($video) {
                 $finalBeastieScore = $video->final_beastie_score
-            ? round($video->final_beastie_score / 2, 2)
-            : null;
+                    ? round($video->final_beastie_score / 2, 2)
+                    : null;
                 return [
                     "id" => $video->id,
                     "character_id" => $video->character_id,
@@ -1131,8 +1131,8 @@ class CharacterController extends Controller
             ->get()
             ->map(function ($video) {
                 $finalBeastieScore = $video->final_beastie_score
-            ? round($video->final_beastie_score / 2, 2)
-            : null;
+                    ? round($video->final_beastie_score / 2, 2)
+                    : null;
                 return [
                     "id" => $video->id,
                     "character_id" => $video->character_id,
@@ -1545,15 +1545,16 @@ class CharacterController extends Controller
     // }
     public function getLatestProductReviews(Request $request, $region)
     {
-        // ?limit=6  (omit or <=0 => no limit i.e., return all)
-    $limit = (int) $request->query('limit', 5);
-    $limit = $limit > 0 ? min($limit, 50) : null; // cap to 50 for safety, null = no limit
+        // ?limit=6 (omit or <=0 => no limit i.e., return all)
+        $limit = $request->has('limit') ? (int) $request->query('limit') : null;
+        $limit = ($limit && $limit > 0) ? min($limit, 50) : null; // cap to 50, null = no limit
 
-    return $this->fetchLatestReviewsByRegion($request, $region, $limit);
-        
+        return $this->fetchLatestReviewsByRegion($request, $region, $limit);
     }
 
-    protected function fetchLatestReviewsByRegion(Request $request, $region, $limit = 6)
+
+    // protected function fetchLatestReviewsByRegion(Request $request, $region, $limit = 5)
+    protected function fetchLatestReviewsByRegion(Request $request, $region, $limit = null)
     {
         try {
             // Normalize region code
@@ -1575,15 +1576,19 @@ class CharacterController extends Controller
             $userId = $user?->id;
             $isSubscribed = $user && $this->hasValidSubscription($userId);
 
-            $reviews = ProductReview::query()
+            // $reviews = ProductReview::query()
+            $query = ProductReview::query()
                 ->where('is_active', 1)
                 ->with(['video', 'character.regions'])
                 ->whereHas('character.regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 })
-                ->orderBy('created_at', 'desc')
-                ->limit($limit)
-                ->get()
+                // ->orderBy('created_at', 'desc')
+                // ->limit($limit)
+                // ->get()
+                ->orderByDesc('created_at')
+                ->when($limit, fn($q) => $q->limit($limit));
+            $reviews = $query->get()
                 ->map(function ($review) use ($isSubscribed) {
                     $video = $review->video;
 
