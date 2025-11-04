@@ -81,6 +81,7 @@ trait HasSubscriptionSections
 {
     $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
         ->where('status', 'published');
+       
 
     // subscription-aware type filter
     $this->applySubscriptionVideoType($q, $userId);
@@ -107,6 +108,7 @@ trait HasSubscriptionSections
         });
     }
 
+    
     return $q->latest();
 }
 
@@ -186,6 +188,9 @@ protected function buildVideosQueryWithoutSubscription3(Request $request, string
         if ($video->relationLoaded('regions')) {
             $video->regions->each->makeHidden(['pivot']);
         }
+         $rawFinal = $video->final_beastie_score ?? $video->final_beastiee_score ?? null;
+    $finalBeastieScore = is_null($rawFinal) ? null : round(((float) $rawFinal) / 2, 1);
+        
 
         return [
             'id' => $video->id,
@@ -212,6 +217,7 @@ protected function buildVideosQueryWithoutSubscription3(Request $request, string
                 'id' => $r->id,
                 'region_code' => $r->region_code,
             ]),
+            'final_beastie_score' => $finalBeastieScore,
         ];
     }
 

@@ -929,15 +929,17 @@ class CategoryController extends Controller
                     });
             }
             $sections = $this->getSubscriptionSectionsNew($request, $region ?? $request->input('region', ''), $type);
+            
             $channelsByRegion = $this->getChannelsForRegionNew($request, $region ?? $request->input('region', ''), $type);
             $featuredResponse = $this->fetchReviewsByRegion($request, $regionCode, 1, $type);
             $featuredReviews = $featuredResponse->getData()->data ?? [];
             // $mostViewedResponse = $this->fetchMostViewedReviewsByRegion($request, $regionCode, 5, $type);
             $mostViewedResponse = $this->getProductReviewCharactersMostFollowed($request, $regionCode, $type);
-
+            
             $mostViewedReviews = $mostViewedResponse->getData()->data ?? [];
             $productReviewCharactersResponse = $this->getProductReviewCharacters($request, $regionCode, $type);
             $productReviewCharacters = $productReviewCharactersResponse->getData()->data ?? [];
+            
 
             // Query for videos by region and type
             // $allvideos = Video::query()
@@ -965,24 +967,33 @@ class CategoryController extends Controller
             // });
             // dd($productReviewCharacters);
 
-            // 🔁 REPLACE your $scaleFinalScore + mappings with this
+
+
+            // inside $scaleFinalScore in index_by_region_api_people
 
             $scaleFinalScore = function ($row) {
                 $to5 = function ($v) {
                     if ($v === null || $v === '') return null;
                     if (!is_numeric($v)) return null;
-                    return (int) round(((float) $v) / 2, 0); // 1–10 → 1–5 rounded
+                    return (int) round(((float) $v) / 2, 0); // 1–10 → 1–5
                 };
 
                 if (is_array($row)) {
+                    
                     if (array_key_exists('final_beastie_score', $row)) {
                         $row['final_beastie_score'] = $to5($row['final_beastie_score']);
                     }
-                    // support alt spelling just in case
                     if (array_key_exists('final_beastiescore', $row)) {
                         $row['final_beastie_score'] = $to5($row['final_beastiescore']);
                     }
-                    // handle common nested shape: video => {...}
+
+                    
+                    if (array_key_exists('final_beastiee_score', $row)) {
+                        $row['final_beastie_score'] = $to5($row['final_beastiee_score']);
+                        unset($row['final_beastiee_score']);
+                    }
+
+                    // nested video
                     if (isset($row['video']) && is_array($row['video'])) {
                         if (array_key_exists('final_beastie_score', $row['video'])) {
                             $row['video']['final_beastie_score'] = $to5($row['video']['final_beastie_score']);
@@ -990,17 +1001,31 @@ class CategoryController extends Controller
                         if (array_key_exists('final_beastiescore', $row['video'])) {
                             $row['video']['final_beastie_score'] = $to5($row['video']['final_beastiescore']);
                         }
+                        
+                        if (array_key_exists('final_beastiee_score', $row['video'])) {
+                            $row['video']['final_beastie_score'] = $to5($row['video']['final_beastiee_score']);
+                            unset($row['video']['final_beastiee_score']);
+                        }
                     }
                     return $row;
                 }
 
                 if (is_object($row)) {
+                    // existing mappings...
                     if (isset($row->final_beastie_score)) {
                         $row->final_beastie_score = $to5($row->final_beastie_score);
                     }
                     if (isset($row->final_beastiescore)) {
                         $row->final_beastie_score = $to5($row->final_beastiescore);
                     }
+
+                    
+                    if (isset($row->final_beastiee_score)) {
+                        $row->final_beastie_score = $to5($row->final_beastiee_score);
+                        unset($row->final_beastiee_score);
+                    }
+
+                    // nested video
                     if (isset($row->video) && is_object($row->video)) {
                         if (isset($row->video->final_beastie_score)) {
                             $row->video->final_beastie_score = $to5($row->video->final_beastie_score);
@@ -1008,12 +1033,18 @@ class CategoryController extends Controller
                         if (isset($row->video->final_beastiescore)) {
                             $row->video->final_beastie_score = $to5($row->video->final_beastiescore);
                         }
+                        
+                        if (isset($row->video->final_beastiee_score)) {
+                            $row->video->final_beastie_score = $to5($row->video->final_beastiee_score);
+                            unset($row->video->final_beastiee_score);
+                        }
                     }
                     return $row;
                 }
 
                 return $row;
             };
+
 
             // apply (unchanged)
             $featuredReviews   = collect($featuredReviews ?? [])->map($scaleFinalScore)->values();
@@ -1025,8 +1056,7 @@ class CategoryController extends Controller
             if (isset($sections['trending_products'])) {
                 $sections['trending_products'] = collect($sections['trending_products'] ?? [])->map($scaleFinalScore)->values();
             }
-
-
+            
 
             return response()->json([
                 'status' => true,
