@@ -1650,6 +1650,10 @@ class VideoController extends Controller
 
             // Build the base query using the helper method from the trait
             $q = $this->buildVideosQueryWithoutSubscription($request, $regionCode, 3);
+            $limit = (int) $request->query('limit', 0); 
+        if ($limit > 0) {
+            $q->limit($limit); 
+        }
 
             $videos = $q->get();
 
