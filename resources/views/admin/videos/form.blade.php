@@ -77,6 +77,38 @@
 </style>
 
 <style>
+    #tags_select + .select2 .select2-selection--multiple {
+  /* align-items: center;  <-- remove this line */
+  align-items: flex-start;           /* optional: or just remove align-items entirely */
+}
+
+/* make the inline search line act like a full-row flex item */
+#tags_select + .select2 .select2-search--inline {
+  flex: 1 0 100%;
+}
+
+/* give the input real width so it doesn't collapse to a few px */
+#tags_select + .select2 .select2-search--inline .select2-search__field {
+  width: 100% !important;
+  min-width: 10ch;   /* a sensible minimum */
+}
+
+#tags_select + .select2 .select2-selection__rendered {
+  display: flex;
+  flex-wrap: wrap;       /* allow wrapping to new line if many tags */
+  gap: .375rem;          /* small spacing between chips */
+  align-items: center;   /* vertical alignment fix */
+}
+
+/* Ensure each tag chip sizes to its content, not full width */
+#tags_select + .select2 .select2-selection__choice {
+  display: inline-flex;
+  align-items: center;
+  max-width: none;       /* remove any width restrictions */
+}
+#tags_select + .select2 .select2-selection__clear {
+  display: none !important;
+}
     /* Make Select2 look/size like Bootstrap form controls */
     #tags_select+.select2 .select2-selection--multiple {
         min-height: 46px;
@@ -157,6 +189,10 @@
         display: flex;
         align-items: center;
     }
+
+    .select2-container {
+  z-index: 2055; /* higher than Bootstrap modal (1055) */
+}
 
     #tags_select+.select2 .select2-selection__rendered,
     #highlight_tags+.select2 .select2-selection__rendered {
@@ -518,13 +554,22 @@
                 <input type="text" name="tags" id="tags" class="form-control"
                     value="{{ old('tags', isset($video->tags) ? cleanTags($video->tags) : '') }}">
             </div> --}}
-            <div class="mb-3">
+            {{-- <div class="mb-3">
                 <label for="tags_select">Tags</label>
                 <select id="tags_select" class="form-select" multiple></select>
                 <input type="hidden" name="tag_ids" id="tag_ids"
                     value="{{ old('tag_ids', $video->tag_ids ?? '') }}">
                 <button type="button" id="createTagBtn" class="btn btn-sm btn-outline-primary mt-2">Create new
                     tag</button>
+            </div> --}}
+            <div class="mb-3">
+                <label for="tags_select">Tags</label>
+                <select id="tags_select" class="form-select" multiple></select>
+                <input type="hidden" name="tag_ids" id="tag_ids"
+                    value="{{ old('tag_ids', $video->tag_ids ?? '') }}">
+                <button type="button" id="createTagBtn" class="btn btn-sm btn-outline-primary mt-2">
+                    Create new tag
+                </button>
             </div>
 
             {{-- Rating Type --}}
@@ -731,8 +776,13 @@
     </form>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
+{{-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script> --}}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
 <script>
     (function() {
         const $select = $('#tags_select');
@@ -744,7 +794,7 @@
 
         $select.select2({
             placeholder: 'Search & select tags…',
-            allowClear: true,
+            allowClear: false,
             multiple: true,
             ajax: {
                 delay: 200,
@@ -758,7 +808,8 @@
             },
             // So we can type arbitrary text then click "Create new tag" button
             tags: false, // creation is handled by button
-            width: '100%'
+            width: '100%',
+            dropdownParent: $(document.body)
         });
 
         // If editing: fetch tag objects for IDs and set them selected
@@ -1143,7 +1194,7 @@
             // Make AJAX request to fetch regions associated with the selected character
             $.ajax({
                 url: '{{ url('admin/videos') }}/' + characterId +
-                '/regions', // Ensure this route is correct
+                    '/regions', // Ensure this route is correct
                 type: 'GET',
                 success: function(data) {
                     // Uncheck all region checkboxes first

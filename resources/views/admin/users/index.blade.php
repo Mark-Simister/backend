@@ -61,11 +61,11 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <button type="button"
+                                        {{-- <button type="button"
                                             class="btn {{ $user->is_blocked ? 'btn-success' : 'btn-outline-danger' }} btn-sm me-1 btn-toggle-block"
                                             data-id="{{ $user->id }}">
                                             {{ $user->is_blocked ? 'Unblock' : 'Block' }}
-                                        </button>
+                                        </button> --}}
 
                                         <a href="{{ route('admin.users.edit', $user) }}"
                                             class="btn btn-warning btn-sm me-1">
