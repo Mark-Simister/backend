@@ -3,7 +3,8 @@
 
 @push('styles')
 <style>
-/* Add any FAQ-specific styles here */
+.ck-editor__editable_inline {
+    min-height: 300px;
 </style>
 @endpush
 
@@ -25,7 +26,7 @@
 
                     <div class="form-group mt-3">
                         <label>Answer <span class="text-danger">*</span></label>
-                        <textarea name="answer" class="form-control" rows="5" required>{{ old('answer') }}</textarea>
+                        <textarea id="answer" name="answer" class="form-control" rows="5">{{ old('answer') }}</textarea>
                         @error('answer')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -39,5 +40,22 @@
 @endsection
 
 @push('scripts')
-<!-- Add custom JS here if needed -->
+<!--  CKEditor 5 Classic CDN -->
+<script src="https://cdn.ckeditor.com/ckeditor5/41.3.1/classic/ckeditor.js"></script>
+<script>
+    ClassicEditor
+        .create(document.querySelector('#answer'), {
+            toolbar: [
+                'undo', 'redo', '|', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 
+                'blockQuote', 'insertTable', 'mediaEmbed'
+            ],
+        })
+        .then(editor => {
+            // set height
+            editor.ui.view.editable.element.style.height = '300px';
+        })
+        .catch(error => {
+            console.error(error);
+        });
+</script>
 @endpush

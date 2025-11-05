@@ -1,9 +1,11 @@
 @extends('layouts.admin.master')
 @push('styles')
-          <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
-        <style>
-           /*  */
-        </style>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .ck-editor__editable_inline {
+            min-height: 300px;
+        }
+    </style>
 @endpush
 @section('title', 'Edit Character')
 
@@ -55,6 +57,8 @@
                     <div class="form-group mt-3">
                         <label>Persona</label>
                         <textarea name="persona" class="form-control" rows="3" required>{{ old('persona', $character->persona) }}</textarea>
+                        {{-- <textarea id="persona" name="persona" class="form-control" rows="3">{{ old('persona', $character->persona) }}</textarea> --}}
+
                         @error('persona')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -63,6 +67,8 @@
                     <div class="form-group mt-3">
                         <label>Mini Bio</label>
                         <textarea name="details" class="form-control" rows="3" required>{{ old('details', $character->details) }}</textarea>
+                        {{-- <textarea id="details" name="details" class="form-control" rows="3">{{ old('details', $character->details) }}</textarea> --}}
+
                         @error('details')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -456,10 +462,12 @@
                     </div>
 
                     <div class="form-group mt-3">
-                        <label for="character_popularity_score">Character Popularity Score <span class="text-info">(Score 1- 5)</span></label>
+                        <label for="character_popularity_score">Character Popularity Score <span class="text-info">(Score 1-
+                                5)</span></label>
                         <input type="number" name="character_popularity_score" id="character_popularity_score"
                             class="form-control"
-                            value="{{ old('character_popularity_score', $character->character_popularity_score ?? '') }}"  min="0" max="5">
+                            value="{{ old('character_popularity_score', $character->character_popularity_score ?? '') }}"
+                            min="0" max="5">
                         @error('character_popularity_score')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -467,7 +475,9 @@
 
                     <div class="form-group mt-3">
                         <label for="editor_notes_content_guidelines">Editor Notes/Content Guidelines</label>
+                        {{-- <textarea name="editor_notes_content_guidelines" id="editor_notes_content_guidelines" class="form-control">{{ old('editor_notes_content_guidelines', $character->editor_notes_content_guidelines ?? '') }}</textarea> --}}
                         <textarea name="editor_notes_content_guidelines" id="editor_notes_content_guidelines" class="form-control">{{ old('editor_notes_content_guidelines', $character->editor_notes_content_guidelines ?? '') }}</textarea>
+
                         @error('editor_notes_content_guidelines')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -526,33 +536,71 @@
 @push('scripts')
     {{-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script> --}}
-  
+
 
     <!-- Include jQuery and Select2 JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    {{-- <script src="https://cdn.ckeditor.com/ckeditor5/41.3.1/classic/ckeditor.js"></script> --}}
     <script>
-$(function () {
-  $('#category_id').select2({
-    width: '100%',
-    placeholder: 'Select Category',
-    allowClear: true
-  });
+        // const editors = {};
 
-  $('#character_tag').select2({
-    width: '100%',
-    placeholder: 'Select tags',
-    allowClear: true,
-    closeOnSelect: false
-  });
+        // function makeCk(selector) {
+        //     const el = document.querySelector(selector);
+        //     if (!el) return;
+        //     ClassicEditor.create(el, {
+        //             toolbar: [
+        //                 'undo', 'redo', '|', 'heading', '|', 'bold', 'italic', 'link',
+        //                 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'mediaEmbed'
+        //             ],
+        //         })
+        //         .then(ed => {
+        //             editors[selector] = ed;
+        //             ed.ui.view.editable.element.style.minHeight = '300px';
+        //         })
+        //         .catch(console.error);
+        // }
 
-  $('#character_role').select2({
-    width: '100%',
-    placeholder: 'Select roles',
-    allowClear: true,
-    closeOnSelect: false
-  });
-});
-</script>
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     makeCk('#persona');
+        //     makeCk('#details');
+        //     makeCk('#editor_notes_content_guidelines');
 
+        //     // sync data back to textareas before submit (for Laravel validation + saving)
+        //     const form = document.querySelector('form');
+        //     if (form) {
+        //         form.addEventListener('submit', function() {
+        //             if (editors['#persona']) document.querySelector('#persona').value = editors['#persona']
+        //                 .getData();
+        //             if (editors['#details']) document.querySelector('#details').value = editors['#details']
+        //                 .getData();
+        //             if (editors['#editor_notes_content_guidelines']) document.querySelector(
+        //                 '#editor_notes_content_guidelines').value = editors[
+        //                 '#editor_notes_content_guidelines'].getData();
+        //         });
+        //     }
+        // });
+
+        $(function() {
+            $('#category_id').select2({
+                width: '100%',
+                placeholder: 'Select Category',
+                allowClear: true
+            });
+
+            $('#character_tag').select2({
+                width: '100%',
+                placeholder: 'Select tags',
+                allowClear: true,
+                closeOnSelect: false
+            });
+
+            $('#character_role').select2({
+                width: '100%',
+                placeholder: 'Select roles',
+                allowClear: true,
+                closeOnSelect: false
+            });
+        });
+    </script>
 @endpush

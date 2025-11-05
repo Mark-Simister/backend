@@ -44,6 +44,7 @@
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $character->name }}</td>
                                     <td>{{ Str::limit($character->persona, 50) }}</td>
+                                    {{-- <td>{{ Str::limit(strip_tags($character->persona), 50) }}</td> --}}
                                     <td>
                                         @if ($character->image)
                                             <img src="{{ asset($character->image) }}" alt="{{ $character->name }}"

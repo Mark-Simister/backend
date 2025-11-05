@@ -100,13 +100,20 @@ class FaqController extends Controller
 }
 
 public function index_api(): JsonResponse
-    {
-        $faqs = Faq::select('id', 'question', 'answer')->orderBy('id', 'desc')->get();
+{
+    $faqs = Faq::select('id', 'question', 'answer')
+        ->orderBy('id', 'desc')
+        ->get()
+        ->map(function ($faq) {
+            $faq->answer = strip_tags($faq->answer);
+            return $faq;
+        });
 
-        return response()->json([
-            'success' => true,
-            'data' => $faqs,
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'data' => $faqs,
+    ]);
+}
+
 
 }

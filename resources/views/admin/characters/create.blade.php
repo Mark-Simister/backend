@@ -17,6 +17,10 @@
             z-index: 9999 !important;
             /* Ensure dropdown is above other elements */
         }
+
+        /* .ck-editor__editable_inline {
+            min-height: 300px;
+        } */
     </style>
 @endpush
 @section('content')
@@ -56,6 +60,8 @@
                     <div class="form-group mt-3">
                         <label>Persona <span class="text-danger">*</span></label>
                         <textarea name="persona" class="form-control" rows="3" required>{{ old('persona') }}</textarea>
+                        {{-- <textarea id="persona" name="persona" class="form-control" rows="3">{{ old('persona') }}</textarea> --}}
+
                         @error('persona')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -66,6 +72,8 @@
                     <div class="form-group mt-3">
                         <label>Mini Bio <span class="text-danger">*</span></label>
                         <textarea name="details" class="form-control" rows="3" required>{{ old('details') }}</textarea>
+                        {{-- <textarea id="details" name="details" class="form-control" rows="3">{{ old('details') }}</textarea> --}}
+
                         @error('details')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -553,6 +561,8 @@
                     <div class="form-group mt-3">
                         <label for="editor_notes_content_guidelines">Editor Notes/Content Guidelines</label>
                         <textarea name="editor_notes_content_guidelines" id="editor_notes_content_guidelines" class="form-control">{{ old('editor_notes_content_guidelines') }}</textarea>
+                        {{-- <textarea name="editor_notes_content_guidelines" id="editor_notes_content_guidelines" class="form-control">{{ old('editor_notes_content_guidelines') }}</textarea> --}}
+
                         @error('editor_notes_content_guidelines')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -618,8 +628,46 @@
     <!-- Include jQuery and Select2 JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
-
+    {{-- <script src="https://cdn.ckeditor.com/ckeditor5/41.3.1/classic/ckeditor.js"></script> --}}
     <script>
+        // const editors = {};
+
+        // function makeCk(selector) {
+        //     const el = document.querySelector(selector);
+        //     if (!el) return;
+        //     ClassicEditor.create(el, {
+        //             toolbar: [
+        //                 'undo', 'redo', '|', 'heading', '|', 'bold', 'italic', 'link',
+        //                 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'mediaEmbed'
+        //             ],
+        //         })
+        //         .then(ed => {
+        //             editors[selector] = ed;
+        //             ed.ui.view.editable.element.style.minHeight = '300px';
+        //         })
+        //         .catch(console.error);
+        // }
+
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     makeCk('#persona');
+        //     makeCk('#details');
+        //     makeCk('#editor_notes_content_guidelines');
+
+        //     // keep textarea values in sync for submit + Laravel validation
+        //     const form = document.querySelector('form');
+        //     if (form) {
+        //         form.addEventListener('submit', function() {
+        //             if (editors['#persona']) document.querySelector('#persona').value = editors['#persona']
+        //                 .getData();
+        //             if (editors['#details']) document.querySelector('#details').value = editors['#details']
+        //                 .getData();
+        //             if (editors['#editor_notes_content_guidelines']) document.querySelector(
+        //                 '#editor_notes_content_guidelines').value = editors[
+        //                 '#editor_notes_content_guidelines'].getData();
+        //         });
+        //     }
+        // });
+
         // $(function () {
         //   function makeSelect2(id, opts) {
         //     var $el = $(id);

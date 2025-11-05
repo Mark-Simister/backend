@@ -46,7 +46,7 @@
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $faq->question }}</td>
-                                    <td>{{ Str::limit($faq->answer, 100) }}</td>
+                                    <td>{{ Str::limit(strip_tags($faq->answer), 100) }}</td>
                                     <td class="text-center">
                                         @can('faq.edit')
                                             <a href="{{ route('admin.faqs.edit', $faq->id) }}"
