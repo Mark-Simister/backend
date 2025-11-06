@@ -1056,7 +1056,7 @@ class CategoryController extends Controller
             if (isset($sections['trending_products'])) {
                 $sections['trending_products'] = collect($sections['trending_products'] ?? [])->map($scaleFinalScore)->values();
             }
-            
+                       
 
             return response()->json([
                 'status' => true,

@@ -5,7 +5,7 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <h4>Edit User</h4>
+            <h4>Edit Customers</h4>
 
             <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
                 @csrf

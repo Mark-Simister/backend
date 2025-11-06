@@ -5,7 +5,7 @@
 @section('content')
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">User Details</h2>
+            <h2 class="mb-0">Customer Details</h2>
             <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">
                 <i class="ti-arrow-left"></i> Back to List
             </a>
@@ -14,7 +14,7 @@
         {{-- User Info --}}
         <div class="card shadow-sm border rounded-3 bg-light mb-4">
             <div class="card-body">
-                <h5 class="fw-bold mb-3">User Information</h5>
+                <h5 class="fw-bold mb-3">Customer Information</h5>
                 <dl class="row mb-0">
                     <dt class="col-sm-3">ID</dt>
                     <dd class="col-sm-9">{{ $user->id }}</dd>
@@ -114,7 +114,7 @@
             </div>
 
             {{-- Reviews --}}
-            <div class="col-md-12 mb-4">
+            {{-- <div class="col-md-12 mb-4">
                 <div class="card shadow-sm border rounded-3 bg-light h-100">
                     <div class="card-body">
                         <h5 class="fw-bold mb-3">Reviews</h5>
@@ -149,7 +149,7 @@
                         @endif
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
 
     </div>

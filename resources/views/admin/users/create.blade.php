@@ -5,7 +5,7 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <h4>Add User</h4>
+            <h4>Add Customers</h4>
             <form action="{{ route('admin.users.store') }}" method="POST">
                 @csrf
 

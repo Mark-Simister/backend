@@ -38,7 +38,7 @@ trait HasSubscriptionSections
     protected function resolveRegionCode(?string $region): string
     {
         $code = strtoupper((string) $region);
-        return in_array($code, ['AU','CA','UK','US'], true) ? $code : 'GLOBAL';
+        return in_array($code, ['AU', 'CA', 'UK', 'US'], true) ? $code : 'GLOBAL';
     }
 
     /** Apply video type constraints depending on subscription */
@@ -54,7 +54,11 @@ trait HasSubscriptionSections
     /** Core query builder used by both "paid" and "free" endpoints */
     protected function buildVideosQuery(Request $request, string $regionCode, int $highlightTag, ?int $userId): Builder
     {
-        $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+        $q = Video::with([
+            'reviews:id,video_id,rating',
+            'regions:id,region_code',
+            'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta,channel_category'
+        ])
             ->where('status', 'published');
 
         // subscription-aware type filter
@@ -78,109 +82,125 @@ trait HasSubscriptionSections
         return $q->latest();
     }
     protected function buildVideosQueryNew(Request $request, string $regionCode, int $highlightTag, ?int $userId, ?string $channelCategory = null): Builder
-{
-    $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
-        ->where('status', 'published');
-       
+    {
+        $q = Video::with([
+            'reviews:id,video_id,rating',
+            'regions:id,region_code',
+            'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta,channel_category'
+        ])
+            ->where('status', 'published');
 
-    // subscription-aware type filter
-    $this->applySubscriptionVideoType($q, $userId);
 
-    // optional filters
-    foreach (['channel_id', 'character_id', 'category_id'] as $f) {
-        if ($request->filled($f)) {
-            $q->where($f, $request->get($f));
+        // subscription-aware type filter
+        $this->applySubscriptionVideoType($q, $userId);
+
+        // optional filters
+        foreach (['channel_id', 'character_id', 'category_id'] as $f) {
+            if ($request->filled($f)) {
+                $q->where($f, $request->get($f));
+            }
         }
-    }
 
-    // highlight tag (2 = top deals, 3 = trending)
-    $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+        // highlight tag (2 = top deals, 3 = trending)
+        $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
 
-    // region
-    $q->whereHas('regions', function ($query) use ($regionCode) {
-        $query->where('region_code', $regionCode);
-    });
-
-    // filter by channel category if $channelCategory is provided
-    if ($channelCategory) {
-        $q->whereHas('channel', function ($query) use ($channelCategory) {
-            $query->where('channel_category', $channelCategory);
+        // region
+        $q->whereHas('regions', function ($query) use ($regionCode) {
+            $query->where('region_code', $regionCode);
         });
-    }
 
-    
-    return $q->latest();
-}
+        // filter by channel category if $channelCategory is provided
+        if ($channelCategory) {
+            $q->whereHas('channel', function ($query) use ($channelCategory) {
+                $query->where('channel_category', $channelCategory);
+            });
+        }
+
+
+        return $q->latest();
+    }
 
 
     protected function buildVideosQueryWithoutSubscription(Request $request, string $regionCode, int $highlightTag): Builder
-{
-    $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
-        ->where('status', 'published');
+    {
+        $q = Video::with([
+            'reviews:id,video_id,rating',
+            'regions:id,region_code',
+            'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta,channel_category'
+        ])
+            ->where('status', 'published');
 
-    // Optional filters (channel, character, category)
-    foreach (['channel_id', 'character_id', 'category_id'] as $f) {
-        if ($request->filled($f)) {
-            $q->where($f, $request->get($f));
+        // Optional filters (channel, character, category)
+        foreach (['channel_id', 'character_id', 'category_id'] as $f) {
+            if ($request->filled($f)) {
+                $q->where($f, $request->get($f));
+            }
         }
+
+        // Highlight tag (2 = top deals, 3 = trending)
+        $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+
+        // Region filter
+        $q->whereHas('regions', function ($query) use ($regionCode) {
+            $query->where('region_code', $regionCode);
+        });
+
+        return $q->latest();
     }
 
-    // Highlight tag (2 = top deals, 3 = trending)
-    $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+    // for latest videos
+    protected function buildVideosQueryWithoutSubscription2(Request $request, string $regionCode): Builder
+    {
+        $q = Video::with([
+            'reviews:id,video_id,rating',
+            'regions:id,region_code',
+            'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta,channel_category'
+        ])
+            ->where('status', 'published');
 
-    // Region filter
-    $q->whereHas('regions', function ($query) use ($regionCode) {
-        $query->where('region_code', $regionCode);
-    });
-
-    return $q->latest();
-}
-
-// for latest videos
-protected function buildVideosQueryWithoutSubscription2(Request $request, string $regionCode): Builder
-{
-    $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
-        ->where('status', 'published');
-
-    // Optional filters (channel, character)
-    foreach (['channel_id', 'character_id'] as $f) {
-        if ($request->filled($f)) {
-            $q->where($f, $request->get($f));
+        // Optional filters (channel, character)
+        foreach (['channel_id', 'character_id'] as $f) {
+            if ($request->filled($f)) {
+                $q->where($f, $request->get($f));
+            }
         }
+
+        // Region filter
+        $q->whereHas('regions', function ($query) use ($regionCode) {
+            $query->where('region_code', $regionCode);
+        });
+
+        return $q->latest();
     }
 
-    // Region filter
-    $q->whereHas('regions', function ($query) use ($regionCode) {
-        $query->where('region_code', $regionCode);
-    });
+    // For featured videos
+    protected function buildVideosQueryWithoutSubscription3(Request $request, string $regionCode, string $type): Builder
+    {
+        $q = Video::with([
+            'reviews:id,video_id,rating',
+            'regions:id,region_code',
+            'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta,channel_category'
+        ])
+            ->where('is_featured', 1)
+            ->where('status', 'published');
 
-    return $q->latest();  
-}
 
-// For featured videos
-protected function buildVideosQueryWithoutSubscription3(Request $request, string $regionCode, string $type): Builder
-{
-    $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
-        ->where('is_featured', 1)
-        ->where('status', 'published');
+        // Region filter
+        $q->whereHas('regions', function ($query) use ($regionCode) {
+            $query->where('region_code', $regionCode);
+        });
 
-    
-    // Region filter
-    $q->whereHas('regions', function ($query) use ($regionCode) {
-        $query->where('region_code', $regionCode);
-    });
-
-    // Channel category filter
+        // Channel category filter
         if ($type) {
             $q->whereHas('channel', function ($query) use ($type) {
                 $query->where('channel_category', $type);
             });
         }
 
-    return $q->latest();  
-}
+        return $q->latest();
+    }
 
-    
+
 
     /** Map one video row to output shape */
     protected function mapVideo($video): array
@@ -188,9 +208,24 @@ protected function buildVideosQueryWithoutSubscription3(Request $request, string
         if ($video->relationLoaded('regions')) {
             $video->regions->each->makeHidden(['pivot']);
         }
-         $rawFinal = $video->final_beastie_score ?? $video->final_beastiee_score ?? null;
-    $finalBeastieScore = is_null($rawFinal) ? null : round(((float) $rawFinal) / 2, 1);
-        
+        $ch = $video->relationLoaded('channel') ? $video->channel : null;
+        $channelPayload = $ch ? [
+            'id'               => $ch->id,
+            'name'             => $ch->name,
+            'image_url'        => $ch->image ? asset($ch->image) : null,
+            'primary_color'    => $ch->primary_color,
+            'secondary_color'  => $ch->secondary_color,
+            'accent_color'     => $ch->accent_color,
+            'background_color' => $ch->background_color,
+            'text_color'       => $ch->text_color,
+            'hover_color'      => $ch->hover_color,
+            'highlight_color'  => $ch->highlight_color,
+            'cta'              => $ch->cta,
+            'channel_category' => $ch->channel_category,
+        ] : null;
+        $rawFinal = $video->final_beastie_score ?? $video->final_beastiee_score ?? null;
+        $finalBeastieScore = is_null($rawFinal) ? null : round(((float) $rawFinal) / 2, 1);
+
 
         return [
             'id' => $video->id,
@@ -218,6 +253,7 @@ protected function buildVideosQueryWithoutSubscription3(Request $request, string
                 'region_code' => $r->region_code,
             ]),
             'final_beastie_score' => $finalBeastieScore,
+            'channel' => $channelPayload,
         ];
     }
 
@@ -296,39 +332,39 @@ protected function buildVideosQueryWithoutSubscription3(Request $request, string
     }
 
     protected function getSubscriptionSectionsNew(Request $request, string $region, ?string $type = null): array
-{
-    $user = $request->user('api') ?? $request->user('sanctum') ?? null;
-    $userId = $user?->id;
-    $regionCode = $this->resolveRegionCode($region);
+    {
+        $user = $request->user('api') ?? $request->user('sanctum') ?? null;
+        $userId = $user?->id;
+        $regionCode = $this->resolveRegionCode($region);
 
-    // Pass $type to the buildVideosQuery method
-    $qTopDeals = $this->buildVideosQueryNew($request, $regionCode, 2, $userId, $type);
-    $qTrending = $this->buildVideosQueryNew($request, $regionCode, 3, $userId, $type);
+        // Pass $type to the buildVideosQuery method
+        $qTopDeals = $this->buildVideosQueryNew($request, $regionCode, 2, $userId, $type);
+        $qTrending = $this->buildVideosQueryNew($request, $regionCode, 3, $userId, $type);
 
-    $topDeals = $qTopDeals->get();
-    $trending = $qTrending->get();
+        $topDeals = $qTopDeals->get();
+        $trending = $qTrending->get();
 
-    $this->attachTagPairs($topDeals);
-    $this->attachTagPairs($trending);
+        $this->attachTagPairs($topDeals);
+        $this->attachTagPairs($trending);
 
-    return [
-        'top_deals' => $topDeals->map(fn($v) => $this->mapVideo($v))->values(),
-        'trending_products' => $trending->map(fn($v) => $this->mapVideo($v))->values(),
-        'is_paid_user' => (bool) ($userId && $this->hasValidSubscription($userId)),
-    ];
-}
+        return [
+            'top_deals' => $topDeals->map(fn($v) => $this->mapVideo($v))->values(),
+            'trending_products' => $trending->map(fn($v) => $this->mapVideo($v))->values(),
+            'is_paid_user' => (bool) ($userId && $this->hasValidSubscription($userId)),
+        ];
+    }
 
 
     protected function buildChannelByRegionQuery(string $regionCode)
-{
-    return Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
-        ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
-        ->with(['regions:id,region_code'])
-        ->latest();
-}
-protected function buildChannelByRegionQueryNew(string $regionCode, ?string $channelCategory = null) 
-{
-    $query = Channel::select(
+    {
+        return Channel::select('id', 'name', 'image', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'created_at', 'updated_at')
+            ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+            ->with(['regions:id,region_code'])
+            ->latest();
+    }
+    protected function buildChannelByRegionQueryNew(string $regionCode, ?string $channelCategory = null)
+    {
+        $query = Channel::select(
             'id',
             'name',
             'image',
@@ -344,73 +380,72 @@ protected function buildChannelByRegionQueryNew(string $regionCode, ?string $cha
             'created_at',
             'updated_at'
         )
-        ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
-        ->with(['regions:id,region_code'])
-        ->latest();
+            ->whereHas('regions', fn($q) => $q->where('region_code', $regionCode))
+            ->with(['regions:id,region_code'])
+            ->latest();
 
-    if ($channelCategory) {
-        $query->where('channel_category', $channelCategory);
+        if ($channelCategory) {
+            $query->where('channel_category', $channelCategory);
+        }
+
+        return $query;
     }
 
-    return $query;
-}
 
+    protected function mapChannel($channel): array
+    {
+        $imageUrl = $channel->image ? asset($channel->image) : null;
 
-protected function mapChannel($channel): array
-{
-    $imageUrl = $channel->image ? asset($channel->image) : null;
+        if ($channel->relationLoaded('regions')) {
+            $channel->regions->each->makeHidden(['pivot']);
+        }
 
-    if ($channel->relationLoaded('regions')) {
-        $channel->regions->each->makeHidden(['pivot']);
+        return [
+            'id' => $channel->id,
+            'name' => $channel->name,
+            'image_url' => $imageUrl,
+            'primary_color' => $channel->primary_color,
+            'secondary_color' => $channel->secondary_color,
+            'accent_color' => $channel->accent_color,
+            'background_color' => $channel->background_color,
+            'text_color' => $channel->text_color,
+            'hover_color' => $channel->hover_color,
+            'highlight_color' => $channel->highlight_color,
+            'cta' => $channel->cta,
+            'channel_category' => $channel->channel_category,
+            'created_at' => optional($channel->created_at)?->toDateTimeString(),
+            'updated_at' => optional($channel->updated_at)?->toDateTimeString(),
+            'regions' => $channel->regions->map(fn($r) => [
+                'id' => $r->id,
+                'region_code' => $r->region_code,
+            ]),
+        ];
     }
 
-    return [
-        'id' => $channel->id,
-        'name' => $channel->name,
-        'image_url' => $imageUrl,
-        'primary_color' => $channel->primary_color,
-        'secondary_color' => $channel->secondary_color,
-        'accent_color' => $channel->accent_color,
-        'background_color' => $channel->background_color,
-        'text_color' => $channel->text_color,
-        'hover_color' => $channel->hover_color,
-        'highlight_color' => $channel->highlight_color,
-        'cta' => $channel->cta,
-        'channel_category' => $channel->channel_category,
-        'created_at' => optional($channel->created_at)?->toDateTimeString(),
-        'updated_at' => optional($channel->updated_at)?->toDateTimeString(),
-        'regions' => $channel->regions->map(fn($r) => [
-            'id' => $r->id,
-            'region_code' => $r->region_code,
-        ]),
-    ];
-}
+    protected function getChannelsForRegion(Request $request, string $region): array
+    {
+        $regionCode = $this->resolveRegionCode($region);
+        $channels = $this->buildChannelByRegionQuery($regionCode)->get();
 
-protected function getChannelsForRegion(Request $request, string $region): array
-{
-    $regionCode = $this->resolveRegionCode($region);
-    $channels = $this->buildChannelByRegionQuery($regionCode)->get();
+        return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
+    }
+    protected function getChannelsForRegionCategory(Request $request, string $region, $category_id): array
+    {
+        $regionCode = $this->resolveRegionCode($region);
+        // $channels = $this->buildChannelByRegionQuery($regionCode)->get();
+        $channels = $this->buildChannelByRegionQuery($regionCode)
+            ->whereHas('categories', function ($q) use ($category_id) {
+                $q->where('categories.id', $category_id);
+            })
+            ->get();
 
-    return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
-}
-protected function getChannelsForRegionCategory(Request $request, string $region, $category_id): array
-{
-    $regionCode = $this->resolveRegionCode($region);
-    // $channels = $this->buildChannelByRegionQuery($regionCode)->get();
-    $channels = $this->buildChannelByRegionQuery($regionCode)
-        ->whereHas('categories', function ($q) use ($category_id) {
-            $q->where('categories.id', $category_id);
-        })
-        ->get();
+        return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
+    }
+    protected function getChannelsForRegionNew(Request $request, string $region, ?string $type = null): array
+    {
+        $regionCode = $this->resolveRegionCode($region);
+        $channels = $this->buildChannelByRegionQueryNew($regionCode, $type)->get();
 
-    return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
-}
-protected function getChannelsForRegionNew(Request $request, string $region, ?string $type = null): array
-{
-    $regionCode = $this->resolveRegionCode($region);
-    $channels = $this->buildChannelByRegionQueryNew($regionCode, $type)->get();
-
-    return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
-}
-
+        return $channels->map(fn($c) => $this->mapChannel($c))->values()->all();
+    }
 }

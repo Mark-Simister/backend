@@ -118,7 +118,7 @@
             <li class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.users.index') }}">
                     <i class="icon-head menu-icon"></i>
-                    <span class="menu-title">Users</span>
+                    <span class="menu-title">Customers</span>
                 </a>
             </li>
         @endcan

@@ -9,8 +9,8 @@
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Users</h2>
-        <a href="{{ route('admin.users.create') }}" class="btn btn-primary">+ Add user</a>
+        <h2 class="mb-0">Customers</h2>
+        <a href="{{ route('admin.users.create') }}" class="btn btn-primary">+ Add Customer</a>
     </div>
 
     @if (session('success'))

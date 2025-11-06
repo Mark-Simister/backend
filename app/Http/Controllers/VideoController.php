@@ -1777,7 +1777,7 @@ class VideoController extends Controller
             $q = $this->buildVideosQueryWithoutSubscription2($request, $regionCode);
 
             $videos = $q->get();
-            // $videos = $q->limit(6)->get();
+            $videos = $q->limit(6)->get();
 
             if ($videos->isEmpty()) {
                 return response()->json([
@@ -1875,7 +1875,9 @@ class VideoController extends Controller
             $startOfWeek = now()->startOfWeek();
             $endOfWeek = now()->endOfWeek();
 
-            $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+            $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code,
+            channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta,channel_category
+            '])
                 ->where('status', 'published')
                 ->whereHas('regions', function ($query) use ($regionCode) {
                     $query->where('region_code', $regionCode);
@@ -1927,6 +1929,21 @@ class VideoController extends Controller
                 if ($video->relationLoaded('regions')) {
                     $video->regions->each->makeHidden(['pivot']);
                 }
+                $ch = $video->relationLoaded('channel') ? $video->channel : null;
+                $channelPayload = $ch ? [
+                    'id'               => $ch->id,
+                    'name'             => $ch->name,
+                    'image_url'        => $ch->image ? asset($ch->image) : null,
+                    'primary_color'    => $ch->primary_color,
+                    'secondary_color'  => $ch->secondary_color,
+                    'accent_color'     => $ch->accent_color,
+                    'background_color' => $ch->background_color,
+                    'text_color'       => $ch->text_color,
+                    'hover_color'      => $ch->hover_color,
+                    'highlight_color'  => $ch->highlight_color,
+                    'cta'              => $ch->cta,
+                    'channel_category' => $ch->channel_category,
+                ] : null;
 
                 $isPaidVideo = in_array($video->type, ['vimeo']);
                 $isPaidUser = $userId && $this->hasValidSubscription($userId);
@@ -1960,6 +1977,7 @@ class VideoController extends Controller
                     'views' => $video->watch ?? 0,
                     'weekly_views' => $video->weekly_views ?? 0,
                     'final_beastie_score' => $finalBeastieScore,
+                    'channel' => $channelPayload,
                 ];
             });
 

@@ -14,9 +14,10 @@ class UserController extends Controller
     public function index()
     {
 
-        $role = Role::where('name', 'user')
+    $role = Role::where('name', 'user')
     ->where('guard_name', 'api')
     ->first();
+
 
     $users = ApiUser::whereHas('roles', function ($q) {
         $q->where('name', 'user')
@@ -127,11 +128,13 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'role' => 'required|exists:roles,name',
         ]);
+        // dd($request->all());
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => bcrypt($validated['password']),
+            'role' => 'sub_admin',
         ]);
 
         // Assign the selected role to the user
