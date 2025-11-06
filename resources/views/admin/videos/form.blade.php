@@ -77,38 +77,34 @@
 </style>
 
 <style>
-    #tags_select + .select2 .select2-selection--multiple {
-  /* align-items: center;  <-- remove this line */
-  align-items: flex-start;           /* optional: or just remove align-items entirely */
-}
+    /* keep rendered list as a wrapping flex row */
+    #highlight_tags+.select2 .select2-selection__rendered {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .375rem;
+    }
 
-/* make the inline search line act like a full-row flex item */
-#tags_select + .select2 .select2-search--inline {
-  flex: 1 0 100%;
-}
+    /* make each chip size to its content (not full width) */
+    #highlight_tags+.select2 .select2-selection__choice {
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 auto;
+        margin: 0;
+        /* remove any default li spacing */
+    }
 
-/* give the input real width so it doesn't collapse to a few px */
-#tags_select + .select2 .select2-search--inline .select2-search__field {
-  width: 100% !important;
-  min-width: 10ch;   /* a sensible minimum */
-}
+    /* keep the inline search as a normal flex item (not full row) */
+    #highlight_tags+.select2 .select2-search--inline {
+        flex: 0 0 auto;
+    }
 
-#tags_select + .select2 .select2-selection__rendered {
-  display: flex;
-  flex-wrap: wrap;       /* allow wrapping to new line if many tags */
-  gap: .375rem;          /* small spacing between chips */
-  align-items: center;   /* vertical alignment fix */
-}
+    #highlight_tags+.select2 .select2-search--inline .select2-search__field {
+        width: auto !important;
+        min-width: 6ch;
+        /* small sensible minimum */
+    }
 
-/* Ensure each tag chip sizes to its content, not full width */
-#tags_select + .select2 .select2-selection__choice {
-  display: inline-flex;
-  align-items: center;
-  max-width: none;       /* remove any width restrictions */
-}
-#tags_select + .select2 .select2-selection__clear {
-  display: none !important;
-}
+
     /* Make Select2 look/size like Bootstrap form controls */
     #tags_select+.select2 .select2-selection--multiple {
         min-height: 46px;
@@ -191,8 +187,9 @@
     }
 
     .select2-container {
-  z-index: 2055; /* higher than Bootstrap modal (1055) */
-}
+        z-index: 2055;
+        /* higher than Bootstrap modal (1055) */
+    }
 
     #tags_select+.select2 .select2-selection__rendered,
     #highlight_tags+.select2 .select2-selection__rendered {
@@ -381,25 +378,7 @@
                 <div id="character_error" class="invalid-feedback" style="display:none;">Please select a character.
                 </div>
             </div>
-            {{-- <div class="form-group region-flex" id="regions_group">
-                <label for="regions">Select Regions: <span class="text-danger">*</span></label>
-                @foreach ($regions as $region)
-                    <div class="form-check form-check-inline">
-                        <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"
-                            {{ in_array($region->id, $selectedRegions ?? []) ? 'checked' : '' }}>
-                        <label class="form-check-label">
-                            {{ $region->region_name }}
-                            @if (!$region->is_active)
-                                <small class="text-danger">(Inactive)</small>
-                            @endif
-                        </label>
-                    </div>
-                @endforeach
-
-                <div id="regions_error" class="invalid-feedback d-none">
-                    Please select at least one region.
-                </div>
-            </div> --}}
+            
             <div class="form-group region-flex" id="regions_group">
                 <label for="regions">Select Regions: <span class="text-danger">*</span></label>
                 @foreach ($regions as $region)
@@ -419,37 +398,6 @@
                     Please select at least one region.
                 </div>
             </div>
-
-
-
-            {{-- <div class="mb-3">
-                <label for="channel_id">Channel</label>
-                <select name="channel_id" id="channel_id" class="form-select" required>
-                    <option value="" disabled selected>-- Select Channel --</option>
-                    @foreach ($channels as $channel)
-                        <option value="{{ $channel->id }}"
-                            {{ old('channel_id', $video->channel_id ?? '') == $channel->id ? 'selected' : '' }}>
-                            {{ $channel->name }}
-                        </option>
-                    @endforeach
-                </select>
-                <div id="channel_error" class="invalid-feedback" style="display:none;">Please select a channel.</div>
-            </div>
-
-            <div class="mb-3">
-                <label for="category_id">Category</label>
-                <select name="category_id" id="category_id" class="form-select" required>
-                    <option value="" disabled selected>-- Select Category --</option>
-                    @foreach ($categories as $category)
-                        <option value="{{ $category->id }}"
-                            {{ old('category_id', $video->category_id ?? '') == $category->id ? 'selected' : '' }}>
-                            {{ $category->name }}
-                        </option>
-                    @endforeach
-                </select>
-                <div id="category_error" class="invalid-feedback" style="display:none;">Please select a category.
-                </div>
-            </div> --}}
 
             <div class="mb-3">
                 <label for="access_level">Access Level</label>
@@ -479,12 +427,7 @@
 
         <!-- Step 3 -->
         <div class="form-step">
-            {{-- <div class="mb-3">
-                <label for="affiliate_link">Affiliate Link</label>
-                <input type="url" name="affiliate_link" id="affiliate_link" class="form-control"
-                    placeholder="https://example.com/affiliate" data-alwaysOptional="true"
-                    value="{{ old('affiliate_link', $video->affiliate_link ?? '') }}">
-            </div> --}}
+            
 
             @php
                 $thumbSource = old('thumbnail_option', !empty($video->thumbnail_image) ? 'image' : 'url');
@@ -549,19 +492,6 @@
                 }
             @endphp
 
-            {{-- <div class="mb-3">
-                <label for="tags">Tags (comma separated)</label>
-                <input type="text" name="tags" id="tags" class="form-control"
-                    value="{{ old('tags', isset($video->tags) ? cleanTags($video->tags) : '') }}">
-            </div> --}}
-            {{-- <div class="mb-3">
-                <label for="tags_select">Tags</label>
-                <select id="tags_select" class="form-select" multiple></select>
-                <input type="hidden" name="tag_ids" id="tag_ids"
-                    value="{{ old('tag_ids', $video->tag_ids ?? '') }}">
-                <button type="button" id="createTagBtn" class="btn btn-sm btn-outline-primary mt-2">Create new
-                    tag</button>
-            </div> --}}
             <div class="mb-3">
                 <label for="tags_select">Tags</label>
                 <select id="tags_select" class="form-select" multiple></select>
@@ -694,7 +624,7 @@
             </div>
 
             @php
-                // Prefer old() (after validation error) else controller-provided $selectedPlatforms
+                
                 $platformsSelected = old('video_platforms', $selectedPlatforms ?? []);
 
                 // Normalize to array (handles: array, JSON string, CSV string)
@@ -807,7 +737,7 @@
                 processResults: (data) => data
             },
             // So we can type arbitrary text then click "Create new tag" button
-            tags: false, // creation is handled by button
+            tags: false,
             width: '100%',
             dropdownParent: $(document.body)
         });
@@ -869,21 +799,7 @@
         });
     })();
 </script>
-<script>
-    $(document).ready(function() {
-        // Initialize Select2 for the Highlight Tags dropdown
-        $('#highlight_tags').select2({
-            placeholder: '-- Select Highlight Tags --',
-            allowClear: true
-        });
 
-        // Initialize Select2 for the Video Platforms dropdown
-        $('#video_platforms').select2({
-            placeholder: '-- Select Video Platforms --',
-            allowClear: true
-        });
-    });
-</script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -1165,7 +1081,6 @@
 </script>
 <script>
     // for charcter select 2
-    // Put after the select2 script is loaded
     $('#character_id').select2({
         placeholder: '-- Select Character --',
         allowClear: true,
