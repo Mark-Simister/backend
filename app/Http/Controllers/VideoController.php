@@ -1650,10 +1650,10 @@ class VideoController extends Controller
 
             // Build the base query using the helper method from the trait
             $q = $this->buildVideosQueryWithoutSubscription($request, $regionCode, 3);
-            $limit = (int) $request->query('limit', 0); 
-        if ($limit > 0) {
-            $q->limit($limit); 
-        }
+            $limit = (int) $request->query('limit', 0);
+            if ($limit > 0) {
+                $q->limit($limit);
+            }
 
             $videos = $q->get();
 
@@ -2107,7 +2107,11 @@ class VideoController extends Controller
                 $regionCode = 'GLOBAL';
             }
 
-            $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
+            $q = Video::with([
+                'reviews:id,video_id,rating',
+                'regions:id,region_code',
+                'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta'
+            ])
                 ->where('status', 'published')
                 ->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]); // Highlight tag for "Top Deals"
 
@@ -2156,6 +2160,22 @@ class VideoController extends Controller
                     $video->regions->each->makeHidden(['pivot']);
                 }
 
+                $ch = $video->relationLoaded('channel') ? $video->channel : null;
+                $channelPayload = $ch ? [
+                    'id'               => $ch->id,
+                    'name'             => $ch->name,
+                    'image_url'        => $ch->image ? asset($ch->image) : null,
+                    'primary_color'    => $ch->primary_color,
+                    'secondary_color'  => $ch->secondary_color,
+                    'accent_color'     => $ch->accent_color,
+                    'background_color' => $ch->background_color,
+                    'text_color'       => $ch->text_color,
+                    'hover_color'      => $ch->hover_color,
+                    'highlight_color'  => $ch->highlight_color,
+                    'cta'              => $ch->cta,
+                ] : null;
+
+
 
                 $isPaidVideo = in_array($video->type, ['vimeo']);
                 $isPaidUser = $userId && $this->hasValidSubscription($userId);
@@ -2199,6 +2219,7 @@ class VideoController extends Controller
                     'paid' => $paidFlag,
                     'is_subscribed' => $isSubscribed,
                     'final_beastie_score' => $finalBeastieScore,
+                    'channel' => $channelPayload,
                 ];
             });
 
@@ -2866,8 +2887,8 @@ class VideoController extends Controller
             ->get()
             ->map(function ($v) {
                 $finalBeastieScore = $v->final_beastie_score
-            ? round($v->final_beastie_score / 2, 2)
-            : null;
+                    ? round($v->final_beastie_score / 2, 2)
+                    : null;
                 return [
                     'id' => $v->id,
                     'title' => $v->title,
@@ -3002,8 +3023,8 @@ class VideoController extends Controller
             ->get()
             ->map(function ($v) {
                 $finalBeastieScore = $v->final_beastie_score
-            ? round($v->final_beastie_score / 2, 2)
-            : null;
+                    ? round($v->final_beastie_score / 2, 2)
+                    : null;
                 return [
                     'id' => $v->id,
                     'name' => $v->title,

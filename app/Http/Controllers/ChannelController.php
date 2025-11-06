@@ -1978,7 +1978,6 @@ class ChannelController extends Controller
             $channelIds = ChannelFollow::where('user_id', $user->id)
                 ->pluck('channel_id');
 
-            // Load channels in the same shape as index_by_region_api (but without regions)
             $channels = Channel::select(
                 'id',
                 'name',
