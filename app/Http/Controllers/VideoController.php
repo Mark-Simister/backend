@@ -1649,7 +1649,13 @@ class VideoController extends Controller
             }
 
             // Build the base query using the helper method from the trait
-            $q = $this->buildVideosQueryWithoutSubscription($request, $regionCode, 3);
+            // $q = $this->buildVideosQueryWithoutSubscription($request, $regionCode, 3);
+            $q = $this->buildVideosQueryWithoutSubscription($request, $regionCode, 3)
+                ->with([
+                    'regions:id,region_code',
+                    'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta',
+                ]);
+
             $limit = (int) $request->query('limit', 0);
             if ($limit > 0) {
                 $q->limit($limit);
@@ -1673,6 +1679,21 @@ class VideoController extends Controller
                 if ($video->relationLoaded('regions')) {
                     $video->regions->each->makeHidden(['pivot']);
                 }
+                $ch = $video->relationLoaded('channel') ? $video->channel : null;
+                $channelPayload = $ch ? [
+                    'id'               => $ch->id,
+                    'name'             => $ch->name,
+                    'image_url'        => $ch->image ? asset($ch->image) : null,
+                    'primary_color'    => $ch->primary_color,
+                    'secondary_color'  => $ch->secondary_color,
+                    'accent_color'     => $ch->accent_color,
+                    'background_color' => $ch->background_color,
+                    'text_color'       => $ch->text_color,
+                    'hover_color'      => $ch->hover_color,
+                    'highlight_color'  => $ch->highlight_color,
+                    'cta'              => $ch->cta,
+                ] : null;
+
 
                 $isPaidVideo = in_array($video->type, ['vimeo']);
 
@@ -1710,6 +1731,7 @@ class VideoController extends Controller
                     'paid' => $paidFlag,  // Set the 'paid' flag 
                     'is_subscribed' => $isSubscribed,  // 'is_subscribed' indicating whether the user has a valid subscription
                     'final_beastie_score' => $finalBeastieScore,
+                    'channel' => $channelPayload,
                 ];
             });
 
