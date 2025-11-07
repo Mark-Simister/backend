@@ -743,6 +743,7 @@ class VideoController extends Controller
 
     public function update(Request $request, Video $video)
     {
+        // dd($request->all());
         // Use Validator 
         $validator = \Validator::make(
             $request->all(),
@@ -807,7 +808,7 @@ class VideoController extends Controller
                 'product_asin_sku' => 'nullable|string|max:255',
                 'character_score' => 'nullable|numeric',
                 'editorial_score' => 'nullable|numeric',
-                'final_beastiescore' => 'nullable|string|max:255',
+                'final_beastie_score' => 'nullable|string|max:255',
                 'product_thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
             ],
             [
@@ -2167,7 +2168,8 @@ class VideoController extends Controller
             });
 
             // Fetch videos
-            $videos = $q->latest()->get();
+            // $videos = $q->latest()->get();
+            $videos = $q->latest('updated_at')->orderByDesc('id')->get();
 
             if ($videos->isEmpty()) {
                 return response()->json([
