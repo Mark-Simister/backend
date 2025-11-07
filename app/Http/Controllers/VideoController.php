@@ -1848,7 +1848,7 @@ class VideoController extends Controller
 
     public function hotThisWeek(Request $request, $region)
     {
-        try {
+        // try {
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
             // Check if the user is blocked
             if ($user && $user->is_blocked) {
@@ -1858,28 +1858,28 @@ class VideoController extends Controller
                 ], 403); // Forbidden
             }
             $userId = $user?->id;
-
+            
             $request->validate([
                 'channel_id' => 'sometimes|integer',
                 'character_id' => 'sometimes|integer',
                 'category_id' => 'sometimes|integer',
             ]);
-
+            
             // Normalize region
             $regionCode = strtoupper($region);
             $allowedRegions = ['AU', 'CA', 'UK', 'US'];
             if (!in_array($regionCode, $allowedRegions)) {
                 $regionCode = 'GLOBAL';
             }
-
+            
             $startOfWeek = now()->startOfWeek();
             $endOfWeek = now()->endOfWeek();
-
-            $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code,
-            channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta,channel_category
-            '])
-                ->where('status', 'published')
-                ->whereHas('regions', function ($query) use ($regionCode) {
+            
+            $q = Video::with([
+                 'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta,channel_category',
+                 'reviews:id,video_id,rating', 'regions:id,region_code'])
+            ->where('status', 'published')
+            ->whereHas('regions', function ($query) use ($regionCode) {
                     $query->where('region_code', $regionCode);
                 })
                 ->withCount([
@@ -1887,19 +1887,19 @@ class VideoController extends Controller
                         $query->whereBetween('watched_at', [$startOfWeek, $endOfWeek]);
                     }
                 ]);
-
-            foreach (['channel_id', 'character_id', 'category_id'] as $filter) {
-                if ($request->filled($filter)) {
-                    $q->where($filter, $request->get($filter));
+                
+                foreach (['channel_id', 'character_id', 'category_id'] as $filter) {
+                    if ($request->filled($filter)) {
+                        $q->where($filter, $request->get($filter));
+                    }
                 }
-            }
-
-            // Always order by weekly_views first, then total watch count
-            $videos = $q->orderByDesc('weekly_views')
+                
+                // Always order by weekly_views first, then total watch count
+                $videos = $q->orderByDesc('weekly_views')
                 ->orderByDesc('watch')
                 ->limit(10)
                 ->get();
-
+                
             if ($videos->isEmpty()) {
                 return response()->json([
                     'status' => false,
@@ -1986,13 +1986,13 @@ class VideoController extends Controller
                 'message' => 'Hot This Week videos fetched successfully',
                 'data' => $data,
             ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to fetch videos',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        // } catch (\Exception $e) {
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Failed to fetch videos',
+        //         'error' => $e->getMessage(),
+        //     ], 500);
+        // }
     }
 
 
