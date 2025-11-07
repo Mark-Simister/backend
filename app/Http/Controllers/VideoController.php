@@ -2318,7 +2318,8 @@ class VideoController extends Controller
             });
 
             // Fetch videos
-            $videos = $q->latest()->get();
+            // $videos = $q->latest()->get();
+            $videos = $q->latest('updated_at')->orderByDesc('id')->get();
 
             if ($videos->isEmpty()) {
                 return response()->json([
