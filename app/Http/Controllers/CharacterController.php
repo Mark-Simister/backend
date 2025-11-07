@@ -61,7 +61,6 @@ class CharacterController extends Controller
 
     public function store(Request $request)
     {
-        // dd($request);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'persona' => 'nullable|string',
@@ -131,7 +130,6 @@ class CharacterController extends Controller
             'character_role.*' => 'string',
         ]);
         $validated['regions'] = $request->input('regions', []);
-
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '.' . $image->getClientOriginalExtension();
@@ -435,7 +433,6 @@ class CharacterController extends Controller
                 ])
                 ->latest();
 
-            // If you want pagination: /api/characters?page=1&per_page=20
             if ($request->boolean('paginate')) {
                 $perPage = (int) $request->input('per_page', 20);
                 $page = (int) $request->input('page', 1);
@@ -445,18 +442,23 @@ class CharacterController extends Controller
             }
 
             $transform = function ($c) {
+
                 $c->image_url = $c->image ? asset($c->image) : null;
+                $c->thumbnail_image_url = $c->thumbnail_image ? asset($c->thumbnail_image) : null;
 
                 $c->character_tag = $c->character_tag ? explode(',', $c->character_tag) : [];
                 $c->character_role = $c->character_role ? explode(',', $c->character_role) : [];
 
-                $c->makeHidden(['image']);
+
+                $c->makeHidden(['image', 'thumbnail_image']);
 
                 if ($c->relationLoaded('regions')) {
                     $c->regions->each->makeHidden(['pivot']);
                 }
+
                 return $c;
             };
+
 
             if ($characters instanceof \Illuminate\Pagination\AbstractPaginator) {
                 $characters->getCollection()->transform($transform);

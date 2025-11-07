@@ -96,10 +96,10 @@ class VideoEngagementController extends Controller
             $thumbnail = $v->thumbnail_url
                 ?: ($v->thumbnail_image ? asset($v->thumbnail_image) : null);
 
-                $finalBeastieScore = null;
-        if (!is_null($v->final_beastie_score)) {
-            $finalBeastieScore = round($v->final_beastie_score / 2, 1);
-        }
+            $finalBeastieScore = null;
+            if (!is_null($v->final_beastie_score)) {
+                $finalBeastieScore = round($v->final_beastie_score / 2, 1);
+            }
 
             return [
                 'video_id'        => $v->id,
@@ -202,19 +202,22 @@ class VideoEngagementController extends Controller
             ], 404);
         }
         $user = Auth::user();
-        if (!$user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthenticated',
-            ], 401);
-        }
+        // if (!$user) {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'Unauthenticated',
+        //     ], 401);
+        // }
         // Increment the view counter EVERY time this endpoint is hit.
         $video->increment('views');
-        //    firstOrCreate will insert on first watch and do nothing on repeats.
-        VideoWatchHistory::firstOrCreate([
-            'user_id' => $user->id,
-            'video_id' => $video->id,
-        ]);
+        if ($user) {
+            //    firstOrCreate will insert on first watch and do nothing on repeats.
+            VideoWatchHistory::firstOrCreate([
+                'user_id' => $user->id,
+                'video_id' => $video->id,
+            ]);
+        }
+
         $video->refresh();
         return response()->json([
             'status' => 'ok',
@@ -498,26 +501,26 @@ class VideoEngagementController extends Controller
         //     $history->video->thumbnail_image = $history->video->thumbnail_image ? asset($history->video->thumbnail_image) : null;
         // });
         $data->each(function ($history) {
-        $video = $history->video;
-        if (!$video) {
-            return;
-        }
+            $video = $history->video;
+            if (!$video) {
+                return;
+            }
 
-        //  Convert final_beastie_score from 1–10 → 1–5
-        $video->final_beastie_score = !is_null($video->final_beastie_score)
-            ? round($video->final_beastie_score / 2, 1)
-            : null;
+            //  Convert final_beastie_score from 1–10 → 1–5
+            $video->final_beastie_score = !is_null($video->final_beastie_score)
+                ? round($video->final_beastie_score / 2, 1)
+                : null;
 
-        //  Make image URLs absolute
-        $video->product_thumbnail = $video->product_thumbnail
-            ? asset($video->product_thumbnail)
-            : null;
+            //  Make image URLs absolute
+            $video->product_thumbnail = $video->product_thumbnail
+                ? asset($video->product_thumbnail)
+                : null;
 
-        $video->thumbnail_image = $video->thumbnail_image
-            ? asset($video->thumbnail_image)
-            : null;
-    });
-        
+            $video->thumbnail_image = $video->thumbnail_image
+                ? asset($video->thumbnail_image)
+                : null;
+        });
+
 
         return response()->json([
             'status' => 'ok',

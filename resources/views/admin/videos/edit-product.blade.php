@@ -76,23 +76,23 @@
         <div class="row g-3">
           <div class="col-6 col-md-3">
             <label class="form-label">Public Rating (0–5)</label>
-            <input type="number" step="0.1" min="0" max="5" name="public_rating" class="form-control"
+            <input type="number" step="1" min="0" max="5" name="public_rating" class="form-control"
                    value="{{ old('public_rating', $video->public_rating) }}">
             <div class="form-text">Shown publicly</div>
           </div>
           <div class="col-6 col-md-3">
             <label class="form-label">Character Score (0–10)</label>
-            <input type="number" step="0.1" min="0" max="10" name="character_score" class="form-control"
+            <input type="number" step="1" min="0" max="10" name="character_score" class="form-control"
                    value="{{ old('character_score', $video->character_score) }}">
           </div>
           <div class="col-6 col-md-3">
             <label class="form-label">Editorial Score (0–10)</label>
-            <input type="number" step="0.1" min="0" max="10" name="editorial_score" class="form-control"
+            <input type="number" step="1" min="0" max="10" name="editorial_score" class="form-control"
                    value="{{ old('editorial_score', $video->editorial_score) }}">
           </div>
           <div class="col-6 col-md-3">
             <label class="form-label">Final Beastie Score (0–10)</label>
-            <input type="number" step="0.1" min="0" max="10" name="final_beastie_score" class="form-control"
+            <input type="number" step="1" min="0" max="10" name="final_beastie_score" class="form-control"
                    value="{{ old('final_beastie_score', $video->final_beastie_score) }}">
           </div>
         </div>

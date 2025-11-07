@@ -156,7 +156,7 @@ class BillingController extends Controller
         $allowedRegions = ['AU', 'CA', 'UK', 'US', 'GLOBAL'];
 
         // Normalize route param
-        $routeRegion = $req->route('region');      
+        $routeRegion = $req->route('region');
         $inputRegion = strtoupper((string) $routeRegion);
         $regionCode = in_array($inputRegion, $allowedRegions, true) ? $inputRegion : 'GLOBAL';
 
@@ -175,10 +175,20 @@ class BillingController extends Controller
             // default => 'INR',
             default => 'AUD',
         };
-        $baseCurrency = 'USD';
+        // $baseCurrency = 'USD';
+        $baseCurrency = 'AUD';
 
         // 3) FX + amount math
-        $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
+        // $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
+        try {
+            $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
+            $effectiveCurrency = $regionCurrency;    // use converted currency
+            $fxSource = 'live-or-cache';
+        } catch (\Throwable $e) {
+            $fxRate = 1.0;                            // no conversion
+            $effectiveCurrency = $baseCurrency;       // fall back to base
+            $fxSource = 'fallback_base';
+        }
         $user = Auth::guard('api')->user();
         $plan = DB::table('subscription_listing')->where('id', $validated['plan_id'])->first();
 
@@ -186,10 +196,16 @@ class BillingController extends Controller
             return response()->json(['message' => 'Plan not found'], 404);
         }
 
+        // $priceLocal = round((float) $plan->price * $fxRate, 2);
+        // $zeroDecimals = ['BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF'];
+        // $currency = strtolower($regionCurrency);
+        // $amountCents = in_array(strtoupper($regionCurrency), $zeroDecimals, true)
+        //     ? (int) round($priceLocal)
+        //     : (int) round($priceLocal * 100);
         $priceLocal = round((float) $plan->price * $fxRate, 2);
         $zeroDecimals = ['BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF'];
-        $currency = strtolower($regionCurrency);
-        $amountCents = in_array(strtoupper($regionCurrency), $zeroDecimals, true)
+        $currency = strtolower($effectiveCurrency);
+        $amountCents = in_array(strtoupper($effectiveCurrency), $zeroDecimals, true)
             ? (int) round($priceLocal)
             : (int) round($priceLocal * 100);
 
@@ -272,8 +288,11 @@ class BillingController extends Controller
                     'status' => 'active',
                     'billing_cycle' => 'one_time',
                     'region' => $regionCode,
-                    'currency' => strtoupper($regionCurrency),
+                    // 'currency' => strtoupper($regionCurrency),
+                    // 'fx_rate_used' => $fxRate,
+                    'currency' => strtoupper($effectiveCurrency),
                     'fx_rate_used' => $fxRate,
+                    'fx_source' => $fxSource,
                 ]);
             }
 
@@ -303,8 +322,11 @@ class BillingController extends Controller
                     'payment_intent_client_secret' => $pi->client_secret,
                     'message' => '3DS authentication required',
                     'region' => $regionCode,
-                    'currency' => strtoupper($regionCurrency),
+                    // 'currency' => strtoupper($regionCurrency),
+                    // 'fx_rate_used' => $fxRate,
+                    'currency' => strtoupper($effectiveCurrency),
                     'fx_rate_used' => $fxRate,
+                    'fx_source' => $fxSource,
                 ], 200);
             }
 
@@ -313,8 +335,11 @@ class BillingController extends Controller
                     'message' => 'Payment incomplete',
                     'status' => $pi->status,
                     'region' => $regionCode,
-                    'currency' => strtoupper($regionCurrency),
+                    // 'currency' => strtoupper($regionCurrency),
+                    // 'fx_rate_used' => $fxRate,
+                    'currency' => strtoupper($effectiveCurrency),
                     'fx_rate_used' => $fxRate,
+                    'fx_source' => $fxSource,
                 ], 402);
             }
 
@@ -328,8 +353,11 @@ class BillingController extends Controller
                 'status' => 'active',
                 'billing_cycle' => 'one_time',
                 'region' => $regionCode,
-                'currency' => strtoupper($regionCurrency),
+                // 'currency' => strtoupper($regionCurrency),
+                // 'fx_rate_used' => $fxRate,
+                'currency' => strtoupper($effectiveCurrency),
                 'fx_rate_used' => $fxRate,
+                'fx_source' => $fxSource,
             ]);
         }
 
@@ -366,10 +394,10 @@ class BillingController extends Controller
         $pi = $stripeSub->latest_invoice->payment_intent ?? null;
 
         //     if ($pi) {
-//     \Stripe\PaymentIntent::update($pi->id, [
-//         'setup_future_usage' => null, // turn it off
-//     ]);
-// }
+        //     \Stripe\PaymentIntent::update($pi->id, [
+        //         'setup_future_usage' => null, // turn it off
+        //     ]);
+        // }
 
         $subscription->update([
             'stripe_subscription_id' => $stripeSub->id,
@@ -389,8 +417,11 @@ class BillingController extends Controller
                 'stripe_subscription_id' => $stripeSub->id,
                 'message' => '3DS authentication required',
                 'region' => $regionCode,
-                'currency' => strtoupper($regionCurrency),
+                // 'currency' => strtoupper($regionCurrency),
+                // 'fx_rate_used' => $fxRate,
+                'currency' => strtoupper($effectiveCurrency),
                 'fx_rate_used' => $fxRate,
+                'fx_source' => $fxSource,
             ], 200);
         }
 
@@ -407,8 +438,11 @@ class BillingController extends Controller
                 'billing_cycle' => 'recurring',
                 'auto_renew' => $autoRenew,
                 'region' => $regionCode,
-                'currency' => strtoupper($regionCurrency),
+                // 'currency' => strtoupper($regionCurrency),
+                // 'fx_rate_used' => $fxRate,
+                'currency' => strtoupper($effectiveCurrency),
                 'fx_rate_used' => $fxRate,
+                'fx_source' => $fxSource,
             ]);
         }
 
@@ -418,8 +452,11 @@ class BillingController extends Controller
             'status' => 'incomplete',
             'message' => 'Awaiting payment confirmation',
             'region' => $regionCode,
-            'currency' => strtoupper($regionCurrency),
+            // 'currency' => strtoupper($regionCurrency),
+            // 'fx_rate_used' => $fxRate,
+            'currency' => strtoupper($effectiveCurrency),
             'fx_rate_used' => $fxRate,
+            'fx_source' => $fxSource,
         ], 202);
     }
 
@@ -506,7 +543,6 @@ class BillingController extends Controller
                         $refundId = $refund->id;
                     }
                 } catch (\Throwable $e) {
-
                 }
             }
 
@@ -531,7 +567,6 @@ class BillingController extends Controller
                     'ended_on' => $today,
                 ],
             ], 200);
-
         }
 
         // Case 3: Unknown/misaligned state
@@ -704,21 +739,21 @@ class BillingController extends Controller
             // $periodEnd = \Carbon\Carbon::createFromTimestamp($stripeSub->current_period_end)->toDateString();
 
             $stripeSub = \Stripe\Subscription::update($sub->stripe_subscription_id, [
-    'cancel_at_period_end' => true,
-]);
+                'cancel_at_period_end' => true,
+            ]);
 
-// Re-fetch to ensure all timestamps are populated
-$stripeSub = \Stripe\Subscription::retrieve($sub->stripe_subscription_id);
+            // Re-fetch to ensure all timestamps are populated
+            $stripeSub = \Stripe\Subscription::retrieve($sub->stripe_subscription_id);
 
-// Pick a safe timestamp (some statuses may not set current_period_end on update)
-$periodEndTs = $stripeSub->current_period_end
-    ?? $stripeSub->cancel_at
-    ?? $stripeSub->trial_end
-    ?? null;
+            // Pick a safe timestamp (some statuses may not set current_period_end on update)
+            $periodEndTs = $stripeSub->current_period_end
+                ?? $stripeSub->cancel_at
+                ?? $stripeSub->trial_end
+                ?? null;
 
-$periodEnd = $periodEndTs
-    ? \Carbon\Carbon::createFromTimestamp($periodEndTs)->toDateString()
-    : ($sub->subscription_end_date ?: now()->toDateString());
+            $periodEnd = $periodEndTs
+                ? \Carbon\Carbon::createFromTimestamp($periodEndTs)->toDateString()
+                : ($sub->subscription_end_date ?: now()->toDateString());
 
             // Still active until period end
             // $sub->update([
@@ -730,10 +765,10 @@ $periodEnd = $periodEndTs
             //     'cancel_at_period_end' => true,
             // ]);
             $sub->update([
-    'auto_renew' => false,
-    'subscription_end_date' => $periodEnd,
-    'cancel_at_period_end' => true,
-]);
+                'auto_renew' => false,
+                'subscription_end_date' => $periodEnd,
+                'cancel_at_period_end' => true,
+            ]);
 
 
             return response()->json([
@@ -752,7 +787,6 @@ $periodEnd = $periodEndTs
                     ],
                 ],
             ], 200);
-
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Unable to cancel at period end',
@@ -829,7 +863,6 @@ $periodEnd = $periodEndTs
                     ],
                 ],
             ], 200);
-
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Unable to reactivate auto-renew',
@@ -837,6 +870,4 @@ $periodEnd = $periodEndTs
             ], 422);
         }
     }
-
-
 }

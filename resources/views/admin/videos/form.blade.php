@@ -522,7 +522,7 @@
                 <div class="mb-3">
                     <label for="public_rating">Public Rating</label>
                     <input type="number" name="public_rating" id="public_rating" class="form-control"
-                        placeholder="Enter public rating (1-5)" min="1" max="5" step="0.1"
+                        placeholder="Enter public rating (1-5)" min="1" max="5" step="1"
                         value="{{ old('public_rating', $video->public_rating ?? '') }}">
                 </div>
             </div>
@@ -541,31 +541,31 @@
             {{-- ===== Scores (optional) ===== --}}
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label for="character_score" class="form-label">Character Score</label>
+                    <label for="character_score" class="form-label">Character Score (0–10)</label>
                     <input type="number" name="character_score" id="character_score" class="form-control"
                         step="1" min="0" max="10"
                         value="{{ old('character_score', $video->character_score ?? '') }}" placeholder="e.g. 4">
                 </div>
 
                 <div class="col-md-4">
-                    <label for="editorial_score" class="form-label">Editorial Score</label>
+                    <label for="editorial_score" class="form-label">Editorial Score (0–10)</label>
                     <input type="number" name="editorial_score" id="editorial_score" class="form-control"
                         step="1" min="0" max="10"
                         value="{{ old('editorial_score', $video->editorial_score ?? '') }}" placeholder="e.g. 4">
                 </div>
 
                 <div class="col-md-4">
-                    <label for="final_beastie_score" class="form-label">Final Beastie Score</label>
+                    <label for="final_beastie_score" class="form-label">Final Beastie Score (0–10)</label>
                     <input type="number" name="final_beastie_score" id="final_beastie_score" class="form-control"
                         value="{{ old('final_beastie_score', $video->final_beastie_score ?? '') }}"
-                        placeholder="Auto/Manual e.g. 4" step="0.1" min="0" max="5">
+                        placeholder="e.g. 4" step="1" min="0" max="10">
 
                 </div>
             </div>
 
 
 
-            <div class="mb-3">
+            <div class="col-md-4">
                 <label for="sponsorship_type">Sponsorship Type</label>
                 <select name="sponsorship_type" id="sponsorship_type" class="form-select">
                     <option value="" disabled selected>-- Select Sponsorship Type --</option>

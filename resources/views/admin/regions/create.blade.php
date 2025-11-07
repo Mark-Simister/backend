@@ -83,7 +83,7 @@
         {{-- <option value="">Select Motif Type</option> --}}
         <option value="solid" {{ old('motif_type') == 'solid' ? 'selected' : '' }}>Solid</option>
         <option value="gradient" {{ old('motif_type') == 'gradient' ? 'selected' : '' }}>Gradient</option>
-        <option value="pattern" {{ old('motif_type') == 'pattern' ? 'selected' : '' }}>Pattern</option>
+        {{-- <option value="pattern" {{ old('motif_type') == 'pattern' ? 'selected' : '' }}>Pattern</option> --}}
     </select>
     @error('motif_type') <span class="text-danger">{{ $message }}</span> @enderror
 </div>

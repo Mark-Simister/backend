@@ -760,7 +760,7 @@ class CategoryController extends Controller
                     'regions:id,region_code'
                 ])
 
-                ->latest();
+                ->latest('updated_at');
 
             if ($request->filled('channel_id')) {
                 $query->where('channel_id', (int) $request->input('channel_id'));
@@ -886,6 +886,7 @@ class CategoryController extends Controller
                         'channels.created_at',
                         'channels.updated_at'
                     )
+                    ->latest('videos.created_at')
                     ->select(
                         'channels.id',
                         'channels.name',
@@ -906,6 +907,7 @@ class CategoryController extends Controller
                     )
                     ->orderByDesc('watch_count')
                     ->orderByDesc('last_watched_at')
+                    ->orderByDesc('channels.created_at') 
                     ->limit(20)
                     ->get()
                     ->map(function ($ch) {

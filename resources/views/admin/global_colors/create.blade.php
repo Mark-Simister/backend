@@ -25,7 +25,7 @@
             </div>
 
             <!-- Hex Value -->
-            <div class="form-group mt-3">
+            {{-- <div class="form-group mt-3">
                 <label>Hex Value <span class="text-danger">*</span></label>
                 <input 
                     type="text" 
@@ -36,7 +36,25 @@
                     required
                 >
                 @error('hex_value') <span class="text-danger">{{ $message }}</span> @enderror
-            </div>
+            </div> --}}
+            <div class="form-group mt-3 d-flex align-items-center gap-2">
+    <input 
+        type="color" 
+        id="colorPicker" 
+        class="form-control form-control-color"
+        value="{{ old('hex_value', '#FF6B6B') }}"
+    >
+    <input 
+        type="text" 
+        name="hex_value" 
+        id="hexValue"
+        class="form-control"
+        value="{{ old('hex_value', '#FF6B6B') }}"
+        placeholder="#FF6B6B" 
+        required
+    >
+</div>
+
 
             <!-- Usage -->
             <div class="form-group mt-3">
@@ -58,3 +76,22 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+
+<script>
+    const colorPicker = document.getElementById('colorPicker');
+    const hexValue = document.getElementById('hexValue');
+
+    colorPicker.addEventListener('input', () => {
+        hexValue.value = colorPicker.value;
+    });
+
+    hexValue.addEventListener('input', () => {
+        if(/^#([0-9A-F]{3}){1,2}$/i.test(hexValue.value)) {
+            colorPicker.value = hexValue.value;
+        }
+    });
+</script>
+
+@endpush

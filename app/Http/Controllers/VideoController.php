@@ -1848,7 +1848,7 @@ class VideoController extends Controller
 
     public function hotThisWeek(Request $request, $region)
     {
-        // try {
+        try {
             $user = $request->user('api') ?? $request->user('sanctum') ?? null;
             // Check if the user is blocked
             if ($user && $user->is_blocked) {
@@ -1986,13 +1986,13 @@ class VideoController extends Controller
                 'message' => 'Hot This Week videos fetched successfully',
                 'data' => $data,
             ], 200);
-        // } catch (\Exception $e) {
-        //     return response()->json([
-        //         'status' => false,
-        //         'message' => 'Failed to fetch videos',
-        //         'error' => $e->getMessage(),
-        //     ], 500);
-        // }
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch videos',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
 

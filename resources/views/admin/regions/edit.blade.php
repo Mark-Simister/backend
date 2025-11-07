@@ -96,8 +96,8 @@
                                 Solid</option>
                             <option value="gradient"
                                 {{ old('motif_type', $region->motif_type) == 'gradient' ? 'selected' : '' }}>Gradient</option>
-                            <option value="pattern"
-                                {{ old('motif_type', $region->motif_type) == 'pattern' ? 'selected' : '' }}>Pattern</option>
+                            {{-- 
+                            ', $region->motif_type) == 'pattern' ? 'selected' : '' }}>Pattern</option> --}}
                         </select>
                         @error('motif_type')
                             <span class="text-danger">{{ $message }}</span>
@@ -134,7 +134,7 @@
                         @enderror
                     </div> --}}
 
-                    <div class="form-group mt-3">
+                    {{-- <div class="form-group mt-3">
                         <label>Status</label>
                         <select name="is_active" class="form-control">
                             <option value="1" {{ old('is_active', $region->is_active) == 1 ? 'selected' : '' }}>Active
@@ -145,7 +145,7 @@
                         @error('is_active')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
-                    </div>
+                    </div> --}}
 
                     <button class="btn btn-primary mt-3">Update</button>
                 </form>

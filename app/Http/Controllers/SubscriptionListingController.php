@@ -582,35 +582,72 @@ class SubscriptionListingController extends Controller
             $plans = $query->get();
 
 
-            $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
+            // $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
+            try {
+    $fxRate = $this->getRealtimeRate($baseCurrency, $regionCurrency);
+    $effectiveCurrency = $regionCurrency;    // show converted currency
+    $fxSource = 'live-or-cache';
+} catch (\Throwable $e) {
+    $fxRate = 1.0;                           // no conversion
+    $effectiveCurrency = $baseCurrency;      // show base currency (AUD)
+    $fxSource = 'fallback_base';
+}
 
-            $data = $plans->map(function ($plan) use ($fxRate, $regionCode, $regionCurrency, $baseCurrency) {
-                if ($plan->relationLoaded('regions')) {
-                    $plan->regions->each->makeHidden(['pivot']);
-                }
+            // $data = $plans->map(function ($plan) use ($fxRate, $regionCode, $regionCurrency, $baseCurrency) {
+            //     if ($plan->relationLoaded('regions')) {
+            //         $plan->regions->each->makeHidden(['pivot']);
+            //     }
 
-                $priceLocal = round(((float) $plan->price) * $fxRate, 2);
+            //     $priceLocal = round(((float) $plan->price) * $fxRate, 2);
 
-                return [
-                    'id'               => $plan->id,
-                    'subscription_name' => $plan->subscription_name,
-                    'sub_description'  => $plan->sub_description,
-                    'price'            => $priceLocal,
-                    'currency'         => $regionCurrency,
-                    'currency_symbol'  => $this->currencySymbol($regionCurrency),
-                    'display_price'    => $this->formatMoney($priceLocal, $regionCurrency),
-                    'duration'         => $plan->duration,
-                    'duration_unit'    => $plan->duration_unit,
-                    'type'             => $plan->type,
-                    'region'           => $regionCode,
-                    'base_currency'    => $baseCurrency,
-                    'fx_rate_used'     => $fxRate,
-                    'regions'          => $plan->regions->map(fn($r) => [
-                        'id' => $r->id,
-                        'region_code' => $r->region_code,
-                    ]),
-                ];
-            });
+            //     return [
+            //         'id'               => $plan->id,
+            //         'subscription_name' => $plan->subscription_name,
+            //         'sub_description'  => $plan->sub_description,
+            //         'price'            => $priceLocal,
+            //         'currency'         => $regionCurrency,
+            //         'currency_symbol'  => $this->currencySymbol($regionCurrency),
+            //         'display_price'    => $this->formatMoney($priceLocal, $regionCurrency),
+            //         'duration'         => $plan->duration,
+            //         'duration_unit'    => $plan->duration_unit,
+            //         'type'             => $plan->type,
+            //         'region'           => $regionCode,
+            //         'base_currency'    => $baseCurrency,
+            //         'fx_rate_used'     => $fxRate,
+            //         'regions'          => $plan->regions->map(fn($r) => [
+            //             'id' => $r->id,
+            //             'region_code' => $r->region_code,
+            //         ]),
+            //     ];
+            // });
+            $data = $plans->map(function ($plan) use ($fxRate, $regionCode, $effectiveCurrency, $baseCurrency, $fxSource) {
+    if ($plan->relationLoaded('regions')) {
+        $plan->regions->each->makeHidden(['pivot']);
+    }
+
+    $priceLocal = round(((float) $plan->price) * $fxRate, 2);
+
+    return [
+        'id'                => $plan->id,
+        'subscription_name' => $plan->subscription_name,
+        'sub_description'   => $plan->sub_description,
+        'price'             => $priceLocal,
+        'currency'          => $effectiveCurrency,
+        'currency_symbol'   => $this->currencySymbol($effectiveCurrency),
+        'display_price'     => $this->formatMoney($priceLocal, $effectiveCurrency),
+        'duration'          => $plan->duration,
+        'duration_unit'     => $plan->duration_unit,
+        'type'              => $plan->type,
+        'region'            => $regionCode,
+        'base_currency'     => $baseCurrency,
+        'fx_rate_used'      => $fxRate,
+        'fx_source'         => $fxSource,
+        'regions'           => $plan->regions->map(fn($r) => [
+            'id' => $r->id,
+            'region_code' => $r->region_code,
+        ]),
+    ];
+});
 
             return response()->json([
                 'status'  => true,
