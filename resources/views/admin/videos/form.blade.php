@@ -1185,3 +1185,74 @@
         toggleRatingBlocks();
     })();
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const typeSel = document.getElementById('type');
+  const urlInput = document.getElementById('video_url');
+  const star = document.getElementById('videoUrlStar');
+
+  // existing: toggle URL required
+  function syncUrlRequired() {
+    const isVimeo = (typeSel.value === 'vimeo');
+    if (isVimeo) {
+      urlInput.removeAttribute('required');
+      if (star) star.style.display = 'none';
+    } else {
+      urlInput.setAttribute('required', 'required');
+      if (star) star.style.display = 'inline';
+    }
+  }
+
+  /* === NEW: lock Access Level based on platform === */
+  const accessSel = document.getElementById('access_level');
+  // snapshot all original options once
+  const allAccessOptions = Array.from(accessSel.options).map(o => ({ value: o.value, text: o.text }));
+
+  function setAccessOptions(allowed) {
+    const prev = accessSel.value;
+    accessSel.innerHTML = '';
+    allAccessOptions.forEach(opt => {
+      if (allowed.includes(opt.value)) {
+        accessSel.add(new Option(opt.text, opt.value));
+      }
+    });
+    // keep previous value if allowed; otherwise pick the first allowed
+    if (allowed.includes(prev)) {
+      accessSel.value = prev;
+    } else if (allowed.length) {
+      accessSel.value = allowed[0];
+    }
+
+    // clear any visible validation error
+    accessSel.classList.remove('is-invalid');
+    const err = document.getElementById('access_level_error');
+    if (err) err.style.display = 'none';
+  }
+
+  function syncAccessByType() {
+    const t = (typeSel.value || '').toLowerCase();
+    if (t === 'vimeo') {
+      // Only Premium, selected by default
+      setAccessOptions(['premium']);
+    } else if (t === 'youtube') {
+      // Only Public or Early Access
+      setAccessOptions(['public', 'early_access']);
+    } else {
+      // Unknown/not chosen → show all
+      setAccessOptions(['public', 'premium', 'early_access']);
+    }
+  }
+  /* === END NEW === */
+
+  // init on load
+  syncUrlRequired();
+  syncAccessByType();
+
+  // on change
+  typeSel.addEventListener('change', function () {
+    syncUrlRequired();
+    syncAccessByType();
+  });
+});
+</script>
+

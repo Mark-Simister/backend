@@ -41,8 +41,9 @@
                                 <th style="width: 60px;">#</th>
                                 <th>Name</th>
                                 <th>Video</th>
+                                <th>Thumbnail</th>
                                 <th>Fields</th>
-                                <th>CTA Type</th> <!-- New column -->
+                                <th>CTA Type</th>
                                 <th>Status</th>
                                 <th style="width: 140px;" class="text-center">Actions</th>
                             </tr>
@@ -60,6 +61,14 @@
                                             </video>
                                         @else
                                             —
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($form->video_thumbnail)
+                                            <img src="{{ asset($form->video_thumbnail) }}" alt="Thumbnail" width="80"
+                                                class="rounded border">
+                                        @else
+                                            <span class="text-muted">No image</span>
                                         @endif
                                     </td>
                                     <td>{{ count($form->fields) }} fields</td>
@@ -144,11 +153,11 @@
             });
         });
         setTimeout(function() {
-                const alert = document.getElementById('auto-alert');
-                if (alert) {
-                    alert.classList.remove('show');
-                    alert.classList.add('hide');
-                }
-            }, 5000);
-        </script>
+            const alert = document.getElementById('auto-alert');
+            if (alert) {
+                alert.classList.remove('show');
+                alert.classList.add('hide');
+            }
+        }, 5000);
+    </script>
 @endpush

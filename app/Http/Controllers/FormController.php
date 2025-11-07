@@ -24,7 +24,7 @@ class FormController extends Controller
     // Show list of forms
     public function index()
     {
-        $forms = Form::all();
+         $forms = Form::latest()->get();
         return view('admin.forms.index', compact('forms'));
     }
 
@@ -36,41 +36,59 @@ class FormController extends Controller
 
     // Store new form
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'cta_type' => 'required|in:apply_now,reachout',
-            'fields' => 'required|array|min:1',
-            'fields.*.label' => 'required|string|max:255',
-            'fields.*.type' => 'required|in:text,email,number,textarea',
-            'fields.*.required' => 'sometimes|boolean',
-        ], [
-            'fields.required' => 'The form must have at least one field.',
-            'fields.min' => 'The form must have at least one field.',
-        ]);
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'cta_type' => 'required|in:apply_now,reachout',
+        'fields' => 'required|array|min:1',
+        'fields.*.label' => 'required|string|max:255',
+        'fields.*.type' => 'required|in:text,email,number,textarea',
+        'fields.*.required' => 'sometimes|boolean',
 
-        // Normalize fields
-        $fields = array_map(function ($field) {
-            $field['key'] = \Str::slug($field['label'], '_'); // generate consistent key
-            return $field;
-        }, $request->fields);
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+    ], [
+        'fields.required' => 'The form must have at least one field.',
+        'fields.min' => 'The form must have at least one field.',
+    ]);
 
-        $videoPath = $request->old_video_path ?? null;
-        if ($request->hasFile('video')) {
-            $videoName = time() . '.' . $request->video->extension();
-            $request->video->move(public_path('videos'), $videoName);
-            $videoPath = 'videos/' . $videoName;
-        }
+    // Normalize fields
+    $fields = array_map(function ($field) {
+        $field['key'] = \Str::slug($field['label'], '_'); // generate consistent key
+        return $field;
+    }, $request->fields);
 
-        Form::create([
-            'name' => $request->name,
-            'cta_type' => $request->cta_type,
-            'video_path' => $videoPath,
-            'fields' => $fields,
-        ]);
-
-        return redirect()->route('admin.forms.index')->with('success', 'Form created successfully!');
+    // Handle video upload
+    $videoPath = $request->old_video_path ?? null;
+    if ($request->hasFile('video')) {
+        $videoName = time() . '.' . $request->video->extension();
+        $request->video->move(public_path('videos'), $videoName);
+        $videoPath = 'videos/' . $videoName;
     }
+
+    
+    $imagePath = null;
+    if ($request->hasFile('image')) {
+        $folderPath = public_path('channel');
+        if (!file_exists($folderPath)) {
+            mkdir($folderPath, 0777, true);
+        }
+        $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
+        $request->image->move($folderPath, $imageName);
+        $imagePath = 'channel/' . $imageName;
+    }
+
+    Form::create([
+        'name' => $request->name,
+        'cta_type' => $request->cta_type,
+        'video_path' => $videoPath,
+        'video_thumbnail' => $imagePath, 
+        'fields' => $fields,
+        // 'is_active' => true, 
+    ]);
+
+    return redirect()->route('admin.forms.index')->with('success', 'Form created successfully!');
+}
+
 
 
 
@@ -112,56 +130,74 @@ class FormController extends Controller
 
     // Update an existing form
     public function update(Request $request, Form $form)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'cta_type' => 'required|in:apply_now,reachout',
-            'fields' => 'required|array|min:1',
-            'fields.*.label' => 'required|string|max:255',
-            'fields.*.type' => 'required|in:text,email,number,textarea',
-            'fields.*.required' => 'sometimes|boolean',
-        ], [
-            'fields.required' => 'The form must have at least one field.',
-            'fields.min' => 'The form must have at least one field.',
-        ]);
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'cta_type' => 'required|in:apply_now,reachout',
+        'fields' => 'required|array|min:1',
+        'fields.*.label' => 'required|string|max:255',
+        'fields.*.type' => 'required|in:text,email,number,textarea',
+        'fields.*.required' => 'sometimes|boolean',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+    ], [
+        'fields.required' => 'The form must have at least one field.',
+        'fields.min' => 'The form must have at least one field.',
+    ]);
 
-        $fields = array_map(function ($field) {
-            $field['key'] = $field['key'] ?? \Str::slug($field['label'], '_'); // keep existing key or create new
-            return $field;
-        }, $request->fields);
+    $fields = array_map(function ($field) {
+        $field['key'] = $field['key'] ?? \Str::slug($field['label'], '_');
+        return $field;
+    }, $request->fields);
 
-        $videoPath = $form->video_path;
-        if ($request->hasFile('video')) {
-            $videoName = time() . '.' . $request->video->extension();
-            $request->video->move(public_path('videos'), $videoName);
-            $videoPath = 'videos/' . $videoName;
-        }
-
-        $form->update([
-            'name' => $request->name,
-            'cta_type' => $request->cta_type,
-            'video_path' => $videoPath,
-            'fields' => $fields,
-        ]);
-
-        return redirect()->route('admin.forms.index')->with('success', 'Form updated successfully!');
+    $videoPath = $form->video_path;
+    if ($request->hasFile('video')) {
+        $videoName = time() . '.' . $request->video->extension();
+        $request->video->move(public_path('videos'), $videoName);
+        $videoPath = 'videos/' . $videoName;
     }
+
+    $imagePath = $form->video_thumbnail;
+    if ($request->hasFile('image')) {
+        $folderPath = public_path('channel');
+        if (!file_exists($folderPath)) {
+            mkdir($folderPath, 0777, true);
+        }
+        $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
+        $request->image->move($folderPath, $imageName);
+        $imagePath = 'channel/' . $imageName;
+    }
+
+    $form->update([
+        'name' => $request->name,
+        'cta_type' => $request->cta_type,
+        'video_path' => $videoPath,
+        'video_thumbnail' => $imagePath,
+        'fields' => $fields,
+    ]);
+
+    return redirect()->route('admin.forms.index')->with('success', 'Form updated successfully!');
+}
+
 
 
 
 
     // Delete a form
     public function destroy(Form $form)
-    {
-        // Delete video if exists
-        if ($form->video_path && file_exists(public_path($form->video_path))) {
-            unlink(public_path($form->video_path));
-        }
-
-        $form->delete();
-
-        return redirect()->route('admin.forms.index')->with('success', 'Form deleted successfully!');
+{
+    if ($form->video_path && file_exists(public_path($form->video_path))) {
+        unlink(public_path($form->video_path));
     }
+
+    if ($form->video_thumbnail && file_exists(public_path($form->video_thumbnail))) {
+        unlink(public_path($form->video_thumbnail));
+    }
+
+    $form->delete();
+
+    return redirect()->route('admin.forms.index')->with('success', 'Form deleted successfully!');
+}
+
 
 
     public function submissionsPageNew()

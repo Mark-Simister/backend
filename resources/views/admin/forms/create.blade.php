@@ -3,71 +3,79 @@
 @section('title', 'Create Form')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Create Form</h2>
-    <a href="{{ route('admin.forms.index') }}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Back to Forms
-    </a>
-</div>
-
-@if ($errors->any())
-<div class="alert alert-danger">
-    <ul class="mb-0">
-        @foreach($errors->all() as $error)
-            <li>{{ $error }}</li>
-        @endforeach
-    </ul>
-</div>
-@endif
-
-<form action="{{ route('admin.forms.store') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-
-    <!-- Form Name -->
-    <div class="mb-3">
-        <label class="form-label">Form Name</label>
-        <input type="text" name="name" class="form-control" required value="{{ old('name') }}">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Create Form</h2>
+        <a href="{{ route('admin.forms.index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Forms
+        </a>
     </div>
 
-    <!-- CTA Type -->
-    <div class="mb-3">
-        <label class="form-label">Form Type (CTA)</label>
-        <select name="cta_type" class="form-select" required>
-            <option value="apply_now" {{ old('cta_type') == 'apply_now' ? 'selected' : '' }}>Apply Now</option>
-            <option value="reachout" {{ old('cta_type') == 'reachout' ? 'selected' : '' }}>Reachout</option>
-        </select>
-        <small class="text-muted d-block">This determines the action button type shown on the frontend.</small>
-    </div>
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
-    <!-- Video Upload -->
-    <div class="mb-3">
-        <label class="form-label">Upload Video</label>
-        <input type="file" name="video" class="form-control" accept="video/*">
-    </div>
+    <form action="{{ route('admin.forms.store') }}" method="POST" enctype="multipart/form-data">
+        @csrf
 
-    <!-- Dynamic Fields -->
-    <div class="mb-4">
-        <label class="form-label">Form Fields</label>
-        <div id="fields-container"></div>
-        <button type="button" class="btn btn-success mt-2" id="add-field-btn">
-            <i class="bi bi-plus-lg"></i> Add Field
-        </button>
-        <small class="text-muted d-block mt-1">Click "Add Field" to dynamically add inputs. Each field only has Label, Type, and Required.</small>
-    </div>
+        <!-- Form Name -->
+        <div class="mb-3">
+            <label class="form-label">Form Name</label>
+            <input type="text" name="name" class="form-control" required value="{{ old('name') }}">
+        </div>
 
-    <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Create Form</button>
-</form>
+        <!-- CTA Type -->
+        <div class="mb-3">
+            <label class="form-label">Form Type (CTA)</label>
+            <select name="cta_type" class="form-select" required>
+                <option value="apply_now" {{ old('cta_type') == 'apply_now' ? 'selected' : '' }}>Apply Now</option>
+                <option value="reachout" {{ old('cta_type') == 'reachout' ? 'selected' : '' }}>Reachout</option>
+            </select>
+            <small class="text-muted d-block">This determines the action button type shown on the frontend.</small>
+        </div>
+
+        <!-- Video Upload -->
+        <div class="mb-3">
+            <label class="form-label">Upload Video</label>
+            <input type="file" name="video" class="form-control" accept="video/*">
+        </div>
+
+        <!-- Video Thumbnail Upload -->
+        <div class="mb-3">
+            <label class="form-label">Upload Video Thumbnail</label>
+            <input type="file" name="image" class="form-control" accept="image/*">
+            <small class="text-muted d-block">Optional: Upload a thumbnail image for the video.</small>
+        </div>
+
+
+        <!-- Dynamic Fields -->
+        <div class="mb-4">
+            <label class="form-label">Form Fields</label>
+            <div id="fields-container"></div>
+            <button type="button" class="btn btn-success mt-2" id="add-field-btn">
+                <i class="bi bi-plus-lg"></i> Add Field
+            </button>
+            <small class="text-muted d-block mt-1">Click "Add Field" to dynamically add inputs. Each field only has Label,
+                Type, and Required.</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Create Form</button>
+    </form>
 @endsection
 
 @push('scripts')
+    <script>
+        $(document).ready(function() {
+            let fieldIndex = 0;
 
-<script>
-$(document).ready(function() {
-    let fieldIndex = 0;
-
-    // Add new dynamic field
-    $('#add-field-btn').click(function() {
-        const fieldHtml = `
+            // Add new dynamic field
+            $('#add-field-btn').click(function() {
+                const fieldHtml = `
         <div class="card mb-2 p-3 field-item">
             <div class="row align-items-center">
                 <div class="col-md-4 mb-2 mb-md-0">
@@ -93,14 +101,14 @@ $(document).ready(function() {
             </div>
         </div>
         `;
-        $('#fields-container').append(fieldHtml);
-        fieldIndex++;
-    });
+                $('#fields-container').append(fieldHtml);
+                fieldIndex++;
+            });
 
-    // Remove dynamic field
-    $(document).on('click', '.remove-field-btn', function() {
-        $(this).closest('.field-item').remove();
-    });
-});
-</script>
+            // Remove dynamic field
+            $(document).on('click', '.remove-field-btn', function() {
+                $(this).closest('.field-item').remove();
+            });
+        });
+    </script>
 @endpush
