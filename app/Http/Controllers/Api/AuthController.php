@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Spatie\Permission\Models\Role;
+use App\Mail\ResetPasswordOtpMail;
 
 use App\Mail\VerifyOtpMail;
 use Illuminate\Support\Facades\Mail;
@@ -398,4 +399,90 @@ private function shapeUser(ApiUser $user): array
             'data' => auth('api')->user()
         ], 200);
     }
+
+/**
+ * Step 1: Forgot Password (send OTP)
+ */
+// ...
+
+public function forgotPassword(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email|exists:users,email',
+    ]);
+
+    $user = ApiUser::where('email', $request->email)->first();
+    if (!$user) {
+        return response()->json(['status' => false, 'message' => 'User not found.'], 404);
+    }
+
+    $otp = (string) random_int(100000, 999999);
+    $user->otp_code = $otp;
+    $user->otp_expires_at = now()->addMinutes($this->otpTtlMinutes);
+    $user->save();
+
+    Mail::to($user->email)->send(new ResetPasswordOtpMail($user->name, $otp, $this->otpTtlMinutes));
+
+    return response()->json([
+        'status' => true,
+        'message' => 'A password reset code has been sent to your email.'
+    ], 200);
+}
+
+
+
+/**
+ * Step 2: Reset Password using OTP
+ */
+public function resetPassword(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email|exists:users,email',
+        'otp' => 'required|digits:6',
+        'password' => 'required|min:6|confirmed', // expect password + password_confirmation
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Validation failed.',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    /** @var ApiUser $user */
+    $user = ApiUser::where('email', $request->email)->first();
+
+    if (!$user->otp_code || !$user->otp_expires_at) {
+        return response()->json([
+            'status' => false,
+            'message' => 'No active OTP found. Please request a new one.'
+        ], 422);
+    }
+
+    if (Carbon::parse($user->otp_expires_at)->isPast()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'OTP has expired. Please request a new one.'
+        ], 422);
+    }
+
+    if ($request->otp !== $user->otp_code) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Invalid OTP.'
+        ], 422);
+    }
+
+    // Update password and clear OTP
+    $user->password = Hash::make($request->password);
+    $user->otp_code = null;
+    $user->otp_expires_at = null;
+    $user->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Password has been reset successfully. You can now log in with your new password.',
+    ], 200);
+}
 }

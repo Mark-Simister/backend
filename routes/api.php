@@ -37,6 +37,9 @@ Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('otp/resend', [AuthController::class, 'resendOtp']);
 Route::post('otp/verify', [AuthController::class, 'verifyOtp']);
+Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('reset-password', [AuthController::class, 'resetPassword']);
+
 
 // Route::middleware(['auth:api'])->group(function () {
 Route::middleware(['auth:api', 'check_blocked'])->group(function () {
