@@ -23,7 +23,7 @@
 <div class="card shadow-sm border-0">
     <div class="card-body">
         <div class="table-responsive">
-            <table id="global-colors-table" class="table table-striped table-hover align-middle">
+            <table id="global-colors-table" class="table align-middle">
                 <thead class="table-light">
                     <tr>
                         <th style="width: 60px;">#</th>
@@ -39,7 +39,7 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $color->name }}</td>
                         <td>
-                            <span class="badge" style="background-color: {{ $color->hex_value }}; color: #000;">
+                            <span class="badge" style="background-color: {{ $color->hex_value }}; color: #FFC100; border:1px solid #4B49AC">
                                 {{ $color->hex_value }}
                             </span>
                         </td>

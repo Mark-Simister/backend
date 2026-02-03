@@ -24,6 +24,7 @@ use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\FaqController;
 // use App\Http\Controllers\VimeoController;
+use App\Http\Controllers\LeaderboardCommentController;
 
 use Illuminate\Support\Facades\Http;
 
@@ -168,6 +169,11 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::get('video/{id}/watch-history', [VideoEngagementController::class, 'getWatchHistory']);
 
 });
+
+// API's For leaderboardcomments 
+Route::post('/leaderboardcomments', [LeaderboardCommentController::class, 'store']);
+Route::get('/leaderboardcomments', [LeaderboardCommentController::class, 'index']);
+Route::get('/leaderboardcomments/leaderboard', [LeaderboardCommentController::class, 'leaderboard']);
 
 // API's For Guest User
 Route::get('regions', [RegionController::class, 'index_api']);

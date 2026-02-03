@@ -170,14 +170,14 @@
             <div class="extra_buttons" style="display:flex;">
     <li class="nav-item me-0">
         <a href="{{ url('profile') }}" class="btn btn-sm btn-outline-primary ms-2 {{ request()->is('profile') ? 'active' : '' }}">
-            <i class="ti-settings {{ request()->is('profile') ? 'text-white' : 'text-primary' }} me-1"></i> 
+            <i class="ti-settings {{ request()->is('profile') ? 'text-white' : 'text-primary' }}"></i> 
         </a>
     </li>
     <li class="nav-item ms-0 me-2">
         <form method="POST" action="{{ url('logout') }}">
             @csrf
             <button type="submit" class="btn btn-sm btn-outline-danger ms-2">
-                <i class="ti-power-off me-1"></i>
+                <i class="ti-power-off"></i>
             </button>
         </form>
     </li>

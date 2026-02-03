@@ -169,7 +169,13 @@ padding: 0px;
             cursor: pointer;
         }
 
-    
+        ul.nav.flex-column.sub-menu {
+        padding: 0px;
+        border-radius: 0px 0px 8px 8px;
+        }
+        .sidebar .nav.sub-menu .nav-item::before {
+          display: none;
+        }
 /* PWS styles for comments end */
 
 /* PWS styles for SEO Start */
