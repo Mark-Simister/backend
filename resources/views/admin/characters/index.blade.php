@@ -45,10 +45,10 @@
                                     <td>{{ $character->name }}</td>
                                     <td>{{ Str::limit($character->persona, 50) }}</td>
                                     {{-- <td>{{ Str::limit(strip_tags($character->persona), 50) }}</td> --}}
-                                    <td>
+                                    <td style="width: 150px;">
                                         @if ($character->image)
-                                            <img src="{{ asset($character->image) }}" alt="{{ $character->name }}"
-                                            style="max-width: 200px; height: auto;">
+                                            <img src="{{ asset($character->image) }}"
+                                            style="width: 100%; height: 80px; object-fit: cover; border-radius: 100%;">
                                         @else
                                             <span>No Image</span>
                                         @endif

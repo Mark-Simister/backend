@@ -79,7 +79,7 @@
 <style>
     /* keep rendered list as a wrapping flex row */
     #highlight_tags+.select2 .select2-selection__rendered {
-        display: flex;
+        display: block !important;
         flex-wrap: wrap;
         gap: .375rem;
     }
@@ -111,7 +111,7 @@
         padding: 6px 8px;
         border-radius: .5rem;
         border: 1px solid #ced4da;
-        display: flex;
+        display: block !important;
         align-items: center;
     }
 
@@ -182,7 +182,7 @@
         padding: 6px 8px;
         border-radius: .5rem;
         border: 1px solid #ced4da;
-        display: flex;
+        display: block !important;
         align-items: center;
     }
 
@@ -310,13 +310,13 @@
                 <input type="hidden" name="_from_vimeo_flow" value="1">
             @endif
             <div class="mb-3">
-                <label for="title">Video Title <span class="text-danger">*</span></label>
+                <label for="title" class="form-label">Video Title <span class="text-danger">*</span></label>
                 <input type="text" name="title" id="title" class="form-control" required
                     value="{{ old('title', $video->title ?? '') }}">
             </div>
 
             <div class="mb-3">
-                <label for="description">Video Description <span class="text-danger">*</span></label>
+                <label for="description" class="form-label">Video Description <span class="text-danger">*</span></label>
                 <textarea name="description" id="description" class="form-control" required>{{ old('description', $video->description ?? '') }}</textarea>
             </div>
             @php
@@ -324,7 +324,7 @@
             @endphp
 
             <div class="mb-3">
-                <label for="type">Video Platform Type <span class="text-danger">*</span></label>
+                <label for="type" class="form-label">Video Platform Type <span class="text-danger">*</span></label>
 
                 <select name="type" id="type" class="form-select" required>
                     <option value="" disabled {{ $defaultType ? '' : 'selected' }}>-- Select Platform --</option>
@@ -335,7 +335,7 @@
             </div>
 
             <div class="mb-3">
-                <label for="video_url">
+                <label for="video_url" class="form-label">
                     Video URL <span id="videoUrlStar" class="text-danger">*</span>
                 </label>
                 <input type="url" name="video_url" id="video_url" class="form-control"
@@ -344,7 +344,7 @@
             </div>
 
             <div class="mb-3">
-                <label for="is_featured">
+                <label for="is_featured" class="form-label">
                     Is Featured <span id="isFeaturedStar" class="text-danger">*</span>
                 </label>
                 <input type="checkbox" name="is_featured" id="is_featured" class="form-check-input" value="1"
@@ -363,7 +363,7 @@
         <!-- Step 2 -->
         <div class="form-step">
             <div class="mb-3">
-                <label for="character_id">Character</label>
+                <label for="character_id" class="form-label">Character</label>
 
                 <select name="character_id" id="character_id" class="form-select character_id" required>
                     <option></option> <!-- empty first option for Select2 placeholder -->
@@ -380,7 +380,7 @@
             </div>
             
             <div class="form-group region-flex" id="regions_group">
-                <label for="regions">Select Regions: <span class="text-danger">*</span></label>
+                <label for="regions" class="form-label">Select Regions: <span class="text-danger">*</span></label>
                 @foreach ($regions as $region)
                     <div class="form-check form-check-inline">
                         <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"
@@ -400,7 +400,7 @@
             </div>
 
             <div class="mb-3">
-                <label for="access_level">Access Level</label>
+                <label for="access_level" class="form-label">Access Level</label>
                 <select name="access_level" id="access_level" class="form-select" required>
                     <option value="public"
                         {{ old('access_level', $video->access_level ?? '') == 'public' ? 'selected' : '' }}>Public
@@ -493,7 +493,7 @@
             @endphp
 
             <div class="mb-3">
-                <label for="tags_select">Tags</label>
+                <label for="tags_select" class="form-label">Tags</label>
                 <select id="tags_select" class="form-select" multiple></select>
                 <input type="hidden" name="tag_ids" id="tag_ids"
                     value="{{ old('tag_ids', $video->tag_ids ?? '') }}">
@@ -504,7 +504,7 @@
 
             {{-- Rating Type --}}
             <div class="mb-3">
-                <label for="rating_type">Rating Type</label>
+                <label for="rating_type" class="form-label">Rating Type</label>
                 <select name="rating_type" id="rating_type" class="form-select">
                     <option value="" disabled selected>-- Select Rating Type --</option>
                     <option value="rating"
@@ -520,7 +520,7 @@
             <div id="rating_fields" class="form-group"
                 style="{{ old('rating_type', $video->rating_type ?? '') === 'rating' ? '' : 'display:none;' }}">
                 <div class="mb-3">
-                    <label for="public_rating">Public Rating</label>
+                    <label for="public_rating" class="form-label">Public Rating</label>
                     <input type="number" name="public_rating" id="public_rating" class="form-control"
                         placeholder="Enter public rating (1-5)" min="1" max="5" step="1"
                         value="{{ old('public_rating', $video->public_rating ?? '') }}">
@@ -531,7 +531,7 @@
             <div id="review_fields" class="form-group"
                 style="{{ old('rating_type', $video->rating_type ?? '') === 'review' ? '' : 'display:none;' }}">
                 <div class="mb-3">
-                    <label for="review_details">Review Details</label>
+                    <label for="review_details" class="form-label">Review Details</label>
                     <textarea name="review_details" id="review_details" class="form-control" placeholder="Enter review details">{{ old('review_details', $video->review_details ?? '') }}</textarea>
                 </div>
             </div>
@@ -554,7 +554,7 @@
                         value="{{ old('editorial_score', $video->editorial_score ?? '') }}" placeholder="e.g. 4">
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-4 mb-3">
                     <label for="final_beastie_score" class="form-label">Final Beastie Score (0–10)</label>
                     <input type="number" name="final_beastie_score" id="final_beastie_score" class="form-control"
                         value="{{ old('final_beastie_score', $video->final_beastie_score ?? '') }}"
@@ -565,8 +565,8 @@
 
 
 
-            <div class="col-md-4">
-                <label for="sponsorship_type">Sponsorship Type</label>
+            <div class="col-md-4 mb-3">
+                <label for="sponsorship_type" class="form-label">Sponsorship Type</label>
                 <select name="sponsorship_type" id="sponsorship_type" class="form-select">
                     <option value="" disabled selected>-- Select Sponsorship Type --</option>
                     <option value="sponsored"
@@ -592,7 +592,7 @@
             @endphp
 
             <div class="mb-3">
-                <label for="highlight_tags">Highlight Tags</label>
+                <label for="highlight_tags" class="form-label">Highlight Tags</label>
                 <select name="highlight_tags[]" id="highlight_tags" class="form-select" multiple>
                     {{-- <option value="" disabled selected>-- Select Highlight Tags --</option> --}}
                     @foreach ($highlight_tags as $highlight_tag)
@@ -605,7 +605,7 @@
             </div>
 
             <div class="mb-3">
-                <label for="video_type">Video Type</label>
+                <label for="video_type" class="form-label">Video Type</label>
                 <select name="video_type" id="video_type" class="form-select" required>
                     <option value="" disabled selected>-- Select Video Type --</option>
                     <option value="short"
@@ -639,7 +639,7 @@
             @endphp
 
             <div class="mb-3">
-                <label for="video_platforms">Video Platform(s)</label>
+                <label for="video_platforms" class="form-label">Video Platform(s)</label>
                 <select name="video_platforms[]" id="video_platforms" class="form-select" multiple>
                     <option value="YouTube" {{ in_array('YouTube', $platformsSelected) ? 'selected' : '' }}>YouTube
                     </option>
@@ -653,19 +653,19 @@
             </div>
 
             <div class="mb-3">
-                <label for="raw_video_file">Raw Video File</label>
+                <label for="raw_video_file" class="form-label">Raw Video File</label>
                 <input type="file" name="raw_video_file" id="raw_video_file" class="form-control"
                     accept="video/*">
             </div>
 
             <div class="mb-3">
-                <label for="caption_file">Caption File</label>
+                <label for="caption_file" class="form-label">Caption File</label>
                 <input type="file" name="caption_file" id="caption_file" class="form-control"
                     accept=".srt,.vtt">
             </div>
 
             <div class="mb-3">
-                <label for="status">Status</label>
+                <label for="status" class="form-label">Status</label>
                 <select name="status" id="status" class="form-select">
                     <option value="draft" {{ old('status', $video->status ?? '') == 'draft' ? 'selected' : '' }}>
                         Draft</option>
@@ -693,7 +693,7 @@
             </div>
 
             <div class="mb-3">
-                <label for="post_schedule_at">Post Schedule At</label>
+                <label for="post_schedule_at" class="form-label">Post Schedule At</label>
                 <input type="datetime-local" name="post_schedule_at" id="post_schedule_at" class="form-control"
                     value="{{ old('post_schedule_at', isset($video->post_schedule_at) ? \Carbon\Carbon::parse($video->post_schedule_at)->format('Y-m-d\TH:i') : '') }}">
             </div>

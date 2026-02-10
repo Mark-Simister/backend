@@ -31,6 +31,7 @@ use App\Http\Controllers\CharacterInsightController;
 use App\Http\Controllers\SimilarProductController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\FormController;
+use App\Http\Controllers\Api\ThemeController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
@@ -54,6 +55,13 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::prefix('admin')
+    ->as('admin.')
+    ->middleware(['auth'])
+    ->group(function () {
+        Route::resource('themes', ThemeController::class);
+    });
 
 Route::middleware(['auth'])
     ->prefix('admin')

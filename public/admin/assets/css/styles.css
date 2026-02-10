@@ -1,8 +1,11 @@
  select.form-select {
     color: #000 !important; 
 }
+:focus, select.form-select:focus  {
+    outline: none !important;
+}
 div.dt-container div.dt-length select {
-    width: 60px !important;
+    /* width: 60px !important; */
     display: inline-block;
     margin-right: .5em;
     margin-left: 10px !important;
@@ -27,7 +30,33 @@ padding: 0px;
     flex-wrap: wrap;
     justify-content: space-between;
 }
-
+.btn-flex-a{
+  width: 145px;
+}
+.btn-flex-product{
+  display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.btn-aff {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+.setting-btn{
+  background: #0d1321 !important;
+    padding: 6px !important;
+}
+.setting-btn .ti-settings{
+  color: #fff !important;
+}
+.power-btn .ti-power-off{
+ color: #ee0505 !important;
+}
+.user-color-management .form-control-color {
+    padding: 0px;
+}
 /* PWS styles for comments start */
         .comments-container {
             background-color: #f8f9fa;

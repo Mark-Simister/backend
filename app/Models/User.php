@@ -69,4 +69,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\VideoWatchHistory::class)->latest('watched_at');
     }
+    public function userTheme()
+    {
+        return $this->hasOne(UserTheme::class);
+    }
+
 }

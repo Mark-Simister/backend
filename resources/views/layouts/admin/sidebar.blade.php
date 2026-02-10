@@ -22,6 +22,14 @@
                 </a>
             </li>
         @endcan
+        @can('themes.view')
+            <li class="nav-item {{ request()->is('admin/themes*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('admin.themes.index') }}">
+                    <i class="ti-paint-bucket menu-icon"></i>
+                    <span class="menu-title">User Theme</span>
+                </a>
+            </li>
+        @endcan
         @can('channel.view')
             <li class="nav-item {{ request()->is('admin/channels*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.channels.index') }}">

@@ -139,7 +139,7 @@ class AuthController extends Controller
     //         ]
     //     ], 200);
     // }
-    public function login(Request $request)
+public function login(Request $request)
 {
     $credentials = $request->only('email', 'password');
 
@@ -166,7 +166,7 @@ class AuthController extends Controller
         return response()->json([
             'status' => false,
             'message' => 'Your account has been deactivated. Please contact support.'
-        ], 410); // Gone
+        ], 410);
     }
 
     // Do not allow login if blocked
@@ -175,14 +175,13 @@ class AuthController extends Controller
         return response()->json([
             'status' => false,
             'message' => 'Your account is blocked. Please contact support.'
-        ], 403); 
+        ], 403);
     }
 
     if (!$user->is_verified) {
         if (!$user->otp_expires_at || Carbon::parse($user->otp_expires_at)->isPast()) {
             $this->issueAndSendOtp($user);
         }
-        // invalidate the token because we won’t let them in
         auth('api')->logout();
 
         return response()->json([
@@ -191,24 +190,42 @@ class AuthController extends Controller
         ], 403);
     }
 
-    // Load additional relationships and data similar to profile
+    // Load related models including the user's theme
     $user->load([
         'subscriptions_api' => fn ($q) => $q->with('listing')->latest(),
         'reviews_api' => fn ($q) => $q->latest()->with(['video:id,title']),
         'roles',
+        'userTheme.theme', //  loads theme relation
     ]);
 
     $data = $this->shapeUser($user);
 
+    // Always define $theme to avoid "Undefined variable" error
+    $theme = null;
+
+    if (!empty($user->userTheme) && !empty($user->userTheme->theme)) {
+        $t = $user->userTheme->theme;
+        $theme = [
+            'id'             => $t->id,
+            'name'           => $t->name,
+            'button_color'   => $t->button_color,
+            'link_color'     => $t->link_color,
+            'dark_bg_color'  => $t->dark_bg_color,
+            'light_bg_color' => $t->light_bg_color,
+        ];
+    }
+
     return response()->json([
-        'status' => true,
+        'status'  => true,
         'message' => 'Login successful.',
-        'data' => [
+        'data'    => [
             'token' => $token,
-            'user' => $data
+            'user'  => $data,
+            'theme' => $theme, // now safely included
         ]
     ], 200);
 }
+
 
 private function shapeUser(ApiUser $user): array
     {

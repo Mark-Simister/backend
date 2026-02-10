@@ -39,7 +39,7 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $color->name }}</td>
                         <td>
-                            <span class="badge" style="background-color: {{ $color->hex_value }}; color: #FFC100; border:1px solid #4B49AC">
+                            <span class="badge" style="background-color: {{ $color->hex_value }}; color: #FFC100; border:1px solid #0d1321">
                                 {{ $color->hex_value }}
                             </span>
                         </td>

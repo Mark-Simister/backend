@@ -113,5 +113,9 @@ class ApiUser extends Authenticatable implements JWTSubject
 
         )->withTimestamps();
     }
+    public function userTheme()
+    {
+        return $this->hasOne(\App\Models\UserTheme::class, 'user_id');
+    }
 
 }

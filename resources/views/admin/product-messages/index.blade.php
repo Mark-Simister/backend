@@ -24,9 +24,9 @@
                                 <th style="width: 60px;">#</th>
                                 <th>Name</th>
                                 <th>Email</th>
-                                <th>Subject</th>
                                 <th>Message</th>
-                                <th>Created At</th>
+                                <!-- <th>Subject</th>
+                                <th>Created At</th> -->
                                 <th style="width: 180px;">Actions</th>
                             </tr>
                         </thead>
@@ -36,9 +36,9 @@
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $productMessage->name }}</td>
                                     <td>{{ $productMessage->email }}</td>
-                                    <td>{{ Str::limit($productMessage->subject, 50) }}</td>
                                     <td>{{ Str::limit($productMessage->message, 50) }}</td>
-                                    <td>{{ $productMessage->created_at }}</td>
+                                    <!-- <td>{{ Str::limit($productMessage->subject, 50) }}</td>
+                                    <td>{{ $productMessage->created_at }}</td> -->
                                     <td>
                                         @can('product_message.view')
                                             <a href="{{ route('admin.product-messages.show', $productMessage) }}" class="btn btn-info me-1">

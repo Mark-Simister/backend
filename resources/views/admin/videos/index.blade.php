@@ -67,29 +67,35 @@
                                     </td>
 
 
-                                    <td class="btn-flex">
+                                    <td class="btn-flex-product">
                                         @can('video.edit')
+                                          <div class="flex">
                                             <a href="{{ route('admin.videos.edit.seo', $video) }}"
-                                                class="btn btn-outline-primary me-1">SEO</a>
+                                                class="btn btn-outline-primary me-1 btn-flex-a">SEO</a>
                                             <a href="{{ route('admin.videos.edit.product', $video) }}"
-                                                class="btn btn-outline-success me-1">Product</a>
+                                                class="btn btn-outline-success me-1 btn-flex-a">Product</a>
+                                            </div>
+                                            <div class="flex">
                                             <a href="{{ route('admin.videos.character-insights.index', $video->id) }}"
-                                                class="btn btn-outline-secondary me-1">Character Insights</a>
+                                                class="btn btn-outline-secondary me-1 btn-flex-a">Character Insights</a>
                                             <a href="{{ route('admin.similar-products.edit', $video->id) }}"
-                                                class="btn btn-outline-warning me-1">Similar Products</a>
+                                                class="btn btn-outline-warning me-1 btn-flex-a">Similar Products</a>
+                                            </div>
                                         @endcan
                                     </td>
-                                    <td>
+                                    <td >
+                                        <div class="btn-aff">
                                         @can('video.edit')
-                                            <a href="{{ route('admin.videos.edit', $video) }}" class="btn btn-warning me-1">
+                                            <a href="{{ route('admin.videos.edit', $video) }}" class="btn btn-warning">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
-                                            <!-- Button to manage affiliate links -->
-                                            <a href="{{ route('admin.videos.affiliate-links', $video->id) }}"
-                                                class="btn btn-info me-1" style="pointer-events: none;">
-                                                <i class="bi bi-link-45deg"></i> Manage Affiliate Links
+                                             <a href="{{ route('admin.videos.comments', $video->id) }}"
+                                                class="btn btn-info show-comments-btn">
+                                                <i class="bi bi-chat-left-dots"></i>
                                             </a>
+
                                         @endcan
+
                                         @can('video.delete')
                                             <form action="{{ route('admin.videos.destroy', $video) }}" method="POST"
                                                 class="d-inline delete-video-form">
@@ -100,10 +106,13 @@
                                                 </button>
                                             </form>
                                         @endcan
+                                        </div>
+
                                         @can('video.edit')
-                                            <a href="{{ route('admin.videos.comments', $video->id) }}"
-                                                class="btn btn-info show-comments-btn">
-                                                <i class="bi bi-chat-left-dots"></i>
+                                            <!-- Button to manage affiliate links -->
+                                            <a href="{{ route('admin.videos.affiliate-links', $video->id) }}"
+                                                class="btn btn-info w-100" style="pointer-events: none;">
+                                                <i class="bi bi-link-45deg"></i> Manage Affiliate Links
                                             </a>
                                         @endcan
                                     </td>

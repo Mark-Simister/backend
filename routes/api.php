@@ -25,6 +25,8 @@ use App\Http\Controllers\FormController;
 use App\Http\Controllers\FaqController;
 // use App\Http\Controllers\VimeoController;
 use App\Http\Controllers\LeaderboardCommentController;
+use App\Http\Controllers\Api\ThemeController;
+use App\Http\Controllers\Api\UserThemeController;
 
 use Illuminate\Support\Facades\Http;
 
@@ -32,6 +34,21 @@ use Illuminate\Support\Facades\Http;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+Route::middleware('auth:api')->group(function () {
+    // Admin routes
+    //Route::post('/themes', [ThemeController::class, 'store']);
+    //Route::delete('/themes/{id}', [ThemeController::class, 'destroy']);
+
+    // Common routes
+    Route::get('/themes', [ThemeController::class, 'index_api']);
+    Route::get('/user/theme', [UserThemeController::class, 'getUserTheme']);
+    Route::post('/user/theme', [UserThemeController::class, 'saveTheme']);
+    Route::post('user/theme/colors', [UserThemeController::class, 'updateCustomColors']);
+});
+
+
+
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);

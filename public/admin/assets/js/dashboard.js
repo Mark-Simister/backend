@@ -91,7 +91,7 @@
             {
               label: 'Online Sales',
               data: [400, 340, 550, 480, 170],
-              backgroundColor: '#4B49AC',
+              backgroundColor: '#0d1321',
               borderRadius:5,
             }
           ]
@@ -175,7 +175,7 @@
           datasets: [{
               data: [100, 50, 50],
               backgroundColor: [
-                 "#4B49AC","#FFC100", "#248AFD",
+                 "#0d1321","#FFC100", "#248AFD",
               ],
               borderColor: "rgba(0,0,0,0)"
           }]
@@ -223,7 +223,7 @@
           datasets: [{
               data: [100, 50, 50],
               backgroundColor: [
-                 "#4B49AC","#FFC100", "#248AFD",
+                 "#0d1321","#FFC100", "#248AFD",
               ],
               borderColor: "rgba(0,0,0,0)"
           }]

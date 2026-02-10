@@ -3,10 +3,10 @@
     <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start">
         <a class="navbar-brand brand-logo me-5" href="{{ url('admin') }}">
             {{-- <img src="{{ asset('admin/assets/images/logo.svg') }}" class="me-2" alt="logo" /> --}}
-            <img src="{{ asset('admin/assets/images/beastierated_logo.png') }}" class="me-2" alt="logo" />
+            <img src="{{ asset('admin/assets/images/beastierated_logo.png') }}" class="me-2" alt="logo" style="height:auto;" />
         </a>
         <a class="navbar-brand brand-logo-mini" href="{{ url('admin') }}">
-            <img src="{{ asset('admin/assets/images/beastierated_logo.png') }}" alt="logo" />
+            <img src="{{ asset('admin/assets/images/beastierated_logo_mini.png') }}" alt="logo" style="height:auto;"/>
         </a>
     </div>
     <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
@@ -160,7 +160,7 @@
                     </div>
                     <div class="dropdown-divider"></div>
 
-                    <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                    <a class="dropdown-item " href="{{ route('profile.edit') }} " >
                         <i class="ti-settings text-primary me-2"></i> Profile
                     </a>
                 </div>
@@ -168,20 +168,20 @@
 
             <!-- Logout and profile  button OUTSIDE -->
             <div class="extra_buttons" style="display:flex;">
-    <li class="nav-item me-0">
-        <a href="{{ url('profile') }}" class="btn btn-sm btn-outline-primary ms-2 {{ request()->is('profile') ? 'active' : '' }}">
-            <i class="ti-settings {{ request()->is('profile') ? 'text-white' : 'text-primary' }}"></i> 
-        </a>
-    </li>
-    <li class="nav-item ms-0 me-2">
-        <form method="POST" action="{{ url('logout') }}">
-            @csrf
-            <button type="submit" class="btn btn-sm btn-outline-danger ms-2">
-                <i class="ti-power-off"></i>
-            </button>
-        </form>
-    </li>
-</div>
+            <li class="nav-item m-0">
+                <a href="{{ url('profile') }}" class="btn btn-sm {{ request()->is('profile') ? 'active' : '' }} setting-btn" >
+                    <i class="ti-settings {{ request()->is('profile') ? 'text-white' : 'text-primary' }} "></i> 
+                </a>
+            </li>
+            <li class="nav-item m-0">
+                <form method="POST" action="{{ url('logout') }}">
+                    @csrf
+                    <button type="submit" class="btn btn-sm power-btn">
+                        <i class="ti-power-off"></i>
+                    </button>
+                </form>
+            </li>
+        </div>
 
 
            
