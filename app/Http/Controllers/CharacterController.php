@@ -43,9 +43,9 @@ class CharacterController extends Controller
 
     public function create()
     {
-        $categories = \App\Models\Category::all();
-        $character_role = CharacterRole::all();
-        $character_tag = CharacterTag::all();
+        $categories = \App\Models\Category::orderBy('id', 'desc')->get();
+        $character_role = CharacterRole::orderBy('id', 'desc')->get();
+        $character_tag = CharacterTag::orderBy('id', 'desc')->get();
 
         // Only active regions
         $regions = \App\Models\Region::where('is_active', 1)->get();
@@ -209,9 +209,9 @@ class CharacterController extends Controller
 
     public function edit(Character $character)
     {
-        $categories = \App\Models\Category::all();
-        $character_role = CharacterRole::all();
-        $character_tag = CharacterTag::all();
+        $categories = \App\Models\Category::orderBy('id', 'desc')->get();
+        $character_role = CharacterRole::orderBy('id', 'desc')->get();
+        $character_tag = CharacterTag::orderBy('id', 'desc')->get();
 
         $regions = \App\Models\Region::all();
         $selectedRegions = $character->regions->pluck('id')->toArray();

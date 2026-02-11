@@ -241,7 +241,8 @@ class SearchController extends Controller
 
                 $videos->orWhere(function ($query) use ($highlightTagIds) {
                     foreach ($highlightTagIds as $highlightTagId) {
-                        $query->orWhereRaw('FIND_IN_SET(?, videos.highlight_tags)', [$highlightTagId]);
+                        // $query->orWhereRaw('FIND_IN_SET(?, videos.highlight_tags)', [$highlightTagId]);
+                        $query->orWhereRaw('FIND_IN_SET(?, REPLACE(REPLACE(videos.highlight_tags, "\"", ""), " ", ""))', [$highlightTagId]);
                     }
                 });
             }

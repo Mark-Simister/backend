@@ -5,7 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Beastierated</title>
+    <title>{{ trim($__env->yieldContent('title')) ? $__env->yieldContent('title') . ' - ' : '' }}Beastierated</title>
+
 
     <!-- plugins:css -->
     <!-- Vendor CSS -->
@@ -33,7 +34,7 @@
     <link rel="stylesheet" href="{{ asset('admin/assets/css/style.css') }}">
 
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('admin/assets/images/favicon.png') }}" />
+    <link rel="shortcut icon" href="{{ asset('admin/assets/images/favicon.svg') }}" />
     
     {{-- <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" /> --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />

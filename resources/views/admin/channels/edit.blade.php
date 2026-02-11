@@ -38,10 +38,10 @@
                         <label for="regions">Select Regions:</label><br>
                         @foreach ($regions as $region)
                             <div class="form-check form-check-inline">
-                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input"
+                                <input type="checkbox" name="regions[]" value="{{ $region->id }}" class="form-check-input" id="region_{{ $region->id }}"
                                     {{ in_array($region->id, $selectedRegions ?? []) ? 'checked' : '' }}>
 
-                                <label class="form-check-label">
+                                <label class="form-check-label" for="region_{{ $region->id }}">
                                     {{ $region->region_name }}
                                     @if ($region->is_active != 1)
                                         <span class="badge bg-danger ms-1">Inactive</span>

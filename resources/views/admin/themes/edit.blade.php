@@ -34,7 +34,7 @@
                 </div>
 
                 <!-- Button Color -->
-                <div class="col-md-3 d-flex align-items-center flex-column" >
+                <div class="col-md-3 btn-fx" >
                     <label for="button_color" class="form-label">Button Color</label>
                     <input 
                         type="color"
@@ -46,7 +46,7 @@
                 </div>
 
                 <!-- Link Color -->
-                <div class="col-md-3 d-flex align-items-center flex-column">
+                <div class="col-md-3 btn-fx">
                     <label for="link_color" class="form-label">Link Color</label>
                     <input 
                         type="color"
@@ -58,7 +58,7 @@
                 </div>
 
                 <!-- Dark BG -->
-                <div class="col-md-3 d-flex align-items-center flex-column">
+                <div class="col-md-3 btn-fx">
                     <label for="dark_bg_color" class="form-label">Dark Background</label>
                     <input 
                         type="color"
@@ -70,7 +70,7 @@
                 </div>
 
                 <!-- Light BG -->
-                <div class="col-md-3 d-flex align-items-center flex-column" >
+                <div class="col-md-3 btn-fx" >
                     <label for="light_bg_color" class="form-label">Light Background</label>
                     <input 
                         type="color"

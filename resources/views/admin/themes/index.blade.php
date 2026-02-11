@@ -44,20 +44,28 @@
                         <td>{{ $theme->name }}</td>
 
                         <td>
+                            <div class="indx-col">
                             <span class="badge border" style="background: {{ $theme->button_color }};">&nbsp;&nbsp;&nbsp;</span>
                             <small class="text-muted ms-1">{{ $theme->button_color }}</small>
+                            </div>
                         </td>
                         <td>
+                            <div class="indx-col">
                             <span class="badge border" style="background: {{ $theme->link_color }};">&nbsp;&nbsp;&nbsp;</span>
                             <small class="text-muted ms-1">{{ $theme->link_color }}</small>
+                            </div>
                         </td>
                         <td>
+                            <div class="indx-col">
                             <span class="badge border" style="background: {{ $theme->dark_bg_color }};">&nbsp;&nbsp;&nbsp;</span>
                             <small class="text-muted ms-1">{{ $theme->dark_bg_color }}</small>
+                            </div>
                         </td>
                         <td>
+                            <div class="indx-col">
                             <span class="badge border" style="background: {{ $theme->light_bg_color }};">&nbsp;&nbsp;&nbsp;</span>
                             <small class="text-muted ms-1">{{ $theme->light_bg_color }}</small>
+                            </div>
                         </td>
 
                         <td class="text-center">

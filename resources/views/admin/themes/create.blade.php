@@ -17,7 +17,7 @@
 
             <div class="row g-4">
                 <!-- Name -->
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <label for="name" class="form-label">Theme Name <span class="text-danger">*</span></label>
                     <input 
                         type="text" 
@@ -34,7 +34,7 @@
                 </div>
 
                 <!-- Button Color -->
-                <div class="col-md-3">
+                <div class="col-md-3 btn-fx">
                     <label for="button_color" class="form-label">Button Color</label>
                     <input 
                         type="color"
@@ -46,7 +46,7 @@
                 </div>
 
                 <!-- Link Color -->
-                <div class="col-md-3">
+                <div class="col-md-3 btn-fx">
                     <label for="link_color" class="form-label">Link Color</label>
                     <input 
                         type="color"
@@ -58,7 +58,7 @@
                 </div>
 
                 <!-- Dark BG -->
-                <div class="col-md-3">
+                <div class="col-md-3 btn-fx">
                     <label for="dark_bg_color" class="form-label">Dark Background</label>
                     <input 
                         type="color"
@@ -70,7 +70,7 @@
                 </div>
 
                 <!-- Light BG -->
-                <div class="col-md-3">
+                <div class="col-md-3 btn-fx">
                     <label for="light_bg_color" class="form-label">Light Background</label>
                     <input 
                         type="color"

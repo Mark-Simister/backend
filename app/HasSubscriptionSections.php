@@ -72,7 +72,8 @@ trait HasSubscriptionSections
         }
 
         // highlight tag (2 = top deals, 3 = trending)
-        $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+        // $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+        $q->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [$highlightTag]);
 
         // region
         $q->whereHas('regions', function ($query) use ($regionCode) {
@@ -102,7 +103,8 @@ trait HasSubscriptionSections
         }
 
         // highlight tag (2 = top deals, 3 = trending)
-        $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+        // $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+        $q->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [$highlightTag]);
 
         // region
         $q->whereHas('regions', function ($query) use ($regionCode) {
@@ -128,7 +130,7 @@ trait HasSubscriptionSections
             'regions:id,region_code',
             'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta,channel_category'
         ])
-            ->where('status', 'published');
+        ->where('status', 'published');
 
         // Optional filters (channel, character, category)
         foreach (['channel_id', 'character_id', 'category_id'] as $f) {
@@ -138,7 +140,8 @@ trait HasSubscriptionSections
         }
 
         // Highlight tag (2 = top deals, 3 = trending)
-        $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+        // $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [$highlightTag]);
+        $q->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [$highlightTag]);
 
         // Region filter
         $q->whereHas('regions', function ($query) use ($regionCode) {

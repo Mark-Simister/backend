@@ -54,8 +54,13 @@ padding: 0px;
 .power-btn .ti-power-off{
  color: #ee0505 !important;
 }
-.user-color-management .form-control-color {
+.btn-fx  .form-control-color {
     padding: 0px;
+}
+.btn-fx {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 /* PWS styles for comments start */
         .comments-container {

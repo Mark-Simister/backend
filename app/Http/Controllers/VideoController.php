@@ -152,7 +152,7 @@ class VideoController extends Controller
     public function create()
     {
         $channels = Channel::all();
-        $characters = Character::where('public_private_toggle', 0)->get();
+        $characters = Character::where('public_private_toggle', 0)->orderBy('id', 'desc')->get();
         $categories = Category::all();
         $highlight_tags = HighlightTag::all();
         $regions = Region::where('is_active', 1)->get();
@@ -1536,7 +1536,8 @@ class VideoController extends Controller
                 }
             }
 
-            $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [3]);
+            // $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [3]);
+            $q->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [3]);
 
 
             $q->whereHas('regions', function ($query) use ($regionCode) {
@@ -2036,7 +2037,8 @@ class VideoController extends Controller
                 }
             }
 
-            $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]);
+            // $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]);
+            $q->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [2]);
 
 
             $q->whereHas('regions', function ($query) use ($regionCode) {
@@ -2155,8 +2157,10 @@ class VideoController extends Controller
                 'regions:id,region_code',
                 'channel:id,name,image,primary_color,secondary_color,accent_color,background_color,text_color,hover_color,highlight_color,cta'
             ])
-                ->where('status', 'published')
-                ->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]); // Highlight tag for "Top Deals"
+            ->where('status', 'published')
+            // ->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]); // Highlight tag for "Top Deals"
+            ->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [2]);
+
 
             foreach (['channel_id', 'character_id', 'category_id'] as $filter) {
                 if ($request->filled($filter)) {
@@ -2308,7 +2312,8 @@ class VideoController extends Controller
 
             $q = Video::with(['reviews:id,video_id,rating', 'regions:id,region_code'])
                 ->where('status', 'published')
-                ->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]); // Highlight tag for "Top Deals"
+                // ->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]); // Highlight tag for "Top Deals"
+                ->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [2]);
 
             foreach (['channel_id', 'character_id', 'category_id'] as $filter) {
                 if ($request->filled($filter)) {
@@ -2440,7 +2445,8 @@ class VideoController extends Controller
                 ->where('status', 'published')
                 ->when($request->filled('channel_id'), fn($q) => $q->where('channel_id', $request->channel_id))
                 ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
-                ->whereRaw('FIND_IN_SET(?, highlight_tags)', [3]) // CSV style as in your code
+                // ->whereRaw('FIND_IN_SET(?, highlight_tags)', [3]) // CSV style as in your code
+                ->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [3])
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 })
@@ -2526,7 +2532,8 @@ class VideoController extends Controller
                 ->where('status', 'published')
                 ->when($request->filled('channel_id'), fn($q) => $q->where('channel_id', $request->channel_id))
                 ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
-                ->whereRaw('FIND_IN_SET(?, highlight_tags)', [3])  // Trending flag
+                // ->whereRaw('FIND_IN_SET(?, highlight_tags)', [3])  // Trending flag
+                ->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [3])
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
                 })
@@ -3455,7 +3462,8 @@ class VideoController extends Controller
             }
         }
 
-        $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [3]);
+        // $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [3]);
+        $q->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [3]);
 
 
         $q->whereHas('regions', function ($query) use ($regionCode) {
@@ -3579,7 +3587,8 @@ class VideoController extends Controller
             }
         }
 
-        $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]);
+        // $q->whereRaw('FIND_IN_SET(?, highlight_tags)', [2]);
+        $q->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [2]);
 
 
         $q->whereHas('regions', function ($query) use ($regionCode) {
@@ -3693,7 +3702,8 @@ class VideoController extends Controller
                 ->when($request->filled('channel_id'), fn($q) => $q->where('channel_id', $request->channel_id))
                 ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
                 // match your existing "trending" flag based on highlight_tags CSV
-                ->whereRaw('FIND_IN_SET(?, highlight_tags)', [3])
+                // ->whereRaw('FIND_IN_SET(?, highlight_tags)', [3])
+                ->whereRaw('FIND_IN_SET(?, REPLACE(REPLACE(highlight_tags, "\"", ""), " ", ""))', [3])
                 // video must be available in region
                 ->whereHas('regions', function ($q) use ($regionCode) {
                     $q->where('region_code', $regionCode);
