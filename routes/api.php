@@ -26,6 +26,7 @@ use App\Http\Controllers\FaqController;
 // use App\Http\Controllers\VimeoController;
 use App\Http\Controllers\LeaderboardCommentController;
 use App\Http\Controllers\Api\ThemeController;
+use App\Http\Controllers\Api\TopCategoryApiController;
 use App\Http\Controllers\Api\UserThemeController;
 
 use Illuminate\Support\Facades\Http;
@@ -47,7 +48,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('user/theme/colors', [UserThemeController::class, 'updateCustomColors']);
 });
 
-
+Route::get('/top-categories', [TopCategoryApiController::class, 'index']);
 
 
 Route::post('register', [AuthController::class, 'register']);
@@ -194,6 +195,7 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
 Route::post('/leaderboardcomments', [LeaderboardCommentController::class, 'store']);
 Route::get('/leaderboardcomments', [LeaderboardCommentController::class, 'index']);
 Route::get('/leaderboardcomments/leaderboard', [LeaderboardCommentController::class, 'leaderboard']);
+Route::get('/leaderboardcomments/leaderboard/category', [LeaderboardCommentController::class, 'leaderboardByCategory']);
 
 // API's For Guest User
 Route::get('regions', [RegionController::class, 'index_api']);

@@ -32,6 +32,7 @@ use App\Http\Controllers\SimilarProductController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\Api\ThemeController;
+use App\Http\Controllers\TopCategoryController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
@@ -46,6 +47,10 @@ Route::middleware('auth')->group(function () {
 Route::prefix('admin')->as('admin.')->middleware(['auth'])->group(function () {
     Route::resource('themes', ThemeController::class);
     });
+
+Route::prefix('admin')->name('admin.')->group(function() {
+    Route::resource('top-categories', TopCategoryController::class);
+});  
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('channels', ChannelController::class)->middleware('permission:channel.view|channel.create|channel.edit|channel.delete'); // Channels

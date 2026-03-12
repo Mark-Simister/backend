@@ -11,7 +11,7 @@ class LeaderboardComment extends Model
 
     protected $table = 'leaderboardcomments';
 
-    protected $fillable = ['user_id', 'comment'];
+    protected $fillable = ['user_id', 'comment', 'type'];
 
     public function user(): BelongsTo
     {

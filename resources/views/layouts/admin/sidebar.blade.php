@@ -46,6 +46,14 @@
                 </a>
             </li>
         @endcan
+        @can('top_category.view')
+            <li class="nav-item {{ request()->is('admin/top-categories*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('admin.top-categories.index') }}">
+                    <i class="icon-layout menu-icon"></i>
+                    <span class="menu-title">Top Categories</span>
+                </a>
+            </li>
+        @endcan
         @can('character.view')
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="collapse" href="#characterMenu" aria-expanded="false"

@@ -3,19 +3,14 @@
 @section('title', 'Add Character')
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
-
-
     <style>
         .select2-container {
             z-index: 9999 !important;
-            /* Ensure the dropdown is above other content */
         }
 
         .select2-dropdown {
             position: absolute !important;
-            /* Ensures dropdown is positioned correctly */
             z-index: 9999 !important;
-            /* Ensure dropdown is above other elements */
         }
 
         /* .ck-editor__editable_inline {
