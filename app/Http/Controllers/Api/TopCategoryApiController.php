@@ -52,7 +52,7 @@ class TopCategoryApiController extends Controller
                 'title' => $category->title,
 
                 'explain_video' => $category->explain_video
-                    ? asset('storage/' . $category->explain_video)
+                    ? url('/api/video/' . basename($category->explain_video))
                     : null,
 
                 // NEW

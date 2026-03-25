@@ -536,3 +536,10 @@ input:checked + .slider:before {
     position: static !important;
     padding-left: 0 !important;
 }
+
+div#timestampRepeater {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}

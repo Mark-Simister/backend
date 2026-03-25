@@ -50,6 +50,15 @@ Route::middleware('auth:api')->group(function () {
 
 Route::get('/top-categories', [TopCategoryApiController::class, 'index']);
 
+Route::get('/video/{filename}', function ($filename) {
+    $path = storage_path('app/public/explain_videos/' . $filename);
+    return response()->file($path, [
+        'Content-Type' => 'video/mp4',
+        'Accept-Ranges' => 'bytes',
+        'Access-Control-Allow-Origin' => '*',
+    ]);
+});
+
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
@@ -189,13 +198,15 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::get('/watch-history/continue', [VideoEngagementController::class, 'myWatchHistoriesContinueWatching'])->name('videos.watch.continue');
     Route::get('video/{id}/watch-history', [VideoEngagementController::class, 'getWatchHistory']);
 
+    // API's For leaderboardcomments 
+    Route::post('/leaderboardcomments', [LeaderboardCommentController::class, 'store']);
+    Route::get('/leaderboardcomments', [LeaderboardCommentController::class, 'index']);
+    Route::get('/leaderboardcomments/leaderboard', [LeaderboardCommentController::class, 'leaderboard']);
+    Route::get('/leaderboardcomments/leaderboard/category', [LeaderboardCommentController::class, 'leaderboardByCategory']);
+
 });
 
-// API's For leaderboardcomments 
-Route::post('/leaderboardcomments', [LeaderboardCommentController::class, 'store']);
-Route::get('/leaderboardcomments', [LeaderboardCommentController::class, 'index']);
-Route::get('/leaderboardcomments/leaderboard', [LeaderboardCommentController::class, 'leaderboard']);
-Route::get('/leaderboardcomments/leaderboard/category', [LeaderboardCommentController::class, 'leaderboardByCategory']);
+
 
 // API's For Guest User
 Route::get('regions', [RegionController::class, 'index_api']);

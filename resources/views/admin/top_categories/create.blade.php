@@ -180,11 +180,13 @@ $(document).ready(function () {
 
         filtered.forEach(v => {
             const isChecked = selectedIds.includes(String(v.id));
+            const thumbnail = v.thumbnail_image;
             $videoList.append(`
                 <div class="col-md-6">
                     <div class="form-check border rounded p-2">
                         <input class="form-check-input" type="checkbox" name="videos[]" id="video_${v.id}" value="${v.id}" ${isChecked ? 'checked' : ''}>
                         <label class="form-check-label" for="video_${v.id}">${v.title}</label>
+                         
                     </div>
                 </div>
             `);
@@ -214,10 +216,17 @@ $(document).ready(function () {
         filtered.forEach(c => {
             const userName = c.user ? c.user.name : 'Anonymous';
             $commentPreview.append(`
-                <div class="border-bottom py-1">
-                    <strong>[${c.type.toUpperCase()}]</strong> ${c.comment} 
-                    <small class="text-muted">(${userName})</small>
-                </div>
+                      <!--
+                        <div class="border-bottom py-1">
+                            <strong>[${c.type.toUpperCase()}]</strong> ${c.comment} 
+                            <small class="text-muted">(${userName})</small>
+                        </div>
+                        -->
+
+                 <div class="border-bottom py-1">
+                     ${c.comment} 
+                     <small class="text-muted">(${userName})</small>
+                 </div>
             `);
         });
     }

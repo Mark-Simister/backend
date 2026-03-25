@@ -74,79 +74,26 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Authenticate a user and issue a JWT.
-     * Blocks login until email is verified.
-     */
-    // public function login(Request $request)
-    // {
-    //     $credentials = $request->only('email', 'password');
 
-    //     if (!$token = auth('api')->attempt($credentials)) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Invalid credentials.'
-    //         ], 401);
-    //     }
-
-    //     /** @var ApiUser $user */
-    //     $user = auth('api')->user();
-
-    //     if (!$user->hasRole('user')) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Access denied. Insufficient permissions.'
-    //         ], 403);
-    //     }
-
-    //     // Do not allow login if user is soft-deleted
-    //     if (method_exists($user, 'trashed') && $user->trashed()) {
-    //         auth('api')->logout();
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Your account has been deactivated. Please contact support.'
-    //         ], 410); // Gone
-    //     }
-
-    //     // Do not allow login if blocked
-    //     if (!empty($user->is_blocked) && $user->is_blocked) {
-    //         auth('api')->logout();
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Your account is blocked. Please contact support.'
-    //         ], 403); 
-    //     }
-
-    //     if (!$user->is_verified) {
-    //         if (!$user->otp_expires_at || Carbon::parse($user->otp_expires_at)->isPast()) {
-    //             $this->issueAndSendOtp($user);
-    //         }
-    //         // invalidate the token because we won’t let them in
-    //         auth('api')->logout();
-
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Email not verified. We have sent (or re-sent) a verification code to your email.',
-    //         ], 403);
-    //     }
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'Login successful.',
-    //         'data' => [
-    //             'token' => $token,
-    //             'user' => $user
-    //         ]
-    //     ], 200);
-    // }
 public function login(Request $request)
 {
     $credentials = $request->only('email', 'password');
 
+    // Check if email exists
+    $user = ApiUser::where('email', $credentials['email'])->first();
+
+    if (!$user) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Unknown Email Address.'
+        ], 404);
+    }
+
+    // Now attempt login
     if (!$token = auth('api')->attempt($credentials)) {
         return response()->json([
             'status' => false,
-            'message' => 'Invalid credentials.'
+            'message' => 'The password you have entered for this email is incorrect.'
         ], 401);
     }
 
@@ -195,12 +142,11 @@ public function login(Request $request)
         'subscriptions_api' => fn ($q) => $q->with('listing')->latest(),
         'reviews_api' => fn ($q) => $q->latest()->with(['video:id,title']),
         'roles',
-        'userTheme.theme', //  loads theme relation
+        'userTheme.theme',
     ]);
 
     $data = $this->shapeUser($user);
 
-    // Always define $theme to avoid "Undefined variable" error
     $theme = null;
 
     if (!empty($user->userTheme) && !empty($user->userTheme->theme)) {
@@ -221,7 +167,7 @@ public function login(Request $request)
         'data'    => [
             'token' => $token,
             'user'  => $data,
-            'theme' => $theme, // now safely included
+            'theme' => $theme,
         ]
     ], 200);
 }

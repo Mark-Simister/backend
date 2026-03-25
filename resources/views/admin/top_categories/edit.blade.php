@@ -227,8 +227,15 @@ $(document).ready(function () {
         filtered.forEach(c => {
             const userName = c.user ? c.user.name : 'Anonymous';
             $commentPreview.append(`
+                <!--
                 <div class="border-bottom py-1">
                     <strong>[${c.type.toUpperCase()}]</strong> ${c.comment} 
+                    <small class="text-muted">(${userName})</small>
+                </div>
+                 -->
+
+                <div class="border-bottom py-1">
+                    ${c.comment} 
                     <small class="text-muted">(${userName})</small>
                 </div>
             `);
