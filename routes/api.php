@@ -28,6 +28,7 @@ use App\Http\Controllers\LeaderboardCommentController;
 use App\Http\Controllers\Api\ThemeController;
 use App\Http\Controllers\Api\TopCategoryApiController;
 use App\Http\Controllers\Api\UserThemeController;
+use App\Http\Controllers\Api\VideoViewController;
 
 use Illuminate\Support\Facades\Http;
 
@@ -204,7 +205,12 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::get('/leaderboardcomments/leaderboard', [LeaderboardCommentController::class, 'leaderboard']);
     Route::get('/leaderboardcomments/leaderboard/category', [LeaderboardCommentController::class, 'leaderboardByCategory']);
 
+    Route::post('/video-view', [VideoViewController::class, 'store']);
+    Route::get('/top-viewers/{type}', [VideoViewController::class, 'topViewers']);
+    Route::get('/most-viewed-videos', [VideoViewController::class, 'mostViewedVideos']);
+
 });
+
 
 
 

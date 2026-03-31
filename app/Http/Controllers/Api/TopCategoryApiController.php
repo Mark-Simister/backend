@@ -19,12 +19,19 @@ class TopCategoryApiController extends Controller
         $data = $topCategories->map(function ($category) {
 
             // === Videos ===
-            $videos = [];
-            if (is_array($category->video_ids) && count($category->video_ids) > 0) {
                 $videos = Video::whereIn('id', $category->video_ids)
-                    ->select('id', 'title', 'video_url')
-                    ->get();
-            }
+                    ->select('id', 'title', 'video_url', 'thumbnail_image')
+                    ->get()
+                    ->map(function ($video) {
+                        return [
+                            'id' => $video->id,
+                            'title' => $video->title,
+                            'video_url' => $video->video_url,
+                            'thumbnail' => $video->thumbnail_image 
+                                ? asset($video->thumbnail_image)
+                                : null,
+                        ];
+                    });
 
             // === Comments ===
             $comments = [];

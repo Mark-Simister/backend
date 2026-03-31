@@ -21,7 +21,13 @@ class TopCategoryController extends Controller
         $videos = Video::select('videos.*', 'channels.channel_category as video_cat')
             ->leftJoin('channels', 'channels.id', '=', 'videos.channel_id')
             ->whereNotNull('videos.video_url')
-            ->get();
+            ->get()
+            ->map(function ($video) {
+                $video->thumbnail_url = $video->thumbnail_image 
+                    ? asset( $video->thumbnail_image) 
+                    : null;
+                return $video;
+            });
 
         $comments = LeaderboardComment::with('user')
             ->select('id', 'comment', 'type', 'user_id')
@@ -81,7 +87,13 @@ class TopCategoryController extends Controller
         $videos = Video::select('videos.*', 'channels.channel_category as video_cat')
             ->leftJoin('channels', 'channels.id', '=', 'videos.channel_id')
             ->whereNotNull('videos.video_url')
-            ->get();
+            ->get()
+            ->map(function ($video) {
+                $video->thumbnail_url = $video->thumbnail_image 
+                    ? asset( $video->thumbnail_image) 
+                    : null;
+                return $video;
+            });
         $comments = LeaderboardComment::with('user')
             ->select('id', 'comment', 'type', 'user_id')
             ->get();

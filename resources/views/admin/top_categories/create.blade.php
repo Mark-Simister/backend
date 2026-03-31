@@ -180,14 +180,38 @@ $(document).ready(function () {
 
         filtered.forEach(v => {
             const isChecked = selectedIds.includes(String(v.id));
-            const thumbnail = v.thumbnail_image;
+            const thumbnail = v.thumbnail_url;
             $videoList.append(`
                 <div class="col-md-6">
-                    <div class="form-check border rounded p-2">
-                        <input class="form-check-input" type="checkbox" name="videos[]" id="video_${v.id}" value="${v.id}" ${isChecked ? 'checked' : ''}>
-                        <label class="form-check-label" for="video_${v.id}">${v.title}</label>
-                         
-                    </div>
+                    <label class="video-card ${isChecked ? 'active' : ''}" for="video_${v.id}">
+                        
+                        <input 
+                            type="checkbox" 
+                            name="videos[]" 
+                            id="video_${v.id}" 
+                            value="${v.id}" 
+                            ${isChecked ? 'checked' : ''}
+                            hidden
+                        >
+
+                        <div class="d-flex align-items-center gap-2">
+                            
+                            <div class="thumb-wrapper">
+                                <img src="${thumbnail}" 
+                                    alt="${v.title}" 
+                                    class="video-thumb">
+
+                                <span class="tick-icon">
+                                    <i class="bi bi-check"></i>
+                                </span>
+                            </div>
+
+                            <div class="video-info">
+                                <div class="video-title">${v.title}</div>
+                            </div>
+
+                        </div>
+                    </label>
                 </div>
             `);
         });
@@ -479,7 +503,18 @@ $(document).ready(function () {
 
     });
 
-    
+
+    $(document).on('change', 'input[name="videos[]"]', function () {
+        if ($('input[name="videos[]"]:checked').length > 5) {
+            this.checked = false;
+            alert('You can select only 5 videos');
+            return;
+        }
+
+        const label = $(this).closest('.video-card');
+        label.toggleClass('active', this.checked);
+    });
+
 });
 
 </script>

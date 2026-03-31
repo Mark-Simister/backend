@@ -543,3 +543,58 @@ div#timestampRepeater {
     flex-direction: column;
     gap: 10px;
 }
+.video-card {
+    display: block;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    background: #fff;
+}
+
+.video-card:hover {
+    border-color: #0d6efd;
+    background: #f8f9ff;
+}
+
+.video-card.active {
+    border: 2px solid #0d6efd;
+    background: #eef4ff;
+}
+
+
+.video-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.thumb-wrapper {
+    position: relative;
+}
+
+.video-thumb {
+    width: 70px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+/* Tick hidden by default */
+.tick-icon {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: #0d6efd;
+    color: #fff;
+    font-size: 12px;
+    padding: 3px 5px;
+    border-radius: 50%;
+    display: none;
+}
+
+/* Show tick when active */
+.video-card.active .tick-icon {
+    display: block;
+}

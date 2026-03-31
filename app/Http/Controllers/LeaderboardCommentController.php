@@ -15,7 +15,7 @@ class LeaderboardCommentController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'comment' => 'required|string|max:1000',
-            'type' => ['required', Rule::in(['pet','people','global'])], // <-- new
+            'type' => ['required', Rule::in(['pet','people','global'])], 
         ]);
 
         $comment = LeaderboardComment::create([
