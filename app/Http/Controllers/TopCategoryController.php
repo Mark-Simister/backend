@@ -64,8 +64,11 @@ class TopCategoryController extends Controller
 
         // Upload video
         if ($request->hasFile('explain_video')) {
-            $validated['explain_video'] = $request->file('explain_video')
-                ->store('explain_videos', 'public');
+            $file = $request->file('explain_video');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('explain_videos'), $filename);
+
+            $validated['explain_video'] = 'explain_videos/' . $filename;
         }
 
         // Save timestamps
@@ -127,13 +130,17 @@ class TopCategoryController extends Controller
                 $commentTypes = $request->comment_types;
             }
         }
+            if ($request->hasFile('explain_video')) {
+                if ($topCategory->explain_video && file_exists(public_path($topCategory->explain_video))) {
+                    unlink(public_path($topCategory->explain_video));
+                }
 
-        if ($request->hasFile('explain_video')) {
-            if ($topCategory->explain_video) {
-                Storage::disk('public')->delete($topCategory->explain_video);
+                $file = $request->file('explain_video');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('explain_videos'), $filename);
+
+                $validated['explain_video'] = 'explain_videos/' . $filename;
             }
-            $validated['explain_video'] = $request->file('explain_video')->store('explain_videos', 'public');
-        }
 
         $validated['video_ids'] = $request->videos ?? [];
         $validated['comment_types'] = $commentTypes;

@@ -85,7 +85,7 @@
                 @if($topCategory->explain_video)
                     <p class="mt-2">
                         Current:
-                        <a href="{{ asset('storage/'.$topCategory->explain_video) }}" target="_blank" class="text-decoration-none">
+                        <a href="{{ asset($topCategory->explain_video) }}" target="_blank" class="text-decoration-none">
                             <i class="bi bi-play-circle text-success"></i> View Uploaded Video
                         </a>
                     </p>
@@ -525,9 +525,14 @@ $(document).ready(function () {
     });
 
     $(document).on('change', 'input[name="videos[]"]', function () {
-    const label = $(this).closest('.video-card');
-    label.toggleClass('active', this.checked);
-});
+            if ($('input[name="videos[]"]:checked').length > 5) {
+            this.checked = false;
+            alert('You can select only 5 videos');
+            return;
+        }
+        const label = $(this).closest('.video-card');
+        label.toggleClass('active', this.checked);
+    });
 });
 </script>
 @endpush

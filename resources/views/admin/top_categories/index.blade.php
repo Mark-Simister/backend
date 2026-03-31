@@ -45,7 +45,7 @@
                         <td>{{ is_array($cat->video_ids) ? count($cat->video_ids) : 0 }}</td>
                         <td>
                             @if($cat->explain_video)
-                                <a href="{{ asset('storage/'.$cat->explain_video) }}" target="_blank" class="text-decoration-none">
+                                <a href="{{ asset($cat->explain_video) }}" target="_blank" class="text-decoration-none">
                                     <i class="bi bi-play-circle text-success"></i> View
                                 </a>
                             @else

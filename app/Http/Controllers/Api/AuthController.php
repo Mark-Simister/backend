@@ -402,7 +402,7 @@ public function resetPassword(Request $request)
     $validator = Validator::make($request->all(), [
         'email' => 'required|email|exists:users,email',
         'otp' => 'required|digits:6',
-        'password' => 'required|min:6|confirmed', // expect password + password_confirmation
+        'password' => 'required|min:6|confirmed', 
     ]);
 
     if ($validator->fails()) {
