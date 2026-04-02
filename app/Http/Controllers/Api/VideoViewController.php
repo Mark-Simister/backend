@@ -15,20 +15,34 @@ class VideoViewController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-           // 'user_id' => 'required|exists:users,id',
             'video_id' => 'required|exists:videos,id',
-            'type' => 'required|in:pet,people,global',
+            'type'     => 'required|in:pet,people,global',
         ]);
 
+        $userId  = auth()->id();
+        $videoId = $request->video_id;
+        $type    = $request->type;
+        $alreadyViewed = VideoView::where('video_id', $videoId)
+            ->where('type', $type)
+            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->exists();
+
+        if ($alreadyViewed) {
+            return response()->json([
+                'status'  => true,
+                'message' => 'View already recorded',
+            ]);
+        }
+
         VideoView::create([
-            'user_id' => auth()->id(),
-            'video_id' => $request->video_id,
-            'type' => $request->type,
+            'user_id'  => $userId,
+            'video_id' => $videoId,
+            'type'     => $type,
         ]);
 
         return response()->json([
-            'status' => true,
-            'message' => 'View recorded successfully'
+            'status'  => true,
+            'message' => 'View recorded successfully',
         ]);
     }
 

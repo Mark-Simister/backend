@@ -515,6 +515,22 @@ $(document).ready(function () {
         label.toggleClass('active', this.checked);
     });
 
+    $('form').on('submit', function (e) {
+        const selectedCount = $('input[name="videos[]"]:checked').length;
+
+        if (selectedCount < 1) {
+            e.preventDefault();
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Select at least 1 top video',
+                text: 'You must select at least one video before submitting.',
+            });
+
+            return false;
+        }
+    });
+
 });
 
 </script>

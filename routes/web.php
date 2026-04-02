@@ -166,6 +166,55 @@ Route::get('/jobs/cancel-overdue-renewals', [CronJobController::class, 'cancelOv
 Route::get('/cron/assign-highlight-tags', [CronJobController::class, 'assignHighlightTags']);
 Route::middleware(['auth'])->get('/admin-test', function () {return 'Welcome Admin';});
 
+Route::get('/explain_videos/{filename}', function ($filename) {
+    $filePath = public_path('explain_videos/' . $filename);
+
+    if (!file_exists($filePath)) {
+        abort(404);
+    }
+
+    $fileSize = filesize($filePath);
+    $start = 0;
+    $end = $fileSize - 1;
+    $length = $fileSize;
+
+    $headers = [
+        'Content-Type'  => 'video/mp4',
+        'Accept-Ranges' => 'bytes',
+        'Content-Length'=> $fileSize,
+    ];
+
+    // ── Handle Range request (seeking) ──
+    if (request()->hasHeader('Range')) {
+        preg_match('/bytes=(\d+)-(\d*)/', request()->header('Range'), $matches);
+
+        $start  = intval($matches[1]);
+        $end    = isset($matches[2]) && $matches[2] !== '' ? intval($matches[2]) : $fileSize - 1;
+        $length = $end - $start + 1;
+
+        $headers['Content-Range']  = "bytes $start-$end/$fileSize";
+        $headers['Content-Length'] = $length;
+
+        return response()->stream(function () use ($filePath, $start, $length) {
+            $file = fopen($filePath, 'rb');
+            fseek($file, $start);
+            $remaining = $length;
+            while (!feof($file) && $remaining > 0) {
+                $chunk = min(8192, $remaining);
+                echo fread($file, $chunk);
+                $remaining -= $chunk;
+                flush();
+            }
+            fclose($file);
+        }, 206, $headers);
+    }
+
+    // ── Full file (no seeking yet) ──
+    return response()->stream(function () use ($filePath) {
+        readfile($filePath);
+    }, 200, $headers);
+});
+
 Route::get('/clear-all', function () {
     $commands = [
         'config:clear',

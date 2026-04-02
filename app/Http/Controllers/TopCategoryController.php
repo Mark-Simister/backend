@@ -41,7 +41,7 @@ class TopCategoryController extends Controller
         $validated = $request->validate([
             'category_type' => 'required|in:pet,people',
             'title' => 'required|string|max:255',
-            'videos' => 'nullable|array',
+            'videos' => 'required|array|min:1|max:5',
             'videos.*' => 'exists:videos,id',
             'comment_types' => 'nullable',
             'timestamps' => 'nullable|array',

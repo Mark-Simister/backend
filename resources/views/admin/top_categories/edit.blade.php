@@ -525,13 +525,32 @@ $(document).ready(function () {
     });
 
     $(document).on('change', 'input[name="videos[]"]', function () {
-            if ($('input[name="videos[]"]:checked').length > 5) {
+
+        const checkedCount = $('input[name="videos[]"]:checked').length;
+        if (checkedCount > 5) {
             this.checked = false;
             alert('You can select only 5 videos');
             return;
         }
+
+        if (checkedCount === 0) {
+            this.checked = true;
+            alert('At least 1 video must be selected');
+            return;
+        }
+
         const label = $(this).closest('.video-card');
         label.toggleClass('active', this.checked);
+    });
+
+    $('form').on('submit', function (e) {
+        const checkedCount = $('input[name="videos[]"]:checked').length;
+
+        if (checkedCount === 0) {
+            e.preventDefault();
+            alert('Please select at least 1 video');
+            return false;
+        }
     });
 });
 </script>
