@@ -80,7 +80,7 @@
                 <label class="form-label fw-semibold">Explain Video (Upload)</label>
                 
                 <input type="file" name="explain_video" id="explain_video"
-                    class="form-control" accept="video/*">
+                    class="form-control" accept="video/*" {{ !$topCategory->explain_video ? 'required' : '' }}>
                 
                 @if($topCategory->explain_video)
                     <p class="mt-2">

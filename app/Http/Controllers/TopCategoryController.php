@@ -48,7 +48,7 @@ class TopCategoryController extends Controller
             'timestamps.*.start' => 'required_with:timestamps|string',
             'timestamps.*.end' => 'required_with:timestamps|string',
             'timestamps.*.message' => 'required_with:timestamps|string|max:255',
-            'explain_video' => 'nullable|mimes:mp4,mov,avi,webm|max:20000',
+            'explain_video' => 'required|file|mimes:mp4,mov,avi,webm|max:51200',
             'status' => 'nullable|in:0,1',
         ]);
 
@@ -118,7 +118,9 @@ class TopCategoryController extends Controller
                 'timestamps.*.start' => 'required_with:timestamps|string',
                 'timestamps.*.end' => 'required_with:timestamps|string',
                 'timestamps.*.message' => 'required_with:timestamps|string|max:255',
-                'explain_video' => 'nullable|mimes:mp4,mov,avi,webm|max:20000',
+                'explain_video' => $topCategory->explain_video
+                    ? 'nullable|file|mimes:mp4,mov,avi,webm|max:51200'
+                    : 'required|file|mimes:mp4,mov,avi,webm|max:51200',
                 'status' => 'nullable|in:0,1',
             ]);
 

@@ -80,7 +80,7 @@
                 <label class="form-label fw-semibold">Explain Video (Upload)</label>
 
                 <input type="file" name="explain_video" id="explain_video"
-                    class="form-control" accept="video/*">
+                    class="form-control" required accept="video/*">
 
                 <div class="mt-2 small text-muted">
                     <span>Video Duration:</span>
