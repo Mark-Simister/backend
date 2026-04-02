@@ -53,7 +53,7 @@ class VideoViewController extends Controller
             ->selectRaw('COUNT(*) as total_views')
             ->with('user:id,name')
             ->where('type', $type)
-            ->groupBy('user_id')
+            ->groupBy('user_id', 'type')
             ->orderByDesc('total_views')
             ->take(10)
             ->get()
@@ -71,38 +71,25 @@ class VideoViewController extends Controller
         ]);
     }
      
-    public function mostViewedVideos(Request $request)
+ public function mostViewedVideos(Request $request)
     {
-        $type = $request->input('type', 'global');
-
-        $validTypes = ['pet', 'people', 'global'];
-
-        if (!in_array($type, $validTypes)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid type parameter.',
-            ], 400);
-        }
+        $type = strtolower(trim($request->input('type', 'global')));
 
         $videos = DB::table('video_views')
-            ->join('videos', 'video_views.video_id', '=', 'videos.id')
             ->leftJoin('users', 'video_views.user_id', '=', 'users.id')
             ->select(
-                'videos.id',
-                'videos.title',
-                DB::raw("CONCAT('" . url('/') . "/', videos.thumbnail_image) as thumbnail"),
-                DB::raw('COUNT(video_views.id) as views'),
+                'video_views.user_id',
+                DB::raw('COUNT(DISTINCT video_views.video_id) as views'),
                 DB::raw('MAX(users.name) as user_name')
             )
             ->where('video_views.type', $type)
-            ->groupBy('videos.id', 'videos.title', 'videos.thumbnail_image')
+            ->groupBy('video_views.user_id')
             ->orderByDesc('views')
             ->limit(10)
             ->get();
 
         return response()->json([
             'status' => true,
-            'message' => 'Most viewed videos fetched successfully',
             'data' => $videos
         ]);
     }
