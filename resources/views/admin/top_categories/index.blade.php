@@ -30,6 +30,7 @@
                         <th style="width: 60px;">#</th>
                         <th>Category Type</th>
                         <th>Title</th>
+                        <th>Cover</th>
                         <th>Videos Count</th>
                         <th>Explain Video</th>
                         <th>Status</th>
@@ -42,6 +43,15 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ ucfirst($cat->category_type) }}</td>
                         <td>{{ $cat->title }}</td>
+                        <td>
+                            @if($cat->thumbnail)
+                                <img src="{{ asset($cat->thumbnail) }}" 
+                                    alt="thumbnail" 
+                                    style="width:80px; height:50px; object-fit:cover; border-radius:6px;">
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
                         <td>{{ is_array($cat->video_ids) ? count($cat->video_ids) : 0 }}</td>
                         <td>
                             @if($cat->explain_video)

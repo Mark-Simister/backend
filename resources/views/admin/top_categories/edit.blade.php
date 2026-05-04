@@ -52,6 +52,67 @@
                 @enderror
             </div>
 
+            {{-- Overview Title --}}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Overview Title</label>
+                <input type="text" 
+                    name="overview_title" 
+                    class="form-control" 
+                    value="{{ old('overview_title', $topCategory->overview_title) }}"
+                    placeholder="Enter overview title">
+
+                @error('overview_title')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+
+            {{-- Overview Description --}}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Overview Description</label>
+                <textarea 
+                    name="overview_description" 
+                    rows="4"
+                    class="form-control"
+                    placeholder="Enter overview description">{{ old('overview_description', $topCategory->overview_description) }}</textarea>
+
+                @error('overview_description')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+
+            {{-- Cover Image / Thumbnail --}}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    Cover Image (Thumbnail)
+                </label>
+
+                <input type="file" 
+                    name="thumbnail" 
+                    id="thumbnail"
+                    class="form-control" 
+                    accept="image/*">
+
+                {{-- OLD IMAGE PREVIEW --}}
+                @if($topCategory->thumbnail)
+                    <div class="mt-2">
+                        <p class="mb-1 small text-muted">Current Image:</p>
+                        <img src="{{ asset($topCategory->thumbnail) }}" 
+                            style="width:120px; height:70px; object-fit:cover; border-radius:8px;">
+                    </div>
+                @endif
+
+                {{-- NEW IMAGE PREVIEW --}}
+                <div class="mt-2">
+                    <img id="thumbnailPreview" 
+                        src="#" 
+                        style="display:none; width:120px; height:70px; object-fit:cover; border-radius:8px;">
+                </div>
+
+                @error('thumbnail')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+
             {{-- Videos & Comments --}}
             <div class="mb-3 row">
                 {{-- Videos --}}
@@ -357,7 +418,7 @@ $(document).ready(function () {
     // If there's an existing video, try to get its duration
     @if($topCategory->explain_video)
         // Create a video element to get duration of existing video
-        const videoUrl = "{{ asset('storage/'.$topCategory->explain_video) }}";
+       const videoUrl = "{{ asset($topCategory->explain_video) }}";
         const tempVideo = document.createElement('video');
         tempVideo.preload = 'metadata';
         tempVideo.onloadedmetadata = function() {
@@ -550,6 +611,22 @@ $(document).ready(function () {
             e.preventDefault();
             alert('Please select at least 1 video');
             return false;
+        }
+    });
+    // Thumbnail preview
+    $('#thumbnail').on('change', function(e) {
+        const file = e.target.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                $('#thumbnailPreview')
+                    .attr('src', e.target.result)
+                    .show();
+            }
+
+            reader.readAsDataURL(file);
         }
     });
 });

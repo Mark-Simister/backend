@@ -9,10 +9,13 @@ class TopCategory extends Model
     protected $fillable = [
         'category_type',
         'title',
+        'thumbnail',
         'video_ids',
         'comment_types',
         'explain_video',
         'video_timestamps',
+        'overview_title',     
+        'overview_description',
         'status',
     ];
 

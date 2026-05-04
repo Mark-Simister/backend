@@ -14,7 +14,18 @@ class TopCategoryApiController extends Controller
         $topCategories = TopCategory::where('status', 1)
             ->latest()
             ->take(5)
-            ->get();
+            ->get([
+                'id',
+                'category_type',
+                'title',
+                'overview_title',
+                'overview_description',
+                'thumbnail',
+                'explain_video',
+                'video_timestamps',
+                'video_ids',
+                'comment_types'
+            ]);
 
         $data = $topCategories->map(function ($category) {
 
@@ -52,11 +63,23 @@ class TopCategoryApiController extends Controller
                         ];
                     });
             }
+            
+            $relatedCategories = TopCategory::where('status', 1)
+            ->where('category_type', $category->category_type)
+            ->where('id', '!=', $category->id)
+            ->latest()
+            ->take(10)
+            ->get(['id', 'title', 'thumbnail']);
 
             return [
                 'id' => $category->id,
                 'category_type' => $category->category_type,
                 'title' => $category->title,
+                'overview_title' => $category->overview_title,
+                'overview_description' => $category->overview_description,
+                 'thumbnail' => $category->thumbnail
+                    ? asset($category->thumbnail)
+                    : null,
 
                 'explain_video' => $category->explain_video
                     ? asset($category->explain_video)
@@ -65,6 +88,16 @@ class TopCategoryApiController extends Controller
 
                 'videos' => $videos,
                 'comments' => $comments,
+
+                'related_categories' => $relatedCategories->map(function ($rc) {
+                    return [
+                        'id' => $rc->id,
+                        'title' => $rc->title,
+                        'thumbnail' => $rc->thumbnail 
+                            ? asset($rc->thumbnail) 
+                            : null,
+                    ];
+                }),
             ];
         });
 

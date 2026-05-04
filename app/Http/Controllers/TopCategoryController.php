@@ -24,7 +24,7 @@ class TopCategoryController extends Controller
             ->get()
             ->map(function ($video) {
                 $video->thumbnail_url = $video->thumbnail_image 
-                    ? asset( $video->thumbnail_image) 
+                    ? asset($video->thumbnail_image) 
                     : null;
                 return $video;
             });
@@ -41,6 +41,9 @@ class TopCategoryController extends Controller
         $validated = $request->validate([
             'category_type' => 'required|in:pet,people',
             'title' => 'required|string|max:255',
+            'overview_title' => 'nullable|string|max:255',        
+            'overview_description' => 'nullable|string',
+            'thumbnail' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048', 
             'videos' => 'required|array|min:1|max:5',
             'videos.*' => 'exists:videos,id',
             'comment_types' => 'nullable',
@@ -52,14 +55,21 @@ class TopCategoryController extends Controller
             'status' => 'nullable|in:0,1',
         ]);
 
+        // Upload Thumbnail
+        if ($request->hasFile('thumbnail')) {
+            $file = $request->file('thumbnail');
+            $filename = time() . '_thumb_' . $file->getClientOriginalName();
+            $file->move(public_path('top_category_thumbnails'), $filename);
+
+            $validated['thumbnail'] = 'top_category_thumbnails/' . $filename;
+        }
+
         // Decode comment types
         $commentTypes = [];
         if ($request->filled('comment_types')) {
-            if (is_string($request->comment_types)) {
-                $commentTypes = json_decode($request->comment_types, true) ?? [];
-            } elseif (is_array($request->comment_types)) {
-                $commentTypes = $request->comment_types;
-            }
+            $commentTypes = is_string($request->comment_types)
+                ? json_decode($request->comment_types, true) ?? []
+                : $request->comment_types;
         }
 
         // Upload video
@@ -71,9 +81,7 @@ class TopCategoryController extends Controller
             $validated['explain_video'] = 'explain_videos/' . $filename;
         }
 
-        // Save timestamps
         $validated['video_timestamps'] = $request->timestamps ?? [];
-
         $validated['video_ids'] = $request->videos ?? [];
         $validated['comment_types'] = $commentTypes;
         $validated['status'] = $request->status ?? 1;
@@ -87,16 +95,18 @@ class TopCategoryController extends Controller
     public function edit($id)
     {
         $topCategory = TopCategory::findOrFail($id);
+
         $videos = Video::select('videos.*', 'channels.channel_category as video_cat')
             ->leftJoin('channels', 'channels.id', '=', 'videos.channel_id')
             ->whereNotNull('videos.video_url')
             ->get()
             ->map(function ($video) {
                 $video->thumbnail_url = $video->thumbnail_image 
-                    ? asset( $video->thumbnail_image) 
+                    ? asset($video->thumbnail_image) 
                     : null;
                 return $video;
             });
+
         $comments = LeaderboardComment::with('user')
             ->select('id', 'comment', 'type', 'user_id')
             ->get();
@@ -108,41 +118,59 @@ class TopCategoryController extends Controller
     {
         $topCategory = TopCategory::findOrFail($id);
 
-            $validated = $request->validate([
-                'category_type' => 'required|in:pet,people',
-                'title' => 'required|string|max:255',
-                'videos' => 'nullable|array',
-                'videos.*' => 'exists:videos,id',
-                'comment_types' => 'nullable',
-                'timestamps' => 'nullable|array',
-                'timestamps.*.start' => 'required_with:timestamps|string',
-                'timestamps.*.end' => 'required_with:timestamps|string',
-                'timestamps.*.message' => 'required_with:timestamps|string|max:255',
-                'explain_video' => $topCategory->explain_video
-                    ? 'nullable|file|mimes:mp4,mov,avi,webm|max:51200'
-                    : 'required|file|mimes:mp4,mov,avi,webm|max:51200',
-                'status' => 'nullable|in:0,1',
-            ]);
+        $validated = $request->validate([
+            'category_type' => 'required|in:pet,people',
+            'title' => 'required|string|max:255',
+            'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048', 
+            'overview_title' => 'nullable|string|max:255',          
+            'overview_description' => 'nullable|string',
+            'videos' => 'nullable|array',
+            'videos.*' => 'exists:videos,id',
+            'comment_types' => 'nullable',
+            'timestamps' => 'nullable|array',
+            'timestamps.*.start' => 'required_with:timestamps|string',
+            'timestamps.*.end' => 'required_with:timestamps|string',
+            'timestamps.*.message' => 'required_with:timestamps|string|max:255',
+            'explain_video' => $topCategory->explain_video
+                ? 'nullable|file|mimes:mp4,mov,avi,webm|max:51200'
+                : 'required|file|mimes:mp4,mov,avi,webm|max:51200',
+            'status' => 'nullable|in:0,1',
+        ]);
 
+        // Upload Thumbnail (Update)
+        if ($request->hasFile('thumbnail')) {
+
+            if ($topCategory->thumbnail && file_exists(public_path($topCategory->thumbnail))) {
+                unlink(public_path($topCategory->thumbnail));
+            }
+
+            $file = $request->file('thumbnail');
+            $filename = time() . '_thumb_' . $file->getClientOriginalName();
+            $file->move(public_path('top_category_thumbnails'), $filename);
+
+            $validated['thumbnail'] = 'top_category_thumbnails/' . $filename;
+        }
+
+        // Decode comment types
         $commentTypes = [];
         if ($request->filled('comment_types')) {
-            if (is_string($request->comment_types)) {
-                $commentTypes = json_decode($request->comment_types, true) ?? [];
-            } elseif (is_array($request->comment_types)) {
-                $commentTypes = $request->comment_types;
-            }
+            $commentTypes = is_string($request->comment_types)
+                ? json_decode($request->comment_types, true) ?? []
+                : $request->comment_types;
         }
-            if ($request->hasFile('explain_video')) {
-                if ($topCategory->explain_video && file_exists(public_path($topCategory->explain_video))) {
-                    unlink(public_path($topCategory->explain_video));
-                }
 
-                $file = $request->file('explain_video');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('explain_videos'), $filename);
-
-                $validated['explain_video'] = 'explain_videos/' . $filename;
+        // Upload video
+        if ($request->hasFile('explain_video')) {
+            if ($topCategory->explain_video && file_exists(public_path($topCategory->explain_video))) {
+                unlink(public_path($topCategory->explain_video));
             }
+
+            $file = $request->file('explain_video');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('explain_videos'), $filename);
+
+            $validated['explain_video'] = 'explain_videos/' . $filename;
+        }
 
         $validated['video_ids'] = $request->videos ?? [];
         $validated['comment_types'] = $commentTypes;
@@ -159,8 +187,12 @@ class TopCategoryController extends Controller
     {
         $topCategory = TopCategory::findOrFail($id);
 
-        if ($topCategory->explain_video) {
-            Storage::disk('public')->delete($topCategory->explain_video);
+        if ($topCategory->thumbnail && file_exists(public_path($topCategory->thumbnail))) {
+            unlink(public_path($topCategory->thumbnail));
+        }
+
+        if ($topCategory->explain_video && file_exists(public_path($topCategory->explain_video))) {
+            unlink(public_path($topCategory->explain_video));
         }
 
         $topCategory->delete();

@@ -51,6 +51,68 @@
                 @enderror
             </div>
 
+            {{-- Overview Title --}}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Overview Title
+                    </label>
+                    <input 
+                        type="text" 
+                        name="overview_title" 
+                        class="form-control" 
+                        value="{{ old('overview_title') }}"
+                        placeholder="Enter overview title"
+                    >
+                    @error('overview_title')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+
+                {{-- Overview Description --}}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Overview Description
+                    </label>
+                    <textarea 
+                        name="overview_description" 
+                        class="form-control" 
+                        rows="4"
+                        placeholder="Enter overview description..."
+                    >{{ old('overview_description') }}</textarea>
+
+                    @error('overview_description')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+
+            {{-- Cover Image / Thumbnail --}}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    Cover Image (Thumbnail) <span class="text-danger">*</span>
+                </label>
+
+                <input type="file" 
+                    name="thumbnail" 
+                    id="thumbnail"
+                    class="form-control" 
+                    accept="image/*" 
+                    required>
+
+                <small class="text-muted">
+                    Upload a clear image (Recommended: 16:9 ratio)
+                </small>
+
+                <div class="mt-2">
+                <img id="thumbnailPreview" 
+                        src="#" 
+                        style="display:none; max-height:120px; border-radius:8px;">
+                </div>
+
+                @error('thumbnail')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+
             {{-- Videos & Comments --}}
             <div class="mb-3 row">
                 {{-- Videos --}}
@@ -528,6 +590,21 @@ $(document).ready(function () {
             });
 
             return false;
+        }
+    });
+
+    $('#thumbnail').on('change', function(e) {
+    const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                $('#thumbnailPreview')
+                    .attr('src', e.target.result)
+                    .show();
+            }
+
+            reader.readAsDataURL(file);
         }
     });
 
