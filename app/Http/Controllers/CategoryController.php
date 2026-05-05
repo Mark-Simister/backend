@@ -886,7 +886,7 @@ class CategoryController extends Controller
                         'channels.created_at',
                         'channels.updated_at'
                     )
-                    ->latest('videos.created_at')
+                    //->latest('videos.created_at')
                     ->select(
                         'channels.id',
                         'channels.name',
