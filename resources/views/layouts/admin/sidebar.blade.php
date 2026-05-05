@@ -38,22 +38,25 @@
                 </a>
             </li>
         @endcan
+
         @can('category.view')
-            <li class="nav-item {{ request()->is('admin/categories*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.categories.index') }}">
                     <i class="icon-layout menu-icon"></i>
                     <span class="menu-title">Categories</span>
                 </a>
             </li>
         @endcan
+
         @can('top_category.view')
-            <li class="nav-item {{ request()->is('admin/top-categories*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('admin.top-categories.*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.top-categories.index') }}">
                     <i class="icon-layout menu-icon"></i>
                     <span class="menu-title">Top Categories</span>
                 </a>
             </li>
         @endcan
+
         @can('character.view')
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="collapse" href="#characterMenu" aria-expanded="false"
@@ -167,7 +170,7 @@
             <li class="nav-item  {{ request()->is('admin/sub-admins*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.sub_admins.index') }}">
                     <i class="ti-user menu-icon"></i>
-                    <span class="menu-title">Sub-admin Management</span>
+                    <span class="menu-title">Admin Management</span>
                 </a>
             </li>
         @endrole

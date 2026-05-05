@@ -598,3 +598,7 @@ div#timestampRepeater {
 .video-card.active .tick-icon {
     display: block;
 }
+.sidebar .nav .nav-item .nav-link {
+    -webkit-align-items: baseline !important;
+    align-items: baseline !important;
+}
