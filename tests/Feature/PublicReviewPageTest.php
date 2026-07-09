@@ -99,6 +99,35 @@ class PublicReviewPageTest extends TestCase
         $this->get('/review/' . $p->review_slug)->assertNotFound();
     }
 
+    public function test_robots_blocks_crawlers_when_not_indexable(): void
+    {
+        config(['reviews.indexable' => false]);
+        $this->get('/robots.txt')
+            ->assertOk()
+            ->assertSee('Disallow: /', false);
+    }
+
+    public function test_robots_allows_and_advertises_sitemap_when_indexable(): void
+    {
+        config(['reviews.indexable' => true]);
+        $this->get('/robots.txt')
+            ->assertOk()
+            ->assertSee('Allow: /', false)
+            ->assertSee('Sitemap:', false)
+            ->assertDontSee('Disallow: /', false);
+    }
+
+    public function test_no_static_robots_txt_shadowing_the_dynamic_route(): void
+    {
+        // A static public/robots.txt is served by Apache BEFORE the Laravel route
+        // (.htaccess RewriteCond !-f), silently overriding the env-aware
+        // /robots.txt and defeating the staging noindex guard. Fail if re-added.
+        $this->assertFileDoesNotExist(
+            public_path('robots.txt'),
+            'A static public/robots.txt would shadow the dynamic env-aware /robots.txt route.'
+        );
+    }
+
     public function test_missing_slug_returns_404(): void
     {
         config(['reviews.public_statuses' => ['ready_for_review', 'published']]);
