@@ -17,7 +17,8 @@ return new class extends Migration
             $table->string('currency_name', 50); // Currency name, e.g., 'US Dollar'
             $table->string('currency_symbol', 50); // Currency symbol, e.g., '$'
             $table->timestamps(); // Created at, updated at
-            $table->primary('id'); // Set primary key
+            // Note: $table->id() already defines `id` as the primary key.
+            // A second $table->primary('id') here fails on SQLite (multiple primary keys).
         });
     }
 
