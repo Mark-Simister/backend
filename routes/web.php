@@ -37,6 +37,19 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
 Route::get('/', function () { return redirect()->route('login'); });
+
+// Public, server-rendered review pages (SEO / LLM crawlable HTML + JSON-LD).
+// The single canonical public URL is /review/{slug} (payload-backed). The
+// legacy numeric /review/{id} is a best-effort 301 into the slug system, so old
+// numeric URLs don't 404 or compete for canonical. Order matters: the numeric
+// (whereNumber) route is registered first so digit-only paths never hit the
+// slug controller; everything else (contains letters) falls to the slug route.
+Route::get('/review/{id}', [\App\Http\Controllers\PublicReviewPageController::class, 'legacyRedirect'])
+    ->whereNumber('id');
+Route::get('/review/{slug}', [\App\Http\Controllers\PublicReviewPageController::class, 'show'])
+    ->where('slug', '[A-Za-z0-9\-]+')->name('public.reviews.show');
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('reviews.sitemap');
+Route::get('/robots.txt', [\App\Http\Controllers\SitemapController::class, 'robots'])->name('reviews.robots');
 Route::get('/dashboard', function () { return view('dashboard'); })->middleware(['auth', 'verified'])->name('dashboard');
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -50,7 +63,13 @@ Route::prefix('admin')->as('admin.')->middleware(['auth'])->group(function () {
 
 Route::prefix('admin')->name('admin.')->group(function() {
     Route::resource('top-categories', TopCategoryController::class);
-});  
+});
+
+// Site images (hero/background image manager) — any authenticated admin.
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('site-images', [\App\Http\Controllers\SiteImageController::class, 'index'])->name('site-images.index');
+    Route::post('site-images/{key}', [\App\Http\Controllers\SiteImageController::class, 'update'])->name('site-images.update');
+});
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('channels', ChannelController::class)->middleware('permission:channel.view|channel.create|channel.edit|channel.delete'); // Channels

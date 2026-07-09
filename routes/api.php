@@ -235,6 +235,7 @@ Route::get(
 Route::get('/region/{region?}', [ChannelController::class, 'filter_region_api']);
 Route::get('/region_new/{region?}', [ChannelController::class, 'filter_region_api_new']);
 Route::get('categories', [CategoryController::class, 'index_api']);
+Route::get('/site-images', [\App\Http\Controllers\SiteImageController::class, 'api'])->name('site-images.api');
 // Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api']);
 Route::get('/categories/region/{region?}', [CategoryController::class, 'index_by_region_api'])->name('categories.byRegion');
 Route::get('/categories-pet/region/{region?}', [CategoryController::class, 'index_by_region_api_pets']);
