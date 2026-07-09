@@ -143,8 +143,8 @@
         @if($brand)<div><dt>Brand</dt><dd>{{ $brand }}</dd></div>@endif
         @if($category)<div><dt>Category</dt><dd>{{ $category }}</dd></div>@endif
         @if($host)<div><dt>Reviewer</dt><dd>{{ $host }}@if($channel) · {{ $channel }}@endif</dd></div>@endif
-        @if($payload->final_beastie_score !== null)<div><dt>BeastieScore</dt><dd>{{ $payload->final_beastie_score }} / 5@if($payload->confidence_tier) · {{ $payload->confidence_tier }} confidence@endif</dd></div>@endif
-        @if($payload->public_score !== null)<div><dt>Public score</dt><dd>{{ $payload->public_score }} / 5@if($payload->public_rating_count) · {{ number_format($payload->public_rating_count) }} ratings@endif</dd></div>@endif
+        @if($payload->final_beastie_score !== null)<div><dt>BeastieScore</dt><dd>{{ $payload->final_beastie_score }} / 5{{ $payload->confidence_tier ? ' · '.$payload->confidence_tier.' confidence' : '' }}</dd></div>@endif
+        @if($payload->public_score !== null)<div><dt>Public score</dt><dd>{{ $payload->public_score }} / 5{{ $payload->public_rating_count ? ' · '.number_format($payload->public_rating_count).' ratings' : '' }}</dd></div>@endif
         @if($payload->analysed_evidence_count)<div><dt>Evidence analysed</dt><dd>{{ number_format($payload->analysed_evidence_count) }} signals across {{ $payload->source_count }} source families</dd></div>@endif
         @if(!empty($fit['best_for']))<div><dt>Best for</dt><dd>{{ implode(', ', $asList($fit['best_for'])) }}</dd></div>@endif
         @if(!empty($fit['not_best_for']))<div><dt>Watch out for</dt><dd>{{ implode(', ', $asList($fit['not_best_for'])) }}</dd></div>@endif
@@ -259,7 +259,7 @@
     @if(!empty($typed) || !empty($articles) || $payload->analysed_evidence_count)
         <h2>Evidence &amp; Sources</h2>
         @if($payload->analysed_evidence_count)
-            <p>{{ number_format($payload->analysed_evidence_count) }} analysed signals across {{ $payload->source_count }} source families@if($payload->public_rating_count), from {{ number_format($payload->public_rating_count) }} public ratings@endif.</p>
+            <p>{{ number_format($payload->analysed_evidence_count) }} analysed signals across {{ $payload->source_count }} source families{{ $payload->public_rating_count ? ', from '.number_format($payload->public_rating_count).' public ratings' : '' }}.</p>
         @endif
         @if(!empty($typed))
             <h3>Review sources</h3>

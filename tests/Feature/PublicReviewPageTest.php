@@ -24,6 +24,10 @@ class PublicReviewPageTest extends TestCase
             'canonical_url' => 'https://example.test/review/' . $slug,
             'final_beastie_score' => 4.5,
             'public_score' => 4.3,
+            'confidence_tier' => 'High',
+            'public_rating_count' => 1234,
+            'analysed_evidence_count' => 520,
+            'source_count' => 5,
             'review_page_json' => [
                 'hero' => ['title' => 'Test Product Review', 'channel' => 'TestChannel', 'character_name' => 'Testy'],
                 'quick_verdict' => ['summary' => 'A solid pick.'],
@@ -52,6 +56,30 @@ class PublicReviewPageTest extends TestCase
         $p = $this->makePayload('published');
 
         $this->get('/review/' . $p->review_slug)->assertOk();
+    }
+
+    /**
+     * Regression: an inline @if glued to a word char (e.g. "5@if(...)") is not
+     * compiled by Blade and leaks as literal text. The Review Facts BeastieScore
+     * / Public-score / Evidence lines must render their conditional suffixes AND
+     * never emit raw directives.
+     */
+    public function test_beastiescore_confidence_renders_without_raw_blade_directives(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review');
+
+        $res = $this->get('/review/' . $p->review_slug)->assertOk();
+
+        // Facts render, including the conditional confidence text.
+        $res->assertSee('BeastieScore', false);
+        $res->assertSee('High confidence', false);
+        $res->assertSee('1,234 ratings', false);
+
+        // No raw Blade directive may appear anywhere in the HTML.
+        foreach (['@if', '@endif', '@foreach', '@endforeach', '@php', '@else'] as $directive) {
+            $res->assertDontSee($directive, false);
+        }
     }
 
     public function test_draft_is_hidden(): void
