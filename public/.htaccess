@@ -5,6 +5,13 @@
 
     RewriteEngine On
 
+    # Force the env-aware /robots.txt and /sitemap.xml through Laravel even if a
+    # static file of that name exists in public/. Apache normally serves a real
+    # file before the front controller (see the !-f condition below), so a stray
+    # static robots.txt would silently shadow the noindex-critical dynamic route.
+    RewriteRule ^robots\.txt$ index.php [L]
+    RewriteRule ^sitemap\.xml$ index.php [L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
