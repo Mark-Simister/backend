@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PublishedReviewPayload;
+use App\Support\RegionResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -16,16 +17,16 @@ class SitemapController extends Controller
     /** XML sitemap of public review pages. <loc> uses the request's regional host. */
     public function index(Request $request)
     {
-        // Reuse the same visibility gate the /review/{slug} route uses, so the
-        // sitemap never advertises a URL that would 404.
-        // PRODUCTION NOTE: normally list ONLY genuinely 'published' rows — set
-        // PUBLIC_REVIEW_STATUSES=published in production.
-        $statuses = (array) config('reviews.public_statuses', ['published']);
+        // Same visibility rule the /review/{slug} route uses (publish_status +
+        // region eligibility for THIS host), so the sitemap never advertises a
+        // URL that would 404 on this regional host.
+        // PRODUCTION NOTE: set PUBLIC_REVIEW_STATUSES=published in production.
+        $region = RegionResolver::fromHost($request->getHost());
         $origin = rtrim($request->getSchemeAndHttpHost(), '/');
 
-        $rows = PublishedReviewPayload::whereIn('publish_status', $statuses)
+        $rows = PublishedReviewPayload::publicForRegion($region)
             ->orderBy('updated_at', 'desc')
-            ->get(['review_slug', 'updated_at', 'created_at']);
+            ->get(['id', 'review_slug', 'updated_at', 'created_at']);
 
         $urls = '';
         foreach ($rows as $r) {

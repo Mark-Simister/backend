@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\PublishedReviewPayload;
+use App\Models\Region;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -38,6 +39,102 @@ class PublicReviewPageTest extends TestCase
                 '@graph' => [['@type' => 'Product', 'name' => 'Test Product']],
             ],
         ]);
+    }
+
+    /** Create a Region, bypassing mass-assignment (test schema-agnostic). */
+    private function region(string $code): Region
+    {
+        $r = Region::firstOrNew(['region_code' => $code]);
+        $r->forceFill(['region_name' => $code, 'is_active' => 1, 'currency' => 'USD', 'currency_symbol' => '$']);
+        $r->save();
+        return $r;
+    }
+
+    private function payloadForRegions(array $codes, string $slug): PublishedReviewPayload
+    {
+        $p = $this->makePayload('ready_for_review', $slug);
+        $p->regions()->sync(collect($codes)->map(fn ($c) => $this->region($c)->id)->all());
+        return $p;
+    }
+
+    private function reviewOn(string $slug, string $host)
+    {
+        // Full absolute URL so Symfony sets the request host (a 'Host' header
+        // alone doesn't override getHost() in tests).
+        return $this->get("http://{$host}/review/{$slug}");
+    }
+
+    public function test_region_gated_payload_resolves_only_on_assigned_regions(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->payloadForRegions(['AU', 'US'], 'regional-b000rgn');
+
+        $this->reviewOn($p->review_slug, 'au.fstg.beastierated.com')->assertOk();
+        $this->reviewOn($p->review_slug, 'us.fstg.beastierated.com')->assertOk();
+        $this->reviewOn($p->review_slug, 'uk.fstg.beastierated.com')->assertNotFound();
+        $this->reviewOn($p->review_slug, 'ca.fstg.beastierated.com')->assertNotFound();
+    }
+
+    public function test_empty_region_pivot_serves_all_regions(): void
+    {
+        // Backwards-compat: pipeline-seeded payloads (no pivot rows) resolve everywhere.
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review', 'nopivot-b000all');
+
+        foreach (['au', 'us', 'uk', 'ca'] as $r) {
+            $this->reviewOn($p->review_slug, "$r.fstg.beastierated.com")->assertOk();
+        }
+        $this->reviewOn($p->review_slug, 'review-bstg.beastierated.com')->assertOk(); // unknown host, still all-region
+    }
+
+    public function test_global_region_row_serves_all_regions(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->payloadForRegions(['GLOBAL'], 'global-b000glb');
+
+        foreach (['au', 'us', 'uk', 'ca'] as $r) {
+            $this->reviewOn($p->review_slug, "$r.fstg.beastierated.com")->assertOk();
+        }
+    }
+
+    public function test_unknown_host_hides_region_restricted_payload(): void
+    {
+        // Fail-safe: if the host can't be resolved to a region, a region-restricted
+        // payload 404s (it must never leak to all regions).
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->payloadForRegions(['AU'], 'auonly-b000au');
+
+        $this->reviewOn($p->review_slug, 'review-bstg.beastierated.com')->assertNotFound();
+        $this->reviewOn($p->review_slug, '127.0.0.1')->assertNotFound();
+        $this->reviewOn($p->review_slug, 'au.fstg.beastierated.com')->assertOk(); // but AU host does serve it
+    }
+
+    public function test_sitemap_filters_by_region(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $this->payloadForRegions(['AU'], 'auonly-sitemap-b000au');
+        $this->makePayload('ready_for_review', 'allreg-sitemap-b000all'); // empty pivot = all
+
+        $this->get('http://au.fstg.beastierated.com/sitemap.xml')
+            ->assertOk()
+            ->assertSee('auonly-sitemap-b000au', false)
+            ->assertSee('allreg-sitemap-b000all', false);
+
+        $this->get('http://uk.fstg.beastierated.com/sitemap.xml')
+            ->assertOk()
+            ->assertDontSee('auonly-sitemap-b000au', false)
+            ->assertSee('allreg-sitemap-b000all', false);
+    }
+
+    public function test_region_gated_canonical_uses_request_host(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->payloadForRegions(['AU'], 'canon-b000au');
+
+        $this->reviewOn($p->review_slug, 'au.fstg.beastierated.com')
+            ->assertOk()
+            ->assertSee('au.fstg.beastierated.com/review/' . $p->review_slug, false)
+            ->assertDontSee('review-bstg', false);
     }
 
     public function test_ready_for_review_visible_when_configured(): void

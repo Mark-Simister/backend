@@ -38,4 +38,20 @@ return [
     */
     'cache_ttl' => (int) env('PUBLIC_REVIEW_CACHE_TTL', 0),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Regional host → region code
+    |--------------------------------------------------------------------------
+    | Maps the leading host label (e.g. "au" in au.fstg.beastierated.com) to a
+    | Region.region_code, for region-gating /review/{slug}. Extend here when a
+    | new regional host goes live (e.g. 'eu' => 'EU'). A host not listed here
+    | resolves to null → only all-region payloads serve (fail-safe).
+    */
+    'region_hosts' => [
+        'au' => 'AU',
+        'us' => 'US',
+        'uk' => 'UK',
+        'ca' => 'CA',
+    ],
+
 ];

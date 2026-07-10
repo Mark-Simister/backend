@@ -49,6 +49,7 @@ class Video extends Model
         'review_type',
         'public_rating',
         'review_details',
+        'review',
         'sponsored',
         'sponsorship_type',
 
@@ -67,6 +68,13 @@ class Video extends Model
         'open_graph_image',
         'twitter_title',
         'twitter_description',
+
+        // Phase 4 — admin SEO publishing state
+        'review_slug',
+        'seo_publish_status',
+        'seo_published_at',
+        'seo_last_published_at',
+        'seo_publish_error',
     ];
 
     protected $casts = [
@@ -74,7 +82,27 @@ class Video extends Model
         'auto_tags' => 'array',
         'hashtags' => 'array',
         'tags' => 'array',
+        'review' => 'array',
+        'seo_published_at' => 'datetime',
+        'seo_last_published_at' => 'datetime',
     ];
+
+    /** The published SEO snapshot for this video (Phase 4), if any. */
+    public function seoPayload()
+    {
+        return $this->hasOne(PublishedReviewPayload::class, 'video_id');
+    }
+    /**
+     * Normalised thumbnail URL. thumbnail_image holds either an absolute URL
+     * (e.g. Vimeo CDN) or a public-relative path (e.g. review_thumbnails/…);
+     * return absolute URLs as-is and asset()-wrap relative paths.
+     */
+    public function getThumbUrlAttribute()
+    {
+        if (! $this->thumbnail_image) return null;
+        return str_starts_with($this->thumbnail_image, 'http') ? $this->thumbnail_image : asset($this->thumbnail_image);
+    }
+
     public function character()
     {
         return $this->belongsTo(Character::class);

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * A pipeline-published review payload — the source of truth for the public
- * SEO review page at /review/{slug}. Resolved by review_slug. The heavy
- * display data + structured data are pre-built in the *_json columns.
+ * A published review payload — the read model for the public SEO page at
+ * /review/{slug}. Resolved by review_slug. Rows are either `source=pipeline`
+ * (spreadsheet-seeded) or `source=admin` (published from a video). Region
+ * eligibility lives in the published_review_payload_region pivot.
  */
 class PublishedReviewPayload extends Model
 {
@@ -38,5 +40,34 @@ class PublishedReviewPayload extends Model
     public function getRouteKeyName(): string
     {
         return 'review_slug';
+    }
+
+    /** Regions this payload is eligible for (empty = all regions). */
+    public function regions()
+    {
+        return $this->belongsToMany(Region::class, 'published_review_payload_region');
+    }
+
+    /**
+     * The single source of truth for "is this payload publicly visible on this
+     * region's host". Used by BOTH the controller and the sitemap so the rule
+     * is never duplicated. Combines the publish_status gate with region
+     * eligibility:
+     *   - empty region pivot            → all regions (backwards-compat)
+     *   - a GLOBAL region row           → all regions
+     *   - a row for $region             → that region
+     *   - $region null (unknown host)   → only all-region payloads (fail-safe)
+     */
+    public function scopePublicForRegion(Builder $query, ?string $region): Builder
+    {
+        return $query
+            ->whereIn('publish_status', (array) config('reviews.public_statuses', ['published']))
+            ->where(function (Builder $q) use ($region) {
+                $q->whereDoesntHave('regions')
+                  ->orWhereHas('regions', fn (Builder $r) => $r->where('region_code', 'GLOBAL'));
+                if ($region) {
+                    $q->orWhereHas('regions', fn (Builder $r) => $r->where('region_code', $region));
+                }
+            });
     }
 }

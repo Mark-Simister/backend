@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PublishedReviewPayload;
 use App\Models\Video;
+use App\Support\RegionResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -31,8 +32,13 @@ class PublicReviewPageController extends Controller
 
     public function show(Request $request, string $slug)
     {
+        // Region-gate by the request's host — the SAME $request->getHost() used
+        // for the canonical (originFor), so region + canonical never diverge.
+        // The publish_status gate + region eligibility live in one place:
+        // PublishedReviewPayload::publicForRegion().
+        $region = RegionResolver::fromHost($request->getHost());
         $payload = PublishedReviewPayload::where('review_slug', $slug)
-            ->whereIn('publish_status', $this->publicStatuses())
+            ->publicForRegion($region)
             ->first();
 
         abort_unless($payload, 404);
