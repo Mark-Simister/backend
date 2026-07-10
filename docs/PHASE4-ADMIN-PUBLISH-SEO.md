@@ -524,3 +524,24 @@ Follow-up (not this rollout): decide which schema is canonical — align the mig
 live tables (varchar 50/20, NOT NULL, no index, matching collations) or migrate the live
 tables to the migration — so fresh installs and staging converge. Until then, treat the
 theme tables as hand-managed, not migration-managed.
+
+### FU-4 correction #4 — 2026-07-11 — the log size field is NOT the response body; the 27-byte delta was never evidence
+
+Direct fetch of both hosts returns an identical 24-byte body:
+  https://au.fstg.beastierated.com/robots.txt       -> "User-agent: *\nDisallow: /"
+  https://review-bstg.beastierated.com/robots.txt   -> "User-agent: *\nDisallow: /"
+So the edge proxies /robots.txt to the origin correctly (via the Include snippet, not the
+inline block originally written), and SitemapController::robots() is serving it.
+
+The 4316 / 4343 in the two access-log lines are therefore NOT the response body (which is
+24 bytes). They are the log's size field — %O (total bytes sent, headers included) or a
+custom field — not %b, and inflated by response headers / proxy accounting, not by content.
+The 27-byte edge-vs-origin difference was never evidence of the X-Forwarded-Host rewrite and
+must not be re-opened as such: the FU-4 capture stands entirely on (a) the unique marker
+appearing in the request path and User-Agent, and (b) the two-log split (edge log = the
+external client's public IP, origin log = the proxy peer 13.238.27.223).
+
+To record WHICH field it is (cosmetic, not load-bearing):
+  grep -rE "LogFormat" /etc/apache2/apache2.conf /etc/apache2/conf-enabled/ 2>/dev/null
+If the combined format uses %O, the ~4.3KB is headers+body; if %b, something (mod_deflate /
+proxy buffering) is mis-accounting — either way the body is 24 bytes and the delta is inert.
