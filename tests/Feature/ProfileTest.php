@@ -21,7 +21,16 @@ class ProfileTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_profile_information_can_be_updated(): void
+    /**
+     * ProfileController::update() deliberately strips `email` from the validated data
+     * before filling the model ("Ensure email isn't updated"), so the profile form can
+     * change the name but not the address you sign in with. The stock Breeze test
+     * assumed the opposite.
+     *
+     * Because the email never becomes dirty, the controller's `email_verified_at = null`
+     * branch is unreachable, and a verified user stays verified across a profile edit.
+     */
+    public function test_profile_name_can_be_updated(): void
     {
         $user = User::factory()->create();
 
@@ -39,8 +48,26 @@ class ProfileTest extends TestCase
         $user->refresh();
 
         $this->assertSame('Test User', $user->name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_the_profile_form_cannot_change_the_email_address(): void
+    {
+        $user = User::factory()->create();
+        $originalEmail = $user->email;
+        $originalVerifiedAt = $user->email_verified_at;
+
+        $this->actingAs($user)
+            ->patch('/profile', [
+                'name' => 'Test User',
+                'email' => 'attacker@example.com',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame($originalEmail, $user->email, 'the profile form must not change the sign-in address');
+        $this->assertEquals($originalVerifiedAt, $user->email_verified_at, 'and must not revoke email verification');
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
