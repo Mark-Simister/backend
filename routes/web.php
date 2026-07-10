@@ -103,18 +103,50 @@ Route::middleware(['auth', 'permission:video.edit'])->prefix('admin')->name('adm
 });
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('channels', ChannelController::class)->middleware('permission:channel.view|channel.create|channel.edit|channel.delete'); // Channels
-    Route::resource('categories', CategoryController::class)->middleware('permission:category.view|category.create|category.edit|category.delete'); // Category CRUD
+    // FU-6 gate A: per-verb permissions (was permission:channel.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('channels', ChannelController::class)->only(['create', 'store'])->middleware('permission:channel.create');
+    Route::resource('channels', ChannelController::class)->only(['index', 'show'])->middleware('permission:channel.view');
+    Route::resource('channels', ChannelController::class)->only(['edit', 'update'])->middleware('permission:channel.edit');
+    Route::resource('channels', ChannelController::class)->only(['destroy'])->middleware('permission:channel.delete');
+    // FU-6 gate A: per-verb permissions (was permission:category.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('categories', CategoryController::class)->only(['create', 'store'])->middleware('permission:category.create');
+    Route::resource('categories', CategoryController::class)->only(['index', 'show'])->middleware('permission:category.view');
+    Route::resource('categories', CategoryController::class)->only(['edit', 'update'])->middleware('permission:category.edit');
+    Route::resource('categories', CategoryController::class)->only(['destroy'])->middleware('permission:category.delete');
     Route::get('categories/{channel}/regions', [CategoryController::class, 'getRegions'])->name('categories.getRegions');
     Route::resource('permissions', PermissionController::class)->middleware('role:super_admin'); // Permissions management (restrict to super_admin only if you want)
-    Route::resource('regions', RegionController::class)->middleware('permission:region.view|region.create|region.edit|region.delete');
+    // FU-6 gate A: per-verb permissions (was permission:region.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('regions', RegionController::class)->only(['create', 'store'])->middleware('permission:region.create');
+    Route::resource('regions', RegionController::class)->only(['index', 'show'])->middleware('permission:region.view');
+    Route::resource('regions', RegionController::class)->only(['edit', 'update'])->middleware('permission:region.edit');
+    Route::resource('regions', RegionController::class)->only(['destroy'])->middleware('permission:region.delete');
     Route::resource('global-colors', GlobalColorController::class);
-    Route::resource('character_tags', CharacterTagController::class)->middleware('permission:character_tag.view|character_tag.create|character_tag.edit|character_tag.delete');
-    Route::resource('character_roles', CharacterRoleController::class)->middleware('permission:character_role.view|character_role.create|character_role.edit|character_role.delete'); // Character roles
-    Route::resource('characters', CharacterController::class)->middleware('permission:character.view|character.create|character.edit|character.delete'); // Characters
-    Route::resource('faqs', FaqController::class)->middleware('permission:faq.view|faq.create|faq.edit|faq.delete'); // Faqs
+    // FU-6 gate A: per-verb permissions (was permission:character_tag.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('character_tags', CharacterTagController::class)->only(['create', 'store'])->middleware('permission:character_tag.create');
+    Route::resource('character_tags', CharacterTagController::class)->only(['index', 'show'])->middleware('permission:character_tag.view');
+    Route::resource('character_tags', CharacterTagController::class)->only(['edit', 'update'])->middleware('permission:character_tag.edit');
+    Route::resource('character_tags', CharacterTagController::class)->only(['destroy'])->middleware('permission:character_tag.delete');
+    // FU-6 gate A: per-verb permissions (was permission:character_role.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('character_roles', CharacterRoleController::class)->only(['create', 'store'])->middleware('permission:character_role.create');
+    Route::resource('character_roles', CharacterRoleController::class)->only(['index', 'show'])->middleware('permission:character_role.view');
+    Route::resource('character_roles', CharacterRoleController::class)->only(['edit', 'update'])->middleware('permission:character_role.edit');
+    Route::resource('character_roles', CharacterRoleController::class)->only(['destroy'])->middleware('permission:character_role.delete');
+    // FU-6 gate A: per-verb permissions (was permission:character.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('characters', CharacterController::class)->only(['create', 'store'])->middleware('permission:character.create');
+    Route::resource('characters', CharacterController::class)->only(['index', 'show'])->middleware('permission:character.view');
+    Route::resource('characters', CharacterController::class)->only(['edit', 'update'])->middleware('permission:character.edit');
+    Route::resource('characters', CharacterController::class)->only(['destroy'])->middleware('permission:character.delete');
+    // FU-6 gate A: per-verb permissions (was permission:faq.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('faqs', FaqController::class)->only(['create', 'store'])->middleware('permission:faq.create');
+    Route::resource('faqs', FaqController::class)->only(['index', 'show'])->middleware('permission:faq.view');
+    Route::resource('faqs', FaqController::class)->only(['edit', 'update'])->middleware('permission:faq.edit');
+    Route::resource('faqs', FaqController::class)->only(['destroy'])->middleware('permission:faq.delete');
     Route::get('characters/{category}/regions', [CharacterController::class, 'getRegions'])->name('characters.getRegions');
-    Route::resource('videos', VideoController::class)->middleware('permission:video.view|video.create|video.edit|video.delete'); // Videos
+    // FU-6 gate A: per-verb permissions (was permission:video.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('videos', VideoController::class)->only(['create', 'store'])->middleware('permission:video.create');
+    Route::resource('videos', VideoController::class)->only(['index', 'show'])->middleware('permission:video.view');
+    Route::resource('videos', VideoController::class)->only(['edit', 'update'])->middleware('permission:video.edit');
+    Route::resource('videos', VideoController::class)->only(['destroy'])->middleware('permission:video.delete');
     Route::get('videos/{character}/regions', [VideoController::class, 'getRegions'])->name('videos.getRegions');
     Route::get('/videos/{id}/comments', [VideoController::class, 'showCommentsPage'])->name('videos.comments');
     Route::delete('/comments/{comment}', [VideoController::class, 'destroy_comment'])->name('comments.delete');
@@ -146,7 +178,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/vimeo', [VimeoController::class, 'index'])->name('vimeo.index');
     Route::post('/admin/vimeo/assign', [VimeoController::class, 'assign'])->middleware('can:video.update')->name('admin.vimeo.assign');
     Route::get('forms/submissions-page', [FormController::class, 'submissionsPageNew'])->name('forms.submissions_page')->middleware('permission:form.view'); // Page to select a form first
-    Route::resource('forms', FormController::class)->middleware('permission:form.view|form.create|form.edit|form.delete'); // Then the resource route
+    // FU-6 gate A: per-verb permissions (was permission:form.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('forms', FormController::class)->only(['create', 'store'])->middleware('permission:form.create');
+    Route::resource('forms', FormController::class)->only(['index', 'show'])->middleware('permission:form.view');
+    Route::resource('forms', FormController::class)->only(['edit', 'update'])->middleware('permission:form.edit');
+    Route::resource('forms', FormController::class)->only(['destroy'])->middleware('permission:form.delete');
     Route::post('forms/{form}/submit', [FormController::class, 'submit'])->name('forms.submit')->middleware('permission:form.view|form.create|form.edit|form.delete'); // Handle frontend form submissions
     Route::get('forms/{form}/submissions', [FormController::class, 'submissions'])->name('forms.submissions')->middleware('permission:form.view'); // Existing route for specific form submissions
     Route::get('product-reviews', [ProductReviewController::class, 'index'])->name('product-reviews.index');
@@ -178,8 +214,16 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // the admin /login, so "any authenticated user" included the public membership.
     Route::post('/users/{user}/toggle-block', [UserController::class, 'toggleBlock'])
         ->middleware('permission:user.edit')->name('users.toggle-block');
-    Route::resource('highlight_tags', HighlightTagController::class)->middleware('permission:highlight_tag.view|highlight_tag.create|highlight_tag.edit|highlight_tag.delete'); // Highlight tags
-    Route::resource('subscription_listing', SubscriptionListingController::class)->middleware('permission:subscription_list.view|subscription_list.create|subscription_list.edit|subscription_list.delete'); // Subscription listing
+    // FU-6 gate A: per-verb permissions (was permission:highlight_tag.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('highlight_tags', HighlightTagController::class)->only(['create', 'store'])->middleware('permission:highlight_tag.create');
+    Route::resource('highlight_tags', HighlightTagController::class)->only(['index', 'show'])->middleware('permission:highlight_tag.view');
+    Route::resource('highlight_tags', HighlightTagController::class)->only(['edit', 'update'])->middleware('permission:highlight_tag.edit');
+    Route::resource('highlight_tags', HighlightTagController::class)->only(['destroy'])->middleware('permission:highlight_tag.delete');
+    // FU-6 gate A: per-verb permissions (was permission:subscription_list.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('subscription_listing', SubscriptionListingController::class)->only(['create', 'store'])->middleware('permission:subscription_list.create');
+    Route::resource('subscription_listing', SubscriptionListingController::class)->only(['index', 'show'])->middleware('permission:subscription_list.view');
+    Route::resource('subscription_listing', SubscriptionListingController::class)->only(['edit', 'update'])->middleware('permission:subscription_list.edit');
+    Route::resource('subscription_listing', SubscriptionListingController::class)->only(['destroy'])->middleware('permission:subscription_list.delete');
     Route::get('/videos/{videoId}/affiliate-links', [VideoController::class, 'manageLinks'])->name('videos.affiliate-links'); // Route for managing affiliate links (View all links for a video)
     // Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link'); // Route for storing a new affiliate link (POST method)
     Route::delete('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'destroy'])->name('videos.affiliateLinks.destroy'); // Route for deleting an affiliate link (DELETE method)
@@ -208,7 +252,11 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 });
 
 Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
-    Route::resource('reviews', ReviewController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])->middleware('permission:rating_review.view|rating_review.create|rating_review.edit|rating_review.delete'); // Reviews (any of these perms can access the resource routes you enabled)
+    // FU-6 gate A: per-verb permissions (was permission:rating_review.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
+    Route::resource('reviews', ReviewController::class)->only(['create', 'store'])->middleware('permission:rating_review.create');
+    Route::resource('reviews', ReviewController::class)->only(['index'])->middleware('permission:rating_review.view');
+    Route::resource('reviews', ReviewController::class)->only(['edit', 'update'])->middleware('permission:rating_review.edit');
+    Route::resource('reviews', ReviewController::class)->only(['destroy'])->middleware('permission:rating_review.delete');
     Route::patch('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve')->middleware('permission:rating_review.approve'); // Review approve/reject (separate explicit permissions)
     Route::patch('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('reviews.reject')->middleware('permission:rating_review.reject');
     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index')->middleware('permission:subscription.view'); // Subscriptions (read-only here)
