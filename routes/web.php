@@ -77,20 +77,20 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::prefix('admin')->as('admin.')->middleware(['auth'])->group(function () {
-    Route::resource('themes', ThemeController::class);
+    Route::resource('themes', ThemeController::class)->middleware('permission:settings.manage');
     });
 
 // FU-6: this group had NO middleware at all — top-categories writes were reachable
 // unauthenticated. EnsureAdminAccess (web group) now covers it by path; `auth` is added
 // so the group matches its siblings and does not read as intentionally public.
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function() {
-    Route::resource('top-categories', TopCategoryController::class);
+    Route::resource('top-categories', TopCategoryController::class)->middleware('permission:settings.manage');
 });
 
 // Site images (hero/background image manager) — any authenticated admin.
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('site-images', [\App\Http\Controllers\SiteImageController::class, 'index'])->name('site-images.index');
-    Route::post('site-images/{key}', [\App\Http\Controllers\SiteImageController::class, 'update'])->name('site-images.update');
+    Route::get('site-images', [\App\Http\Controllers\SiteImageController::class, 'index'])->name('site-images.index')->middleware('permission:settings.manage');
+    Route::post('site-images/{key}', [\App\Http\Controllers\SiteImageController::class, 'update'])->name('site-images.update')->middleware('permission:settings.manage');
 });
 
 // Explicit "Publish to SEO" sign-off — the ONLY thing that creates the first
@@ -120,7 +120,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('regions', RegionController::class)->only(['index', 'show'])->middleware('permission:region.view');
     Route::resource('regions', RegionController::class)->only(['edit', 'update'])->middleware('permission:region.edit');
     Route::resource('regions', RegionController::class)->only(['destroy'])->middleware('permission:region.delete');
-    Route::resource('global-colors', GlobalColorController::class);
+    Route::resource('global-colors', GlobalColorController::class)->middleware('permission:settings.manage');
     // FU-6 gate A: per-verb permissions (was permission:character_tag.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
     Route::resource('character_tags', CharacterTagController::class)->only(['create', 'store'])->middleware('permission:character_tag.create');
     Route::resource('character_tags', CharacterTagController::class)->only(['index', 'show'])->middleware('permission:character_tag.view');
@@ -149,34 +149,34 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('videos', VideoController::class)->only(['destroy'])->middleware('permission:video.delete');
     Route::get('videos/{character}/regions', [VideoController::class, 'getRegions'])->name('videos.getRegions');
     Route::get('/videos/{id}/comments', [VideoController::class, 'showCommentsPage'])->name('videos.comments');
-    Route::delete('/comments/{comment}', [VideoController::class, 'destroy_comment'])->name('comments.delete');
-    Route::put('/comments/{comment}', [VideoController::class, 'update_comment'])->name('comments.update');
-    Route::delete('/replies/{reply}', [VideoController::class, 'deleteReply'])->name('replies.delete');
+    Route::delete('/comments/{comment}', [VideoController::class, 'destroy_comment'])->name('comments.delete')->middleware('permission:video.edit');
+    Route::put('/comments/{comment}', [VideoController::class, 'update_comment'])->name('comments.update')->middleware('permission:video.edit');
+    Route::delete('/replies/{reply}', [VideoController::class, 'deleteReply'])->name('replies.delete')->middleware('permission:video.edit');
     Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
-    Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
+    Route::post('/tags', [TagController::class, 'store'])->name('tags.store')->middleware('permission:settings.manage');
     Route::get('/tags/by-ids', [TagController::class, 'byIds'])->name('tags.byIds');
     Route::get('/newsletter', [NewsletterController::class, 'index'])->name('newsletter');
     Route::get('videos/{video}/edit-seo', [VideoController::class, 'editSeo'])->name('videos.edit.seo')->middleware('permission:video.edit');
     Route::put('videos/{video}/update-seo', [VideoController::class, 'updateSeo'])->name('videos.update.seo')->middleware('permission:video.edit');
     Route::get('{video}/similar-products/edit', [VideoController::class, 'editSimilarProducts'])->name('similar-products.edit');
-    Route::post('{video}/similar-products/update', [VideoController::class, 'updateSimilarProducts'])->name('similar-products.update');
+    Route::post('{video}/similar-products/update', [VideoController::class, 'updateSimilarProducts'])->name('similar-products.update')->middleware('permission:video.edit');
     Route::get('similar-products/{videoId}/region/{regionId}', [VideoController::class, 'getSimilarProductsByRegion']);
     Route::get('/similar-products/{video}/region/{region}', [SimilarProductController::class, 'fetchByRegion']); // Fetch products by region
-    Route::post('/similar-products/{video}/create', [SimilarProductController::class, 'store']); // Create a new product
-    Route::post('/similar-products/{product}/update', [SimilarProductController::class, 'update']); // Update an existing product
-    Route::delete('/similar-products/{product}/delete', [SimilarProductController::class, 'destroy']); // Delete a product
+    Route::post('/similar-products/{video}/create', [SimilarProductController::class, 'store'])->middleware('permission:video.edit'); // Create a new product
+    Route::post('/similar-products/{product}/update', [SimilarProductController::class, 'update'])->middleware('permission:video.edit'); // Update an existing product
+    Route::delete('/similar-products/{product}/delete', [SimilarProductController::class, 'destroy'])->middleware('permission:video.edit'); // Delete a product
     Route::get('videos/{video}/seo/{region}', [VideoController::class, 'getSeoByRegion'])->name('videos.seo.by-region')->middleware('permission:video.edit');
     Route::get('videos/{video}/edit-product', [VideoController::class, 'editProduct'])->name('videos.edit.product')->middleware('permission:video.edit');
     Route::put('videos/{video}/update-product', [VideoController::class, 'updateProduct'])->name('videos.update.product')->middleware('permission:video.edit');
     Route::get('/videos/{videoId}/character-insights', [CharacterInsightController::class, 'index'])->name('videos.character-insights.index');
-    Route::get('/videos/{videoId}/character-insights/create', [CharacterInsightController::class, 'create'])->name('videos.character-insights.create');
-    Route::post('/videos/{videoId}/character-insights', [CharacterInsightController::class, 'store'])->name('videos.character-insights.store');
-    Route::get('/videos/{videoId}/character-insights/{characterInsight}/edit', [CharacterInsightController::class, 'edit'])->name('videos.character-insights.edit');
-    Route::put('/videos/{videoId}/character-insights/{characterInsight}', [CharacterInsightController::class, 'update'])->name('videos.character-insights.update');
-    Route::delete('/videos/{videoId}/character-insights/{characterInsight}', [CharacterInsightController::class, 'destroy'])->name('videos.character-insights.destroy');
-    Route::post('videos/toggle-featured', [VideoController::class, 'toggleFeatured'])->name('videos.toggleFeatured');
+    Route::get('/videos/{videoId}/character-insights/create', [CharacterInsightController::class, 'create'])->name('videos.character-insights.create')->middleware('permission:video.edit');
+    Route::post('/videos/{videoId}/character-insights', [CharacterInsightController::class, 'store'])->name('videos.character-insights.store')->middleware('permission:video.edit');
+    Route::get('/videos/{videoId}/character-insights/{characterInsight}/edit', [CharacterInsightController::class, 'edit'])->name('videos.character-insights.edit')->middleware('permission:video.edit');
+    Route::put('/videos/{videoId}/character-insights/{characterInsight}', [CharacterInsightController::class, 'update'])->name('videos.character-insights.update')->middleware('permission:video.edit');
+    Route::delete('/videos/{videoId}/character-insights/{characterInsight}', [CharacterInsightController::class, 'destroy'])->name('videos.character-insights.destroy')->middleware('permission:video.edit');
+    Route::post('videos/toggle-featured', [VideoController::class, 'toggleFeatured'])->name('videos.toggleFeatured')->middleware('permission:video.edit');
     Route::get('/vimeo', [VimeoController::class, 'index'])->name('vimeo.index');
-    Route::post('/admin/vimeo/assign', [VimeoController::class, 'assign'])->middleware('can:video.update')->name('admin.vimeo.assign');
+    Route::post('/admin/vimeo/assign', [VimeoController::class, 'assign'])->middleware('permission:video.edit')->name('admin.vimeo.assign');
     Route::get('forms/submissions-page', [FormController::class, 'submissionsPageNew'])->name('forms.submissions_page')->middleware('permission:form.view'); // Page to select a form first
     // FU-6 gate A: per-verb permissions (was permission:form.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
     Route::resource('forms', FormController::class)->only(['create', 'store'])->middleware('permission:form.create');
@@ -187,15 +187,15 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('forms/{form}/submissions', [FormController::class, 'submissions'])->name('forms.submissions')->middleware('permission:form.view'); // Existing route for specific form submissions
     Route::get('product-reviews', [ProductReviewController::class, 'index'])->name('product-reviews.index');
     Route::get('product-reviews/{category}/characters', [ProductReviewController::class, 'product_review_character'])->name('product_review.character');
-    Route::post('product-reviews/store', [ProductReviewController::class, 'store'])->name('product_review.store');
+    Route::post('product-reviews/store', [ProductReviewController::class, 'store'])->name('product_review.store')->middleware('permission:video.edit');
     Route::get('videos/fetch/{character_id}', [ProductReviewController::class, 'fetchVideos'])->name('fetch_videos');
-    Route::patch('product-reviews/{review}/featured', [ProductReviewController::class, 'updateFeatured'])->name('product_review.featured');
+    Route::patch('product-reviews/{review}/featured', [ProductReviewController::class, 'updateFeatured'])->name('product_review.featured')->middleware('permission:video.edit');
     Route::get('characters/{character}/bloopers', [BlooperController::class, 'index'])->name('bloopers.index');
-    Route::get('characters/{character}/bloopers/create', [BlooperController::class, 'create'])->name('bloopers.create');
-    Route::get('characters/{character}/bloopers/{blooper}/edit', [BlooperController::class, 'edit'])->name('bloopers.edit');
-    Route::post('characters/{character}/bloopers', [BlooperController::class, 'store'])->name('bloopers.store');
-    Route::match(['put','patch'], 'characters/{character}/bloopers/{blooper}', [BlooperController::class, 'update'])->name('bloopers.update');
-    Route::delete('bloopers/{blooper}', [BlooperController::class, 'destroy'])->name('bloopers.destroy');
+    Route::get('characters/{character}/bloopers/create', [BlooperController::class, 'create'])->name('bloopers.create')->middleware('permission:character.edit');
+    Route::get('characters/{character}/bloopers/{blooper}/edit', [BlooperController::class, 'edit'])->name('bloopers.edit')->middleware('permission:character.edit');
+    Route::post('characters/{character}/bloopers', [BlooperController::class, 'store'])->name('bloopers.store')->middleware('permission:character.edit');
+    Route::match(['put','patch'], 'characters/{character}/bloopers/{blooper}', [BlooperController::class, 'update'])->name('bloopers.update')->middleware('permission:character.edit');
+    Route::delete('bloopers/{blooper}', [BlooperController::class, 'destroy'])->name('bloopers.destroy')->middleware('permission:character.edit');
     // Users. Spatie's `permission:a|b|c` means ANY of them, so the old
     // `permission:user.view|user.create|user.edit|user.delete` on the whole resource let a
     // view-only sub-admin create, edit and DELETE users. Each verb now carries its own
@@ -226,11 +226,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('subscription_listing', SubscriptionListingController::class)->only(['destroy'])->middleware('permission:subscription_list.delete');
     Route::get('/videos/{videoId}/affiliate-links', [VideoController::class, 'manageLinks'])->name('videos.affiliate-links'); // Route for managing affiliate links (View all links for a video)
     // Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link'); // Route for storing a new affiliate link (POST method)
-    Route::delete('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'destroy'])->name('videos.affiliateLinks.destroy'); // Route for deleting an affiliate link (DELETE method)
+    Route::delete('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'destroy'])->name('videos.affiliateLinks.destroy')->middleware('permission:video.edit'); // delete affiliate link
     // Route::patch('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link'); // Route for updating an existing affiliate link (PATCH method)
-    Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link');
-    Route::post('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link');
-    Route::resource('affiliate-links', AffiliateLinkController::class);
+    Route::post('/videos/{videoId}/affiliate-links', [AffiliateLinkController::class, 'store'])->name('videos.store-affiliate-link')->middleware('permission:video.edit');
+    Route::post('/videos/{video}/affiliate-links/{affiliateLink}', [AffiliateLinkController::class, 'updateAffiliateLink'])->name('videos.update-affiliate-link')->middleware('permission:video.edit');
+    Route::resource('affiliate-links', AffiliateLinkController::class)->middleware('permission:video.edit'); // FU-6: affiliate links = video-edit trust level
     // Route::get('videos/{video}/seo/{region}', [VideoSeoController::class, 'regionData'])->name('videos.seo.region');
 });
 
@@ -263,7 +263,7 @@ Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () 
     Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show')->middleware('permission:subscription.view');
     Route::get('product-messages', [ProductMessageController::class, 'index'])->name('product-messages.index'); // Product Messages
     Route::get('product-messages/{id}', [ProductMessageController::class, 'show'])->name('product-messages.show');
-    Route::delete('product-messages/{id}', [ProductMessageController::class, 'destroy'])->name('product-messages.delete');
+    Route::delete('product-messages/{id}', [ProductMessageController::class, 'destroy'])->name('product-messages.delete')->middleware('permission:settings.manage');
 });
 
 // Stripe apyment related hooks

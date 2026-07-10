@@ -49,6 +49,15 @@ class RolePermissionSeeder extends Seeder
             'video.edit',
             'video.delete',
             'video.publish',
+
+            // FU-6: a single permission for the admin-chrome routes that had no natural
+            // permission family and were only super-admin-reachable by accident (the
+            // Gate::before bypass over an unseeded permission). Granted to super_admin
+            // ONLY, below - never sub_admin. It DELIBERATELY bundles unrelated concerns
+            // (site images, global colours, themes, top-categories, tag creation, and
+            // product-message deletion). Split it into per-domain permissions BEFORE it is
+            // ever granted to a sub_admin, or a colour-editor also gains message deletion.
+            'settings.manage',
         ];
 
         // Create permissions
