@@ -263,3 +263,83 @@ public SEO renderer. Relying on `review_reader`'s lack of `INSERT` is not a cont
 
 **Process note.** Three separate reviews concluded these tests were "pre-existing and
 unrelated." A red test is not a triage category. Read what it is failing on.
+
+### FU-6 — 2026-07-11 — `auth` treated as sufficient for /admin (whole-surface authorization failure)
+
+Found while fixing the "pre-existing" RegistrationTest (FU-5): the admin surface had no
+coherent authorization floor. This is the finding that generalises — the specifics below
+are symptoms of one root cause.
+
+**Root cause.** routes/web.php declares SEVEN separate `prefix('admin')` groups. Each was
+expected to gate its own routes, and the pattern used was `auth` at the group level plus,
+sometimes, a per-route/per-resource `permission:`. That is not an authorization model; it
+is an authorization convention, and conventions rot. The result:
+
+- **31 loose privileged routes** (declared with `Route::post/put/delete` rather than
+  `Route::resource`) inherited only `auth`. Any web-authenticated user could invoke them.
+  Because `ApiUser::$table = 'users'`, a PUBLIC frontend member authenticates at the admin
+  `/login` and was therefore "any authenticated user" — a member could delete comments,
+  reassign a video's Vimeo media, edit affiliate links, or block a super_admin.
+- **One entire group had no middleware at all** — not even `auth`. `admin/top-categories`
+  store/update/destroy were reachable **completely unauthenticated**.
+
+**Note the audit trap, because it recurs.** The unauthenticated group was invisible to the
+first audit, which searched for *authenticated* writes lacking a permission. A route with
+*nothing* on it does not match a search for routes with the *wrong* thing. When hunting
+missing controls, enumerate the whole surface; do not filter by the presence of the control
+you expect to find broken.
+
+**The 13 OR-permission resources** were a subtler variant. `permission:x.view|x.create|
+x.edit|x.delete` reads like "these permissions guard this resource"; Spatie's pipe means
+ANY of them, applied to every verb — so a view-only sub_admin could create, edit and
+delete. (`users` fixed in 70423d7; the other 12 in the gate-A resources commit.)
+
+**Fix, in two gates.**
+
+- **Gate B (baseline).** `EnsureAdminAccess`, keyed on the request PATH and appended to the
+  `web` group, requires every `admin/*` request to be an authenticated user with at least
+  one web-guard permission. Path-keyed, not group-keyed, so it cannot be missed by a group
+  declared elsewhere or added later; `AdminSurfaceCoverageTest` proves the coverage by
+  construction. This alone closes the 31 loose routes and the unauthenticated group to
+  everyone but genuine admins.
+- **Gate A (specific).** Each verb of the 13 resources now requires its own permission
+  (four `Route::resource()->only()` registrations, preserving names/params). Each of the 31
+  loose routes now carries the permission matching what it changes: payload-feeding →
+  `video.edit`, bloopers → `character.edit`, admin chrome → `settings.manage`. B does NOT
+  make A redundant: a sub_admin with `faq.view` passes B and would still reach everything
+  without A.
+
+**`settings.manage` is a deliberate bundle.** Six admin-chrome routes (themes, global
+colours, top-categories, site images, tag creation, product-message deletion) had no
+natural permission family. They were super-admin-only ONLY by accident — see the landmine
+below. `settings.manage` makes that a decision: seeded, granted to super_admin only, and
+commented in the seeder as bundling unrelated concerns that must be split before it is ever
+granted to a sub_admin.
+
+**LANDMINE — nine permission families are referenced by live middleware and seeded
+nowhere:** `faq.*`, `region.*`, `character_tag.*`, `character_role.*`, `highlight_tag.*`,
+`subscription_list.*`, `rating_review.*`, `form.*`, `subscription.*`. They exist in no
+seeder. The routes that reference them are reachable today ONLY because of the super-admin
+Gate::before bypass (below), which short-circuits the check before the missing permission is
+consulted. **If anyone ever narrows or removes Gate::before, those nine resources become
+unreachable by everyone, super-admins included, with no obvious cause** — the middleware
+will deny a permission that cannot be granted because it does not exist. Seed them (or
+delete the references) before touching Gate::before.
+
+**Gate::before is load-bearing and undecided.** `AppServiceProvider` contains:
+
+    Gate::before(fn ($user, $ability) => $user->hasRole('super_admin') ? true : null);
+
+Every per-verb split and every loose-route permission added here is, BY DESIGN, entirely
+untested against a super_admin — because a super_admin never reaches the permission check
+at all. The test suite asserts these controls only for sub_admins/members and says so in
+each test. Anyone reading the splits later must understand: their correctness for a
+super_admin depends wholly on this one line, and this one line is the reason the nine
+unseeded families appear to work. It has never been deliberately reviewed as a security
+control. It should be.
+
+**ApiUser.** Shares the `users` table; its three privilege columns (`role`, `is_verified`,
+`is_blocked`) were mass-assignable exactly as User's were (FU-5 A3). Hardened the same way.
+
+**Also fixed.** `admin/vimeo/assign` used `can:video.update` — an UNSEEDED ability, so it
+was super-admin-only by the same accident; normalised to `permission:video.edit`.
