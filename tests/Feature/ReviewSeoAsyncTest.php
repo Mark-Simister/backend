@@ -115,6 +115,46 @@ class ReviewSeoAsyncTest extends TestCase
         $this->assertTrue(config('queue.connections.database.after_commit'));
     }
 
+    // ───────── P-6: the renderer's null queue discards without executing ─────────
+
+    public function test_a_null_queue_connection_is_defined(): void
+    {
+        $this->assertSame('null', config('queue.connections.null.driver'));
+    }
+
+    /**
+     * review-bstg runs QUEUE_CONNECTION=null on a SELECT-only account. `sync` would not
+     * do: it runs the job inline and the job's body writes. `null` must discard the
+     * dispatch — no jobs row, no application write, no invalid-connection exception.
+     */
+    public function test_the_null_queue_discards_the_job_without_executing_it(): void
+    {
+        $v = $this->livePublishedVideo();
+        $before = PublishedReviewPayload::first()->updated_at;
+
+        config(['queue.default' => 'null']);
+
+        RefreshSeoPayloadJob::dispatch($v->id);   // must not throw
+
+        $this->assertSame(0, DB::table('jobs')->count(), 'null must not write to jobs');
+        $this->assertSame(0, DB::table('failed_jobs')->count());
+        $this->assertEquals($before, PublishedReviewPayload::first()->updated_at, 'the job must never execute');
+    }
+
+    /** `.env`'s bare `null` is cast to PHP null by Env, so queue.default arrives as null. */
+    public function test_a_php_null_queue_default_also_resolves_to_the_null_driver(): void
+    {
+        $v = $this->livePublishedVideo();
+        $before = PublishedReviewPayload::first()->updated_at;
+
+        config(['queue.default' => null]);
+
+        RefreshSeoPayloadJob::dispatch($v->id);
+
+        $this->assertSame(0, DB::table('jobs')->count());
+        $this->assertEquals($before, PublishedReviewPayload::first()->updated_at);
+    }
+
     // ───────── no job may be observable before the pivot is synchronised ─────────
 
     public function test_the_observers_refresh_is_not_visible_before_the_transaction_commits(): void

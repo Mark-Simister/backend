@@ -34,6 +34,21 @@ return [
             'driver' => 'sync',
         ],
 
+        /*
+         * The public review renderer runs on a SELECT-only database account and must
+         * perform no writes. `sync` would not do: it executes the job inline, and
+         * RefreshSeoPayloadJob's body writes to published_review_payloads and back to
+         * videos — it fails AT the write, not before it. The null driver discards the
+         * dispatch without executing anything.
+         *
+         * Declared explicitly rather than relying on QueueManager::getConfig()'s special
+         * case for the literal name 'null' (and on Env casting the bare string `null` to
+         * PHP null). Both work; neither should be load-bearing.
+         */
+        'null' => [
+            'driver' => 'null',
+        ],
+
         'database' => [
             'driver' => 'database',
             'connection' => env('DB_QUEUE_CONNECTION'),

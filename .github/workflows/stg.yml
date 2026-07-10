@@ -1,8 +1,22 @@
 name: Staging CI/CD
 
+# DISABLED FOR THE SEO ROLLOUT WINDOW (P-8).
+#
+# The previous trigger was `push: branches: [staging]`. Re-enable it ONLY after all of:
+#
+#   1. FU-1 is resolved — the guards on the two theme migrations have landed AND the
+#      three pre-existing Pending migrations have been run deliberately, so that
+#      `php artisan migrate --force` below is a no-op rather than a half-applied batch.
+#      (`themes`/`user_themes` exist while their migrations are Pending; MySQL has no
+#      transactional DDL, so the ALTER that runs first cannot be undone.)
+#   2. The deployment checkout at /home/beastierated/backend is genuinely clean, so the
+#      dirty-tree check below does not fail every push. The tracked storage/.gitignore
+#      files currently show as modified because `chmod -R 775` sets the executable bit;
+#      fix with `git config core.fileMode false` AND the `find`-based chmod below.
+#
+# Until then, deploy manually. See docs/PHASE4-ADMIN-PUBLISH-SEO.md.
 on:
-  push:
-    branches: [ staging ]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -20,18 +34,33 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
+            set -euo pipefail
             cd /home/beastierated/backend/
 
-            git stash
-            git pull origin staging
+            # Never `git stash`. It silently pockets whatever is dirty on the server —
+            # including a colleague's work, or a deliberate hotfix — and nobody ever looks
+            # in the stash again. Fail loudly and let a human decide.
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "::error::deployment checkout is dirty; refusing to deploy"
+              git status --porcelain
+              exit 1
+            fi
+
+            git pull --ff-only origin staging
 
             composer install --no-interaction --prefer-dist --optimize-autoloader
 
             php artisan migrate --force
 
+            # .env is authoritative; caches are rebuilt from it, never before it changes.
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
 
             chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} storage bootstrap/cache
-            chmod -R 775 storage bootstrap/cache
+
+            # Directories need the traversal bit; files do NOT need +x. `chmod -R 775`
+            # marks every tracked .gitignore executable, which git reports as a modified
+            # file mode — which is what made this checkout permanently dirty.
+            find storage bootstrap/cache -type d -exec chmod 775 {} +
+            find storage bootstrap/cache -type f -exec chmod 664 {} +

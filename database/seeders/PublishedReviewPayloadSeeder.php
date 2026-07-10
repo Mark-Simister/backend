@@ -36,11 +36,27 @@ class PublishedReviewPayloadSeeder extends Seeder
             return;
         }
 
+        $force = (bool) ($this->command?->option('force') ?? false);
         $count = 0;
+        $skipped = 0;
+
         foreach ($rows as $r) {
             if (empty($r['published_review_id']) || empty($r['review_slug'])) {
                 continue;
             }
+
+            $existing = PublishedReviewPayload::where('published_review_id', $r['published_review_id'])->first();
+
+            // A withdrawn page was taken down deliberately. updateOrCreate() would
+            // overwrite publish_status from the sheet and put it straight back on the
+            // public web. A takedown is a public-safety action; a routine import must
+            // not undo it. Forward transitions (→ published) still flow from the sheet.
+            if ($existing && $existing->publish_status === 'withdrawn' && ! $force) {
+                $this->command?->warn("  skipped {$existing->review_slug}: withdrawn (re-run with --force to resurrect)");
+                $skipped++;
+                continue;
+            }
+
             // Normalise raw sheet values that SQLite tolerated but MySQL strict
             // mode rejects (ISO-8601 datetimes, stringy numerics). The *_json
             // fields stay decoded arrays; the model's array casts re-encode them.
@@ -51,7 +67,8 @@ class PublishedReviewPayloadSeeder extends Seeder
             $count++;
         }
 
-        $this->command?->info("PublishedReviewPayloadSeeder: imported {$count} payload(s).");
+        $this->command?->info("PublishedReviewPayloadSeeder: imported {$count} payload(s)"
+            . ($skipped ? ", skipped {$skipped} withdrawn." : '.'));
     }
 
     /**

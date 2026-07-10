@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\PublishedReviewPayload;
-use App\Models\Video;
 use App\Support\RegionResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -50,8 +50,8 @@ class PublicReviewPageController extends Controller
         // regional host it was served on, e.g. au.fstg.beastierated.com), not
         // from the payload's stored canonical_url — the pipeline's stored host
         // reflects whatever region it assumed at generation time. The slug stays
-        // authoritative. TrustProxies (bootstrap/app.php) makes this correct
-        // behind the CDN. See originFor().
+        // authoritative. App\Providers\ProxyTrustServiceProvider makes this correct
+        // behind the reverse proxy — and only for a verified proxy address. See originFor().
         $origin = $this->originFor($request, $payload);
 
         // Cache key includes the origin (canonical/OG/JSON-LD are host-specific)
@@ -103,11 +103,16 @@ class PublicReviewPageController extends Controller
      */
     public function legacyRedirect(int $id)
     {
-        $video = Video::find($id);
-        if ($video && $video->product_asin_sku) {
-            $asin = strtoupper($video->product_asin_sku);
+        // Read ONE column, not the whole row. `review_reader` holds a column-scoped
+        // grant — GRANT SELECT (id, product_asin_sku) ON videos — so Video::find()'s
+        // `SELECT *` would fail with ERROR 1143. This also keeps every other column of
+        // `videos` (internal notes, affiliate links, seo_publish_error, unpublished
+        // drafts) out of the public renderer's read surface.
+        $asin = DB::table('videos')->where('id', $id)->value('product_asin_sku');
+
+        if (filled($asin)) {
             $payload = PublishedReviewPayload::whereIn('publish_status', $this->publicStatuses())
-                ->where('product_uid', 'like', '%ASIN_' . $asin . '%')
+                ->where('product_uid', 'like', '%ASIN_' . strtoupper($asin) . '%')
                 ->first();
             if ($payload) {
                 return redirect()->route('public.reviews.show', $payload->review_slug, 301);
