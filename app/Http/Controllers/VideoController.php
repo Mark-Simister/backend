@@ -976,6 +976,13 @@ class VideoController extends Controller
             $video->regions()->sync([]);
         }
 
+        // Pivot writes don't fire model events, so VideoObserver can't see a region
+        // change. Re-snapshot the public payload here — no-ops unless this video was
+        // explicitly published to SEO; withdraws it if all regions were removed.
+        if ($video->isSeoPublished()) {
+            \App\Jobs\RefreshSeoPayloadJob::dispatch($video->id);
+        }
+
         // if (!empty($validated['channel_ids'])) {
         //     $video->channel()->sync($validated['channel_ids']);
         // }

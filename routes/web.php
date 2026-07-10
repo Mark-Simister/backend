@@ -84,6 +84,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('site-images/{key}', [\App\Http\Controllers\SiteImageController::class, 'update'])->name('site-images.update');
 });
 
+// Explicit "Publish to SEO" sign-off — the ONLY thing that creates the first
+// public review payload. Reaching status=published never auto-publishes.
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::post('videos/{video}/seo-publish', [\App\Http\Controllers\Admin\ReviewSeoPublishController::class, 'publish'])->name('videos.seo-publish');
+    Route::post('videos/{video}/seo-withdraw', [\App\Http\Controllers\Admin\ReviewSeoPublishController::class, 'withdraw'])->name('videos.seo-withdraw');
+});
+
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('channels', ChannelController::class)->middleware('permission:channel.view|channel.create|channel.edit|channel.delete'); // Channels
     Route::resource('categories', CategoryController::class)->middleware('permission:category.view|category.create|category.edit|category.delete'); // Category CRUD

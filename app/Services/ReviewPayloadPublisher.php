@@ -47,9 +47,14 @@ class ReviewPayloadPublisher
             return null;   // never SEO-published: the explicit action is required first
         }
 
-        // All eligible regions removed → withdraw (an admin payload must never have an
-        // empty pivot, since "empty pivot" means ALL regions for pipeline back-compat).
-        if ($video->regions()->count() === 0) {
+        // TAKEDOWN signals — the admin has intentionally made this not-a-public-review.
+        // Withdraw the live page. (Contrast with a DATA GAP, e.g. product_name cleared:
+        // snapshot() records an error and deliberately leaves the page up.)
+        //   - all regions removed: an admin payload must never have an empty pivot,
+        //     since "empty pivot" means ALL regions for pipeline back-compat.
+        if ($video->status !== 'published'
+            || $video->review_type !== 'review'
+            || $video->regions()->count() === 0) {
             $this->withdraw($video);
             return null;
         }
@@ -63,7 +68,16 @@ class ReviewPayloadPublisher
         if ($payload) {
             $payload->forceFill(['publish_status' => 'withdrawn', 'updated_at' => now()])->save();
         }
-        $video->forceFill(['seo_publish_status' => 'withdrawn'])->save();
+        $this->saveVideo($video, ['seo_publish_status' => 'withdrawn']);
+    }
+
+    /**
+     * Persist the publisher's own bookkeeping WITHOUT firing model events —
+     * otherwise VideoObserver would re-dispatch a refresh for the write we just made.
+     */
+    private function saveVideo(Video $video, array $attributes): void
+    {
+        Video::withoutEvents(fn () => $video->forceFill($attributes)->save());
     }
 
     /**
@@ -145,21 +159,21 @@ class ReviewPayloadPublisher
 
             $payload->regions()->sync($video->regions()->pluck('regions.id')->all());
 
-            $video->forceFill([
+            $this->saveVideo($video, [
                 'review_slug' => $slug,
                 'seo_publish_status' => 'published',
                 'seo_published_at' => $video->seo_published_at ?? now(),
                 'seo_last_published_at' => now(),
                 'seo_publish_error' => null,
-            ])->save();
+            ]);
 
             return $payload;
         } catch (Throwable $e) {
             // Record the failure on the video; leave any existing live payload alone.
-            $video->forceFill([
+            $this->saveVideo($video, [
                 'seo_publish_status' => 'error',
                 'seo_publish_error' => Str::limit($e->getMessage(), 1000),
-            ])->save();
+            ]);
 
             return null;
         }

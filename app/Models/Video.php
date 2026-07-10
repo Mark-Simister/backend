@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\VideoObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/** VideoObserver keeps an already-SEO-published review's public payload in sync. */
+#[ObservedBy([VideoObserver::class])]
 class Video extends Model
 {
     use HasFactory;
@@ -91,6 +95,12 @@ class Video extends Model
     public function seoPayload()
     {
         return $this->hasOne(PublishedReviewPayload::class, 'video_id');
+    }
+
+    /** True once the explicit "Publish to SEO" action has run at least once. */
+    public function isSeoPublished(): bool
+    {
+        return filled($this->seo_published_at);
     }
     /**
      * Normalised thumbnail URL. thumbnail_image holds either an absolute URL
