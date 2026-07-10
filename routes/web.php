@@ -157,8 +157,24 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('characters/{character}/bloopers', [BlooperController::class, 'store'])->name('bloopers.store');
     Route::match(['put','patch'], 'characters/{character}/bloopers/{blooper}', [BlooperController::class, 'update'])->name('bloopers.update');
     Route::delete('bloopers/{blooper}', [BlooperController::class, 'destroy'])->name('bloopers.destroy');
-    Route::resource('users', UserController::class)->middleware('permission:user.view|user.create|user.edit|user.delete'); // Users (maybe only super_admin + managers)
-    Route::post('/users/{user}/toggle-block', [UserController::class, 'toggleBlock'])->name('users.toggle-block');
+    // Users. Spatie's `permission:a|b|c` means ANY of them, so the old
+    // `permission:user.view|user.create|user.edit|user.delete` on the whole resource let a
+    // view-only sub-admin create, edit and DELETE users. Each verb now carries its own
+    // permission. Order matters: users/create must precede users/{user}.
+    Route::get('users', [UserController::class, 'index'])->middleware('permission:user.view')->name('users.index');
+    Route::get('users/create', [UserController::class, 'create'])->middleware('permission:user.create')->name('users.create');
+    Route::post('users', [UserController::class, 'store'])->middleware('permission:user.create')->name('users.store');
+    Route::get('users/{user}', [UserController::class, 'show'])->middleware('permission:user.view')->name('users.show');
+    Route::get('users/{user}/edit', [UserController::class, 'edit'])->middleware('permission:user.edit')->name('users.edit');
+    Route::match(['put', 'patch'], 'users/{user}', [UserController::class, 'update'])->middleware('permission:user.edit')->name('users.update');
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('permission:user.delete')->name('users.destroy');
+
+    // toggle-block carried NO permission at all: this group is `middleware(['auth'])`, so
+    // any authenticated user could block or unblock anyone — including a super_admin. And
+    // because ApiUser::$table = 'users', a frontend member's credentials authenticate at
+    // the admin /login, so "any authenticated user" included the public membership.
+    Route::post('/users/{user}/toggle-block', [UserController::class, 'toggleBlock'])
+        ->middleware('permission:user.edit')->name('users.toggle-block');
     Route::resource('highlight_tags', HighlightTagController::class)->middleware('permission:highlight_tag.view|highlight_tag.create|highlight_tag.edit|highlight_tag.delete'); // Highlight tags
     Route::resource('subscription_listing', SubscriptionListingController::class)->middleware('permission:subscription_list.view|subscription_list.create|subscription_list.edit|subscription_list.delete'); // Subscription listing
     Route::get('/videos/{videoId}/affiliate-links', [VideoController::class, 'manageLinks'])->name('videos.affiliate-links'); // Route for managing affiliate links (View all links for a video)

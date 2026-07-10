@@ -37,6 +37,33 @@ class UserController extends Controller
         return view('admin.users.create', compact('roles'));
     }
 
+    /**
+     * A role may be assigned only if it exists on the TARGET model's guard, and only a
+     * super_admin may grant super_admin.
+     *
+     * `exists:roles,name` was never a control. `super_admin` exists - on the `web` guard -
+     * so it validated, and `$user->update(['role' => ...])` persisted
+     * `users.role = 'super_admin'` before `assignRole()` failed on the guard mismatch.
+     * These routes manage ApiUser records, which live on the `api` guard.
+     */
+    private function assertMayAssignRole(string $role, string $guard): void
+    {
+        $actor = auth()->user();
+        abort_unless($actor, 403);
+
+        abort_unless(
+            Role::where('name', $role)->where('guard_name', $guard)->exists(),
+            403,
+            "Role [{$role}] does not exist on the [{$guard}] guard."
+        );
+
+        abort_if(
+            $role === 'super_admin' && ! $actor->hasRole('super_admin'),
+            403,
+            'Only a super_admin may grant super_admin.'
+        );
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -44,8 +71,12 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|string|exists:roles,name',
+            'role' => ['required', 'string', Rule::exists('roles', 'name')->where('guard_name', 'api')],
         ]);
+
+        // Authorize BEFORE anything is written. The old code persisted the role column and
+        // only then discovered it could not attach the role.
+        $this->assertMayAssignRole($request->role, 'api');
 
         $user = ApiUser::create([
             'name' => $request->name,
@@ -86,8 +117,10 @@ class UserController extends Controller
             // 'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|string|exists:roles,name',
+            'role' => ['required', 'string', Rule::exists('roles', 'name')->where('guard_name', 'api')],
         ]);
+
+        $this->assertMayAssignRole($request->role, 'api');
 
         $user->update([
             'name' => $request->name,
