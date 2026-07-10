@@ -370,3 +370,30 @@ carries no admin gate because there is nothing to gate. The routes are gone, not
 — the only state in which "the renderer has no admin surface" is actually true rather than
 true-until-the-grant-changes. Built from 09b63d3 as commit c71692e; held locally, lands
 with runbook v3.
+
+### FU-3 caveat — 2026-07-11 — the extractor selects its workbook by modification time
+
+`extract_published_payloads.py` reads columns BY HEADER NAME (row 1), not by fixed cell —
+so `publish_status` is whatever column is headed `publish_status`, and promoting a row means
+editing that column's cell for that row. In the current newest workbook that is cell **Y2**
+for the Vecomfy row (`publish_status` = column Y, review_slug = column K, Vecomfy = row 2).
+Verify the header, not the letter, since the mapping is by name.
+
+The trap: the script picks the workbook with the NEWEST modification time —
+`sorted(glob(...), key=os.path.getmtime, reverse=True)[0]`. There are currently TWO
+`BeastieRated_Production_OS*.xlsx` files in public/product_review/. Opening and saving the
+WRONG one silently makes it newest, so the extractor switches source with no error and no
+diff — the promotion appears not to have taken. Always confirm the `sheet file: …` line the
+script prints names the workbook you actually edited, and consider removing stale workbooks
+so only one exists.
+
+### review-renderer surface — 2026-07-11 — it is SEVEN routes, not four
+
+The renderer serves four *intended* routes — /review/{id}, /review/{slug}, /sitemap.xml,
+/robots.txt — plus /up (health) and two framework/package auto-routes: sanctum/csrf-cookie
+(Laravel Sanctum) and storage/{path} (storage:link). `php artisan route:list` on
+review-renderer @ c71692e shows SEVEN GET routes, zero writes, zero admin/auth. The two
+package routes are inert read-only GETs and are left in place deliberately: removing Sanctum
+from the branch about to serve four regional hosts trades a real boot-time dependency risk
+for a cosmetic count. Recorded so nobody re-derives the four-vs-seven discrepancy later and
+mistakes it for scope creep.
