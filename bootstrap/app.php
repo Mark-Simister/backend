@@ -30,6 +30,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // Do NOT reintroduce `at: '*'`. The admin backend is reachable directly, so a
         // wildcard lets any client forge X-Forwarded-Host and select a region.
 
+        // FU-6 — baseline gate for the whole /admin surface. Appended to the web group so
+        // it runs after StartSession (thus $request->user() resolves) and applies to EVERY
+        // admin/* route regardless of which of the seven prefix('admin') groups declared
+        // it. Keyed on the path, not the group, so it cannot be missed by a group added
+        // later. AdminSurfaceCoverageTest proves the coverage. This is a baseline only —
+        // per-route permission: middleware still enforces WHICH admin action is allowed.
+        $middleware->web(append: [
+            \App\Http\Middleware\EnsureAdminAccess::class,
+        ]);
+
         // Register existing Spatie permission middleware aliases
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

@@ -80,7 +80,10 @@ Route::prefix('admin')->as('admin.')->middleware(['auth'])->group(function () {
     Route::resource('themes', ThemeController::class);
     });
 
-Route::prefix('admin')->name('admin.')->group(function() {
+// FU-6: this group had NO middleware at all — top-categories writes were reachable
+// unauthenticated. EnsureAdminAccess (web group) now covers it by path; `auth` is added
+// so the group matches its siblings and does not read as intentionally public.
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function() {
     Route::resource('top-categories', TopCategoryController::class);
 });
 
