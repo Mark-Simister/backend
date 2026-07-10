@@ -196,3 +196,70 @@ diagnostic endpoint needs to survive.
 
 Record the captured address here when it is known, so the next session does not rediscover
 it, and does not quietly re-assume `127.0.0.1`.
+
+### FU-5 — 2026-07-11 — Authentication holes on the admin backend (found via a "pre-existing" test failure)
+
+`tests/Feature/Auth/RegistrationTest.php` had failed for months and was repeatedly waved
+past as "pre-existing Breeze scaffolding, unrelated to the feature." It was not. The
+failing assertion (`assertAuthenticated`) was caused by missing seeded roles, and behind it
+sat a live privilege-escalation hole. Three findings, all on directly reachable hosts.
+
+**A1 — public registration granted `super_admin`.** `GET/POST /register` sat behind `guest`
+middleware only. `RegisteredUserController::store()` created the account with
+`role = 'super_admin'` and called `assignRole('super_admin')` on the web guard. `User` does
+not implement `MustVerifyEmail` (the import is commented out at `app/Models/User.php:5`), so
+`EnsureEmailIsVerified` — the `verified` middleware on `/dashboard` — passes anything that
+is not a `MustVerifyEmail` instance. A registrant was authenticated, super-admin and on the
+dashboard in one request, with no email confirmation.
+
+It was exposed on **two** hosts: `stg.beastierated.com` and `review-bstg.beastierated.com`,
+which serves the same `routes/auth.php` on its own public hostname.
+
+*Fix:* routes, `RegisteredUserController` and the register view deleted. Admin accounts come
+from `RolePermissionSeeder` + `DatabaseSeeder` or the console. `RegistrationTest` is
+inverted — both routes must 404, no route may be named `register`, and the controller file
+must not exist. `POST /api/register` is unchanged: that is the frontend member signup,
+creating an `ApiUser` with role `user` on the `api` guard.
+
+**A2 — OR-permissions and an unguarded block endpoint.** Spatie's `permission:a|b|c` means
+*any* of them. `Route::resource('users', ...)->middleware('permission:user.view|user.create|
+user.edit|user.delete')` therefore let a view-only sub-admin create, edit and **delete**
+users. `users/{user}/toggle-block` carried no permission at all — its enclosing group is
+`middleware(['auth'])` — so any authenticated user could block a super_admin. Because
+`ApiUser::$table = 'users'`, a public frontend member's credentials authenticate at the
+admin `/login`, so "any authenticated user" included the membership.
+
+`'role' => 'required|string|exists:roles,name'` was not a control either: `super_admin`
+exists on the `web` guard, so it validated, and `$user->update(['role' => ...])` wrote
+`users.role = 'super_admin'` *before* `assignRole()` failed on the guard mismatch.
+
+*Fix:* each verb carries its own permission; `toggle-block` requires `user.edit`; the role
+rule is scoped to the `api` guard (these routes manage `ApiUser` records) and
+`assertMayAssignRole()` authorizes before anything is written, refusing `super_admin` to
+anyone who is not one.
+
+**Still open — the same OR-permission pattern is on twelve other resources:** `channels`,
+`categories`, `regions`, `character_tags`, `character_roles`, `characters`, `faqs`,
+**`videos`**, `forms`, `highlight_tags`, `subscription_listing`, `reviews`. `videos` matters
+most here: after the shared-database cutover, a sub-admin holding only `video.view` can
+edit a video and thereby rewrite its public review page.
+
+**A3 — privilege columns were mass-assignable.** `role` and `is_verified` were in
+`User::$fillable`, and `ProfileController::update()` does
+`$request->user()->fill($request->validated())`. `ProfileUpdateRequest::rules()` returns only
+name and email today, so nothing was exploitable — but it was one careless line from
+self-promotion.
+
+*Fix:* removed from `$fillable`; `$guarded = ['role', 'is_verified', 'is_blocked']` declared
+as well. **`$guarded` alone would have done nothing:** `Model::isFillable()` returns true the
+moment a key appears in `$fillable` and never consults `$guarded`. Taking them out of
+`$fillable` is the operative control. `ApiUser` (same table) still lists all three; its call
+sites pass hardcoded values, but it deserves the same treatment.
+
+**Decision — the renderer gets no auth surface.** `review-renderer` will drop
+`routes/auth.php` entirely: no login, no registration, no password reset, no dashboard on a
+public SEO renderer. Relying on `review_reader`'s lack of `INSERT` is not a control; it is a
+500.
+
+**Process note.** Three separate reviews concluded these tests were "pre-existing and
+unrelated." A red test is not a triage category. Read what it is failing on.
