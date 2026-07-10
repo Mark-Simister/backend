@@ -44,12 +44,25 @@ Route::get('/', function () { return redirect()->route('login'); });
 // numeric URLs don't 404 or compete for canonical. Order matters: the numeric
 // (whereNumber) route is registered first so digit-only paths never hit the
 // slug controller; everything else (contains letters) falls to the slug route.
-Route::get('/review/{id}', [\App\Http\Controllers\PublicReviewPageController::class, 'legacyRedirect'])
-    ->whereNumber('id');
-Route::get('/review/{slug}', [\App\Http\Controllers\PublicReviewPageController::class, 'show'])
-    ->where('slug', '[A-Za-z0-9\-]+')->name('public.reviews.show');
-Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('reviews.sitemap');
-Route::get('/robots.txt', [\App\Http\Controllers\SitemapController::class, 'robots'])->name('reviews.robots');
+//
+// STATELESS: strip session/cookie/CSRF middleware so these anonymous, cacheable
+// SEO responses never emit Set-Cookie (XSRF-TOKEN / laravel_session) — a
+// Set-Cookie header makes a response uncacheable at the CDN and needlessly
+// hands crawlers a session. These routes read no session and post no forms.
+Route::withoutMiddleware([
+    \Illuminate\Cookie\Middleware\EncryptCookies::class,
+    \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+    \Illuminate\Session\Middleware\StartSession::class,
+    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+    \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+])->group(function () {
+    Route::get('/review/{id}', [\App\Http\Controllers\PublicReviewPageController::class, 'legacyRedirect'])
+        ->whereNumber('id');
+    Route::get('/review/{slug}', [\App\Http\Controllers\PublicReviewPageController::class, 'show'])
+        ->where('slug', '[A-Za-z0-9\-]+')->name('public.reviews.show');
+    Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('reviews.sitemap');
+    Route::get('/robots.txt', [\App\Http\Controllers\SitemapController::class, 'robots'])->name('reviews.robots');
+});
 Route::get('/dashboard', function () { return view('dashboard'); })->middleware(['auth', 'verified'])->name('dashboard');
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

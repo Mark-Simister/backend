@@ -128,6 +128,27 @@ class PublicReviewPageTest extends TestCase
         );
     }
 
+    public function test_public_seo_routes_are_stateless(): void
+    {
+        // Public SEO responses must not emit Set-Cookie (XSRF-TOKEN /
+        // laravel_session): a Set-Cookie makes them uncacheable at the CDN and
+        // hands crawlers a session. Assert the resolved middleware stack has no
+        // session/CSRF/cookie middleware — environment-independent, so it guards
+        // even where the test session driver wouldn't set a cookie anyway.
+        $router = app('router');
+        foreach (['reviews.sitemap', 'reviews.robots', 'public.reviews.show'] as $name) {
+            $route = $router->getRoutes()->getByName($name);
+            $this->assertNotNull($route, "Route {$name} should exist");
+            $stateful = array_filter(
+                $router->gatherRouteMiddleware($route),
+                fn ($m) => str_contains($m, 'StartSession')
+                    || str_contains($m, 'Csrf')
+                    || str_contains($m, 'Cookie')
+            );
+            $this->assertSame([], array_values($stateful), "{$name} must be stateless (no session/CSRF/cookie middleware)");
+        }
+    }
+
     public function test_missing_slug_returns_404(): void
     {
         config(['reviews.public_statuses' => ['ready_for_review', 'published']]);
