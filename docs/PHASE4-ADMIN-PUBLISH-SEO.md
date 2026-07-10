@@ -732,3 +732,63 @@ The FPM checks returned nothing: no SetHandler/proxy:unix/php*-fpm in the vhost,
 PHP-FPM — CLI and web read different php.ini. This is now VERIFIED, not inferred. Inert today
 because JWT_ALGO is unset (HS256, never reaches sodium); becomes relevant if JWT_ALGO is set
 to an EdDSA variant, which would then require ext-sodium in the apache2 SAPI too.
+
+### FU-4 note — 2026-07-11 — the CHECK-A / CHECK-B split was found by mutation testing, not review
+
+The two-check structure was not reasoned out. It surfaced while writing the mutations for the
+EIP assertion: pre-cutover the renderer .env has no TRUSTED_PROXIES, so a single "TP == META"
+check compares against an empty TP — it would either pass vacuously or STOP spuriously at
+SNAP-0, and which one would only have been discovered live, at the snapshot, during the
+rollout. Writing the failing cases first forced the realisation that the pre-cutover snapshot
+must assert META == decided-EIP (CHECK-A) and only the post-B5 step can assert TP == META
+(CHECK-B). Reviewing the check would not have found this; breaking it did. This is the
+strongest single argument in these docs for the standing rule below.
+
+## STANDING RULE — every control must be mutation-tested (six instances that read like protection and enforced nothing)
+
+A control is not "in place" because a test is green. Green-forever/red-never is the signature
+of a control that does nothing. Before trusting any guard, BREAK the thing it protects and
+confirm something goes red. If nothing does, the control is decorative — no matter how correct
+it looks.
+
+This is not a hypothetical. Six times in the Phase-4 hardening work, a control read like
+protection and enforced nothing. Every one was found by deliberately breaking it, never by
+reading it:
+
+  1. User::$guarded with `role` still in $fillable. Model::isFillable() returns true the
+     moment a key is in $fillable and never consults $guarded, so `$guarded = ['role', ...]`
+     alongside `role` in $fillable was a no-op that read like a control. Caught: restoring
+     `role` to $fillable with $guarded still present failed 3 tests — proving the REMOVAL
+     from $fillable is the control, not $guarded.
+
+  2. SESSION_DRIVER=array made the "public SEO routes perform no DB writes" test unfailable.
+     phpunit.xml pins array drivers, so a stray StartSession writes to no table and the test
+     could never go red. Caught: the test now pins session.driver/cache.default to database
+     first; without that, reintroducing StartSession failed nothing.
+
+  3. AssertionFailedError extends RuntimeException, so a `$this->fail(...)` placed INSIDE a
+     `try { } catch (\RuntimeException $e)` under test was swallowed by the very catch being
+     tested — the test passed on PHPUnit's own error object. Caught: reverting the H-2 fix
+     left the test green; moving fail() outside the try made it load-bearing.
+
+  4. The H-1 async tests wrapped the code under test in the TEST'S OWN DB::transaction, which
+     deferred the jobs by itself, so deleting the transaction from VideoRegionUpdater failed
+     zero tests. Caught: the mutation (remove the transaction) passed; rewritten to probe the
+     jobs table from inside the video's `saved` event, with no ambient transaction.
+
+  5. The profile form's "no editable email" property depended on the <input> being commented
+     out in the Blade — honest by accident, enforced by nothing. Caught: rendering /profile as
+     an authenticated user and asserting on the HTML (not reading the file); then made
+     load-bearing with a mutation-tested assertion that re-adding name="email" fails.
+
+  6. The EIP assertion used grep -q "TRUSTED_PROXIES=.*${META_IP}" — a substring match that
+     passed on a trailing extra proxy (13.238.27.223,10.0.5.85) AND on an empty META_IP
+     (`.*` matches anything): two of the three cases it existed to catch. Caught: the mutation
+     battery; replaced with exact-equality + empty-guard (CHECK-A/CHECK-B, FU-4). Writing the
+     mutations also revealed the two-check structure the single check would have got wrong.
+
+Recurring tells across the six: a check that reads a value but compares nothing; a test whose
+environment makes the failure it asserts impossible; a test that supplies the very condition
+it claims to verify; a property that holds by comment or by accident rather than by
+enforcement. The defence is the same every time — break it and watch. If breaking it changes
+no test, the test was decorative; fix the test before trusting the control.
