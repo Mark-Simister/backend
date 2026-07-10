@@ -613,3 +613,28 @@ Diff verification (received from the box): confined to lcobucci/clock (2.3.0->3.
 lcobucci/jwt (4.0.4->4.3.0), stella-maris/clock (removed); psr/clock already present so no
 add; league/commonmark and stripe/stripe-php are context only; content-hash unchanged
 (b56f8bb532b451ec1704c1a1f5b319e0). 34 insertions, 83 deletions, one file.
+
+### FU-7 addendum #2 — 2026-07-11 — generalise: diff require blocks, not versions
+
+A lock bump can introduce platform requirements the old package never had. Diffing versions
+is not enough — diff the `require` block (ext-* and php) of EVERY changed package.
+
+Applied to this bump (verified against the box diff):
+  - lcobucci/clock 2.3.0->3.5.0: no new ext; php NARROWS ~8.1||~8.2 -> ~8.3||~8.4||~8.5. So
+    the fixed lock now REQUIRES PHP >= 8.3 and will not install on 8.2. (This narrowing is
+    the fix: old clock 2.3.0's ~8.2 was the failure on the 8.3.6 box.)
+  - lcobucci/jwt 4.0.4->4.3.0: php unchanged; ext mbstring,openssl -> + hash + json + sodium.
+  - stella-maris/clock removed; psr/clock already present.
+  Net new platform demands: ext-hash, ext-json, ext-sodium, php floor 8.3.
+
+Where each is needed:
+  - hash, json: compiled into PHP 8.3, cannot be absent.
+  - sodium: INSTALL-TIME only (A3's CLI composer install). NOT called at runtime because the
+    app signs JWTs with HS256 (config/jwt.php:134 default = ALGO_HS256, HMAC via hash/openssl).
+    Confirmed loaded in the box CLI (php -m). If JWT_ALGO is ever set to an EdDSA variant in
+    the admin .env, the mod_php apache2 SAPI would then need sodium too — the box runs mod_php
+    (no php-fpm service), so CLI and web-tier php.ini are distinct.
+
+A3 pre-flight (already recorded above) asserts sodium/hash/json/mbstring/openssl on the admin
+CLI before the merge. This addendum records WHY the check exists and the rule that produced
+it, so the next lock bump gets the same require-block audit rather than a version glance.
