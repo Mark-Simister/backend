@@ -31,23 +31,28 @@
             @enderror
         </div>
 
-        <!-- Email Field -->
-        {{-- <div class="mb-3">
+        <!-- Email Field — READ ONLY -->
+        {{--
+            Email is the login identifier on a table shared by User and ApiUser across two
+            guards, so it is deliberately not editable through this self-service form (see
+            ProfileController::update / ProfileUpdateRequest). It is shown for reference
+            only: no `name` attribute, so nothing email-related is ever submitted, and
+            `disabled`/`readonly` so it cannot be typed into. Do NOT add name="email" here —
+            ProfileTest::test_the_profile_form_exposes_no_editable_email_field enforces it.
+        --}}
+        <div class="mb-3">
             <label for="email" class="form-label">{{ __('Email') }}</label>
             <input
                 type="email"
-                class="form-control @error('email') is-invalid @enderror"
+                class="form-control"
                 id="email"
-                name="email"
-                value="{{ old('email', $user->email) }}"
-                required
-                autocomplete="username"
+                value="{{ $user->email }}"
+                disabled
+                readonly
             >
-            @error('email')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
+            <div class="form-text">{{ __('Your email address is used to sign in and cannot be changed here.') }}</div>
 
-            <!-- Email Verification Prompt -->
+            <!-- Email Verification Prompt (only for MustVerifyEmail users) -->
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div class="form-text mt-2 text-warning">
                     {{ __('Your email address is unverified.') }}
@@ -65,7 +70,7 @@
                     @endif
                 </div>
             @endif
-        </div> --}}
+        </div>
 
         <!-- Save Button + Status -->
         <div class="d-flex align-items-center gap-3">

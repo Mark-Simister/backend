@@ -22,6 +22,32 @@ class ProfileTest extends TestCase
     }
 
     /**
+     * The profile form must expose NO submittable, editable email field. Email is
+     * immutable here (it is the shared-table login identifier), and the controller/request
+     * enforce that server-side — but the form must not *invite* an edit that silently does
+     * nothing. The email is shown read-only (no `name` attribute → never submitted).
+     *
+     * This makes the Blade's honesty load-bearing rather than incidental: re-adding
+     * name="email" fails this test. Asserted against the fully rendered /profile page
+     * (the error bag is only present on the real request, not a bare view()->render()).
+     */
+    public function test_the_profile_form_exposes_no_editable_email_field(): void
+    {
+        $user = User::factory()->create(['email' => 'real@example.com']);
+
+        $html = $this->actingAs($user)->get('/profile')->getContent();
+
+        // No submittable email field at all.
+        $this->assertStringNotContainsString('name="email"', $html,
+            'the profile form must not submit an email field');
+
+        // But the address is still shown (read-only) for reference...
+        $this->assertStringContainsString('real@example.com', $html);
+        // ...in a field that cannot be typed into.
+        $this->assertMatchesRegularExpression('/<input[^>]*id="email"[^>]*(disabled|readonly)/i', $html);
+    }
+
+    /**
      * ProfileController::update() deliberately strips `email` from the validated data
      * before filling the model ("Ensure email isn't updated"), so the profile form can
      * change the name but not the address you sign in with. The stock Breeze test
