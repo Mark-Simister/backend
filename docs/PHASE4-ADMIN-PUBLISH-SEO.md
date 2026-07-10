@@ -480,3 +480,14 @@ verifiable from the repo, hence the dual marker):
   - robots is not wrapped in Cache (no application cache to disturb);
   - /robots.txt is not behind EnsurePublicReviewRendering, so the probe reaches the
     controller regardless of the rendering flag.
+
+### FU-4 correction #3 — 2026-07-11 — read the whole matched line, not just the first field
+
+The first field (%h) and the marker's location (%r request path, %{User-Agent}i) are logged
+independently. A private-looking %h with the marker appearing somewhere unexpected means
+something between edge and origin rewrote the request — at which point %h no longer
+describes the hop the marked request actually came from, and is not trustworthy even though
+it is private. So the check is: the marker MUST appear in the request path
+(/robots.txt?probe=…) or the User-Agent field of the matched line, AND the first field must
+be private. Read the whole line, confirm the marker is where it belongs, THEN take the
+address. Marker anywhere unexpected = hard stop, same as public or empty-grep.
