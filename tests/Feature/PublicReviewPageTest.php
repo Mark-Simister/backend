@@ -15,6 +15,21 @@ class PublicReviewPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * These tests model the PUBLIC RENDERER host (review-bstg and the regional hosts in
+     * front of it). PUBLIC_REVIEW_RENDERING_ENABLED now defaults to false, so that the
+     * directly-reachable admin backend never becomes a second, indexable renderer of the
+     * same content (R2). A renderer opts in explicitly.
+     *
+     * The disabled side of the flag is covered by PublicReviewRenderingFlagTest.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['reviews.rendering_enabled' => true]);
+    }
+
     private function makePayload(string $status, string $slug = 'test-product-b000test'): PublishedReviewPayload
     {
         return PublishedReviewPayload::create([

@@ -58,7 +58,12 @@ class SitemapController extends Controller
      */
     public function robots(Request $request)
     {
-        $indexable = (bool) config('reviews.indexable', false);
+        // Both conditions. A host that renders nothing has no sitemap to advertise, so
+        // disabling rendering can never leave a `Sitemap:` line pointing at a 404 — and
+        // the admin backend stays non-indexable regardless of PUBLIC_REVIEW_INDEXABLE.
+        $indexable = (bool) config('reviews.indexable', false)
+            && (bool) config('reviews.rendering_enabled', false);
+
         $origin = rtrim($request->getSchemeAndHttpHost(), '/');
 
         if ($indexable) {

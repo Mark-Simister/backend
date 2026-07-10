@@ -56,11 +56,17 @@ Route::withoutMiddleware([
     \Illuminate\View\Middleware\ShareErrorsFromSession::class,
     \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
 ])->group(function () {
-    Route::get('/review/{id}', [\App\Http\Controllers\PublicReviewPageController::class, 'legacyRedirect'])
-        ->whereNumber('id');
-    Route::get('/review/{slug}', [\App\Http\Controllers\PublicReviewPageController::class, 'show'])
-        ->where('slug', '[A-Za-z0-9\-]+')->name('public.reviews.show');
-    Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('reviews.sitemap');
+    // R2: only a host with PUBLIC_REVIEW_RENDERING_ENABLED=true renders review pages.
+    Route::middleware(\App\Http\Middleware\EnsurePublicReviewRendering::class)->group(function () {
+        Route::get('/review/{id}', [\App\Http\Controllers\PublicReviewPageController::class, 'legacyRedirect'])
+            ->whereNumber('id');
+        Route::get('/review/{slug}', [\App\Http\Controllers\PublicReviewPageController::class, 'show'])
+            ->where('slug', '[A-Za-z0-9\-]+')->name('public.reviews.show');
+        Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('reviews.sitemap');
+    });
+
+    // NOT gated. The static public/robots.txt was deleted, so a host with rendering
+    // disabled must still answer "Disallow: /" here rather than 404 at crawlers.
     Route::get('/robots.txt', [\App\Http\Controllers\SitemapController::class, 'robots'])->name('reviews.robots');
 });
 Route::get('/dashboard', function () { return view('dashboard'); })->middleware(['auth', 'verified'])->name('dashboard');
