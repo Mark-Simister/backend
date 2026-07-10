@@ -90,3 +90,69 @@ Region gating (AU/US/UK/CA + unknown host), empty-pivot BC, GLOBAL row, sitemap
 per-region filtering, canonical host, no Set-Cookie, existing pipeline payload
 compatibility; later: explicit-gate, auto-refresh, auto-withdraw, slug immutability,
 mapper/schema/slug units, SPA regression.
+
+## Tracked follow-ups (dated; not resolved by this feature)
+
+These were discovered while auditing the shared-DB rollout. None is caused by the SEO
+work; all three affect it. Recorded here so they are not visible only in a chat log.
+
+### FU-1 — 2026-07-10 — `php artisan migrate` is broken on the admin backend, destructively
+`themes` and `user_themes` **exist** in `bstd_staging` while their migrations
+(`2026_02_04_055440`, `2026_02_04_072317`) are still `Pending`. Laravel runs pending
+migrations in filename order, so a bare `migrate`:
+
+1. applies `2025_09_26_130905_add_highlight_tags_last_checked_at_to_videos_table`
+   (ALTERs `videos`, records the row), then
+2. dies on `create_themes_table` with `SQLSTATE[42S01]: table already exists`.
+
+MySQL has no transactional DDL, so step 1 cannot be undone. The result is a half-applied
+batch, every time, forever, until this is reconciled.
+
+**This is armed.** `.github/workflows/stg.yml` runs `php artisan migrate --force` on every
+push to `staging`. The `--path`-scoped migration rule protects the SEO rollout only; it
+does not protect the next person who pushes.
+
+**Recommendation.** Add `Schema::hasTable()` early-return guards to both theme migrations —
+the same idempotency pattern the review migrations already use — after confirming with
+`SHOW CREATE TABLE themes` that the live tables match the stub definition (`id` +
+`timestamps`). If they do not match, the migration is lying about the schema: record both
+as already-run in the `migrations` table instead and leave the real tables alone. Either
+way, run them as their own deliberate batch **before** any scoped batch, so the last batch
+remains cleanly rollback-able. Also fix `stg.yml`, which additionally runs `git stash` and
+silently discards whatever is dirty on the server.
+
+### FU-2 — 2026-07-10 — `APP_ENV=local` disarms Laravel's destructive-command guard
+`Illuminate\Console\ConfirmableTrait` prompts only when `app()->environment() === 'production'`.
+On the admin backend (`APP_ENV=local`), **`php artisan migrate:fresh` and `db:wipe` drop every
+table in the shared staging database with no confirmation.**
+
+Changing `APP_ENV` to `staging` buys nothing — only the literal string `production` arms the
+prompt. `APP_ENV=production` does arm it, and its only effect on our code is
+`config/reviews.php:29`, where `indexable` defaults to `APP_ENV === 'production'` — which
+would flip the admin host's `robots.txt` to allow-all.
+
+**Recommendation.** Set `PUBLIC_REVIEW_INDEXABLE=false` explicitly on the admin backend
+(the SEO rollout does this at A5), and only then set `APP_ENV=production`. Verify
+`/robots.txt` still returns `Disallow: /` afterwards. Note the guard remains partial:
+`--force` bypasses the prompt, and CI already passes `--force` to `migrate`.
+
+This is why the rollout sets `PUBLIC_REVIEW_INDEXABLE` and `TRUSTED_PROXIES` as explicit
+environment variables rather than deriving them from the environment name. Two safety
+properties keyed off one string will eventually pull in opposite directions.
+
+### FU-3 — 2026-07-10 — `PUBLIC_REVIEW_STATUSES=published` is permanent policy, not a one-off
+Only `published` is publicly renderable. `ready_for_review` is a workflow state.
+`draft → ready_for_review → published → public website`.
+
+The chain that decides a pipeline row's visibility is
+**`Published_Review_Payloads` sheet → `extract_published_payloads.py` → `published_review_payloads.json`
+→ `PublishedReviewPayloadSeeder` → DB**, and the seeder's `updateOrCreate()` overwrites
+`publish_status` from the JSON. So a DB-only `UPDATE` is reverted by the next import, and a
+JSON-only edit is reverted by the next extraction. **Promotion must originate in the sheet.**
+
+**Consequence for the unbuilt WF4 ingestion endpoint:** it must carry its own explicit
+mechanism for setting `publish_status='published'` when its editorial process completes.
+Without one, every pipeline-generated review will land as `ready_for_review`, be invisible
+to the public site, and stall until a human edits the spreadsheet. The seeder must also
+refuse to move a row **out of** `withdrawn` without `--force`: a takedown is a public-safety
+action and a routine import must not resurrect the page.
