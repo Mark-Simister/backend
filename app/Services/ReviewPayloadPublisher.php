@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Exceptions\ReviewPublishGateException;
 use App\Models\PublishedReviewPayload;
 use App\Models\Video;
 use App\Support\Reviews\ReviewSchemaBuilder;
 use App\Support\Reviews\ReviewSlugGenerator;
 use App\Support\Reviews\VideoReviewMapper;
 use Illuminate\Support\Str;
-use RuntimeException;
 use Throwable;
 
 /**
@@ -22,10 +22,19 @@ use Throwable;
  * - withdraw() : marks the payload unavailable (404) — used when the video is
  *                unpublished/drafted or all regions are removed.
  *
- * FAILURE POLICY (applies to publish AND refresh): a gate/mapper failure records
- * seo_publish_status='error' + seo_publish_error on the VIDEO and leaves any
- * existing live payload completely untouched. A failure must never silently yank
- * a page that is already serving.
+ * FAILURE POLICY (applies to publish AND refresh). Two kinds, deliberately separated:
+ *
+ *  - EXPECTED (ReviewPublishGateException): the video fails the publish gate. Recorded
+ *    as seo_publish_status='error' on the VIDEO, swallowed, and any existing live payload
+ *    is left completely untouched. Retrying cannot help, so the job must NOT fail.
+ *
+ *  - UNEXPECTED (anything else): a bug or an infrastructure fault. Reported, recorded on
+ *    the video best-effort, then RETHROWN so the queue retries it and, once $tries is
+ *    exhausted, records it in failed_jobs. Swallowing these would turn a broken refresh
+ *    into a successful-looking job and let the public page rot silently.
+ *
+ * Deployment monitoring therefore watches videos.seo_publish_status='error' for gate
+ * failures, and failed_jobs only for genuinely exhausted unexpected exceptions.
  */
 class ReviewPayloadPublisher
 {
@@ -115,7 +124,7 @@ class ReviewPayloadPublisher
     {
         try {
             if ($errors = $this->gateErrors($video)) {
-                throw new RuntimeException('Cannot publish to SEO: ' . implode('; ', $errors));
+                throw ReviewPublishGateException::fromGateErrors($errors);
             }
 
             $slug = ReviewSlugGenerator::forVideo($video);          // immutable once set
@@ -168,14 +177,34 @@ class ReviewPayloadPublisher
             ]);
 
             return $payload;
+        } catch (ReviewPublishGateException $e) {
+            // EXPECTED. Record it, leave the live payload serving, and do not fail the job.
+            $this->recordFailure($video, $e);
+
+            return null;
         } catch (Throwable $e) {
-            // Record the failure on the video; leave any existing live payload alone.
+            // UNEXPECTED. Report, record what we can, then rethrow so the worker retries
+            // and eventually records a real failure instead of a phantom success.
+            report($e);
+            $this->recordFailure($video, $e);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Best-effort failure bookkeeping on the video. If this write itself fails the
+     * database is the broken thing — swallow it rather than masking the original cause.
+     */
+    private function recordFailure(Video $video, Throwable $e): void
+    {
+        try {
             $this->saveVideo($video, [
                 'seo_publish_status' => 'error',
                 'seo_publish_error' => Str::limit($e->getMessage(), 1000),
             ]);
-
-            return null;
+        } catch (Throwable) {
+            //
         }
     }
 }

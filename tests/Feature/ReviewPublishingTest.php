@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Channel;
 use App\Models\Character;
+use App\Exceptions\ReviewPublishGateException;
 use App\Models\PublishedReviewPayload;
 use App\Models\Region;
 use App\Models\Video;
@@ -294,7 +295,15 @@ class ReviewPublishingTest extends TestCase
         $this->assertStringContainsString('region', $v->seo_publish_error);
     }
 
-    public function test_forced_mapper_failure_records_error_and_leaves_existing_payload_untouched(): void
+    /**
+     * H-2: a mapper explosion is an UNEXPECTED failure, not a gate failure. It is recorded
+     * on the video, leaves the live payload untouched, and is RETHROWN so the queue retries.
+     *
+     * It throws a plain \RuntimeException on purpose: ReviewPublishGateException extends
+     * RuntimeException, so this proves the publisher discriminates by exact type and does
+     * not treat every RuntimeException as an expected gate failure.
+     */
+    public function test_forced_mapper_failure_records_error_leaves_payload_untouched_and_rethrows(): void
     {
         $v = $this->makeVideo(['review' => $this->realReview(122)]);
         $original = $this->publisher()->publish($v);
@@ -308,7 +317,18 @@ class ReviewPublishingTest extends TestCase
             }
         });
 
-        $this->assertNull($this->publisher()->publish($v->fresh()));
+        // fail() must stay OUT of the try: PHPUnit's AssertionFailedError is a
+        // RuntimeException, so catching RuntimeException would swallow the failure itself.
+        $caught = null;
+        try {
+            $this->publisher()->publish($v->fresh());
+        } catch (\RuntimeException $e) {
+            $caught = $e;
+        }
+
+        $this->assertNotNull($caught, 'an unexpected failure must be rethrown, not swallowed into a null return');
+        $this->assertSame('mapper exploded', $caught->getMessage());
+        $this->assertNotInstanceOf(ReviewPublishGateException::class, $caught);
 
         $v->refresh();
         $this->assertSame('error', $v->seo_publish_status);
