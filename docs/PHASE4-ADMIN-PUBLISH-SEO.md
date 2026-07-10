@@ -397,3 +397,49 @@ package routes are inert read-only GETs and are left in place deliberately: remo
 from the branch about to serve four regional hosts trades a real boot-time dependency risk
 for a cosmetic count. Recorded so nobody re-derives the four-vs-seven discrepancy later and
 mistakes it for scope creep.
+
+### FU-4 correction — 2026-07-11 — the captured proxy address MUST be private, or STOP
+
+The capture procedure curls a REGIONAL host (au.fstg.beastierated.com) but reads the
+REVIEW-BSTG ORIGIN vhost's access log. That is correct only because the regional host
+proxies /robots.txt to review-bstg — the proxied request lands in the review-bstg log with
+the PROXY as REMOTE_ADDR, which is what we want. But it is a trap: if you tail the
+regional host's OWN access log instead, the first field is the external client (your
+laptop's public IP), and setting `TRUSTED_PROXIES` to that would trust X-Forwarded-Host
+from that address — trusting the open internet in the one field whose entire purpose is to
+prevent exactly that.
+
+Two hard rules, added to the procedure:
+
+1. Before reading a first field, confirm WHICH vhost the log belongs to. It must be the
+   review-bstg / origin vhost (the one Laravel runs behind), NOT the regional edge vhost.
+   `grep ServerName` the config that owns the log file and verify it is
+   review-bstg.beastierated.com.
+2. The captured address MUST be private — loopback (127.0.0.1, ::1) or RFC1918
+   (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16). Anything else — any public/routable IP —
+   means the wrong log was read (or the topology is not what we assume). HARD STOP. Do not
+   set TRUSTED_PROXIES to a public address under any circumstances.
+
+### Process note — 2026-07-11 — the empirical check keeps beating the careful read
+
+Three or four times now, the thing that settled a question was exercising the running
+system, not reading the source more carefully:
+
+  - the `robots.txt` regression was a real request from a separate network, not a local
+    file that looked right;
+  - the `Host` header vs getHost() behaviour was a full absolute-URL request, not the
+    route definition;
+  - `getAllPermissions()` guard-filtering for a member was a rendered check, not Spatie's
+    docs;
+  - the profile form's "editable email input" — reported as a live UX defect from a grep
+    that matched the <input> lines but could not see the {{-- --}} wrapping them — was
+    settled by rendering /profile as an authenticated user and asserting on the HTML. The
+    field was already commented out; there was never a live defect. The fix (read-only
+    display + a mutation-tested no-name="email" assertion) stands anyway, on a different
+    footing than first stated: not "fix a shipped bug" but "make an incidentally-correct
+    Blade load-bearing", the same category as $guarded and SESSION_DRIVER=array reading
+    like controls while enforcing nothing.
+
+When a claim is about what the system DOES, assert against the running system. A grep and a
+careful read both answer the question asked; only the running system answers the question
+meant.
