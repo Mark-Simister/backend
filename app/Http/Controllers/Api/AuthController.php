@@ -56,9 +56,11 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'role' => 'user',
-            'is_verified' => false,
         ]);
+
+        // role / is_verified are guarded on ApiUser (not mass-assignable). Public signup
+        // is always an unverified `user`; set them explicitly rather than from request.
+        $user->forceFill(['role' => 'user', 'is_verified' => false])->save();
 
         $user->assignRole('user');
 

@@ -83,4 +83,31 @@ class UserMassAssignmentTest extends TestCase
 
         $this->assertSame('sub_admin', $user->fresh()->role);
     }
+
+    /** ApiUser shares the users table and gets the same treatment. */
+    public function test_api_user_privilege_columns_are_not_mass_assignable(): void
+    {
+        $u = new \App\Models\ApiUser();
+        $u->fill(['name' => 'M', 'role' => 'super_admin', 'is_verified' => true, 'is_blocked' => true]);
+
+        $this->assertSame('M', $u->name);
+        $this->assertNull($u->role);
+        $this->assertNull($u->is_verified);
+        $this->assertNull($u->is_blocked);
+    }
+
+    public function test_api_register_creates_an_unverified_user_not_something_privileged(): void
+    {
+        // Even though a caller could POST role/is_verified, the guarded columns ignore it.
+        $this->postJson('/api/register', [
+            'name' => 'Sneaky', 'email' => 'sneaky@example.com', 'password' => 'password',
+            'role' => 'super_admin', 'is_verified' => true, 'is_blocked' => true,
+        ]);
+
+        $row = \App\Models\ApiUser::where('email', 'sneaky@example.com')->first();
+        $this->assertNotNull($row);
+        $this->assertSame('user', $row->role, 'public signup is always role user');
+        $this->assertFalse((bool) $row->is_verified);
+        $this->assertFalse((bool) $row->is_blocked);
+    }
 }

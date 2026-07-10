@@ -83,9 +83,10 @@ class UserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'is_verified' => true,
         ]);
+
+        // role / is_verified are guarded on ApiUser; the role was authorized above.
+        $user->forceFill(['role' => $request->role, 'is_verified' => true])->save();
 
         $user->assignRole($request->role);
 
@@ -127,8 +128,10 @@ class UserController extends Controller
             // 'email'    => $request->email,
             'phone' => $request->phone,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
-            'role' => $request->role,
         ]);
+
+        // role is guarded on ApiUser; the role was authorized above.
+        $user->forceFill(['role' => $request->role])->save();
 
         $user->syncRoles([$request->role]);
 

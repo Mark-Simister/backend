@@ -24,10 +24,20 @@ class ApiUser extends Authenticatable implements JWTSubject
         'password',
         'phone',
         'profile_image',
-        'role',
-        'is_verified',
-        'is_blocked',
     ];
+
+    /**
+     * Privilege columns. Not mass-assignable - set explicitly, after authorization.
+     *
+     * ApiUser shares the `users` table with User, so the same rule applies (see User).
+     * Removing them from $fillable is the control; $guarded alone is a no-op because
+     * isFillable() never consults it once a key is in $fillable. Not exploitable today -
+     * the two ApiUser::create sites pass hardcoded or already-authorized values - but this
+     * closes the "one careless ApiUser::create($request->all())" away from escalation.
+     *
+     * @var list<string>
+     */
+    protected $guarded = ['role', 'is_verified', 'is_blocked'];
 
     protected $hidden = [
         'password',
