@@ -966,22 +966,16 @@ class VideoController extends Controller
             $validated['video_platforms'] = json_encode(array_values(array_filter(array_map('trim', $validated['video_platforms']))));
         }
 
-        // Update the video with validated data
-        $video->update($validated);
-        // Sync regions (replace old ones with the new selection)
-        if ($request->has('regions')) {
-            $video->regions()->sync($request->regions);
-        } else {
-            // If none selected, clear all
-            $video->regions()->sync([]);
-        }
-
-        // Pivot writes don't fire model events, so VideoObserver can't see a region
-        // change. Re-snapshot the public payload here — no-ops unless this video was
-        // explicitly published to SEO; withdraws it if all regions were removed.
-        if ($video->isSeoPublished()) {
-            \App\Jobs\RefreshSeoPayloadJob::dispatch($video->id);
-        }
+        // The update, the region pivot write and the SEO refresh dispatch are ONE
+        // committed unit. With after_commit=true on the database queue, no refresh job
+        // reaches a worker until the final region set is committed — otherwise the
+        // refresh VideoObserver dispatches from inside update() could snapshot the
+        // payload against the OLD regions. See App\Services\VideoRegionUpdater.
+        app(\App\Services\VideoRegionUpdater::class)->update(
+            $video,
+            $validated,
+            $request->has('regions') ? (array) $request->regions : []
+        );
 
         // if (!empty($validated['channel_ids'])) {
         //     $video->channel()->sync($validated['channel_ids']);

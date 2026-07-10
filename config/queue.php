@@ -40,7 +40,12 @@ return [
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
-            'after_commit' => false,
+
+            // H-1: a job must not become visible to a worker until the transaction that
+            // produced its data commits. VideoRegionUpdater depends on this — without it,
+            // the refresh VideoObserver dispatches from inside $video->update() can run
+            // against a region pivot that has not been written yet.
+            'after_commit' => true,
         ],
 
         'beanstalkd' => [
