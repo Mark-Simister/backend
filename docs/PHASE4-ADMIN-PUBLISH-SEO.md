@@ -545,3 +545,47 @@ To record WHICH field it is (cosmetic, not load-bearing):
   grep -rE "LogFormat" /etc/apache2/apache2.conf /etc/apache2/conf-enabled/ 2>/dev/null
 If the combined format uses %O, the ~4.3KB is headers+body; if %b, something (mod_deflate /
 proxy buffering) is mis-accounting — either way the body is 24 bytes and the delta is inert.
+
+### FU-7 — 2026-07-11 — composer.lock pins clock 2.3.0, incompatible with the box's PHP 8.3.6
+
+Every committed ref (5694a72, 1c710c6, 09b63d3, c71692e) pins lcobucci/clock 2.3.0
+(transitive via tymon/jwt-auth ^2.2 -> lcobucci/jwt -> clock ^2.0). clock 2.3.0 requires
+PHP ~8.1||~8.2; the EC2 box runs 8.3.6. So `composer install` fails platform check on both
+apps. clock 3.5.0 does not satisfy jwt's clock ^2.0, so the fix necessarily bumps
+lcobucci/jwt too (clock/jwt together), plus stella-maris/clock -> psr/clock.
+
+State on the box:
+  - review-bstg (backend-review): composer.lock hand-updated to clock 3.5.0 / jwt bump so
+    `composer install` succeeds. This is the proven-on-8.3.6 artifact.
+  - admin (backend): composer.lock is UNMODIFIED (still 2.3.0). It runs STALE vendor/
+    installed under the pre-8.3 PHP. It works today only because no `composer install` has
+    run there since the upgrade. A fresh install fails identically.
+
+Consequences that change the rollout:
+
+  - review-renderer (cut from 09b63d3) still pins 2.3.0; B4 checkout reverts the fix and the
+    next install fails. It needs the fixed lock committed -> new RENDERER_TARGET.
+  - carousel-data also pins 2.3.0; the merge to admin at A2 carries it. As written, A3's
+    `composer install` is gated on composer.lock differing from 5694a72 (identical -> SKIP),
+    so the admin merge would NOT reinstall and the stale-vendor landmine stays latent.
+  - **P-8 interaction:** re-enabling stg.yml on push:[staging] runs `composer install` as its
+    third command. Today that breaks the admin deploy on 8.3.6. So stg.yml MUST NOT be
+    re-enabled until the lock fix lands.
+
+Resolution: commit the proven server lock onto BOTH review-renderer (new RENDERER_TARGET)
+and carousel-data (new ADMIN_TARGET). Committing to carousel-data makes composer.lock diverge
+from 5694a72, so:
+
+  - **A3 changes from "probably skipped" to "MUST RUN and MUST SUCCEED"** on 8.3.6, and it
+    becomes the step that de-fuses the admin stale-vendor landmine (FU-1's sibling) — a fresh
+    `composer install` replaces the pre-8.3 vendor with clock 3.5.0 / jwt.
+  - Add a pre-flight: `composer install --dry-run` on the box's actual PHP for BOTH hosts,
+    so a lock/PHP mismatch fails loudly before cutover.
+  - Verify the admin path's PHP (and its FPM pool, not just CLI) is the same 8.3.6; if the
+    web tier runs a different PHP, A3 succeeding under CLI proves nothing about what it loads.
+
+Server update command (to be blast-radius-verified before committing): 
+  composer update lcobucci/clock lcobucci/jwt --with-all-dependencies  (no composer.json edit)
+Committed lock must show: changes confined to lcobucci/jwt, lcobucci/clock (2.3.0->3.5.0),
+stella-maris/clock (removed), psr/clock (added); content-hash UNCHANGED
+(b56f8bb532b451ec1704c1a1f5b319e0); platform/platform-overrides UNCHANGED.
