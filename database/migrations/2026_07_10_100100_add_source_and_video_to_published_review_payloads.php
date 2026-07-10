@@ -27,8 +27,22 @@ return new class extends Migration
         });
     }
 
+    /**
+     * Drop the indexes BEFORE their columns. MySQL removes a single-column index
+     * implicitly with the column; SQLite does not, and leaves a dangling index that
+     * makes the rollback fail. The rollback path is only useful if it actually runs.
+     */
     public function down(): void
     {
+        Schema::table('published_review_payloads', function (Blueprint $table) {
+            if (Schema::hasColumn('published_review_payloads', 'video_id')) {
+                $table->dropIndex('published_review_payloads_video_id_index');
+            }
+            if (Schema::hasColumn('published_review_payloads', 'source')) {
+                $table->dropIndex('published_review_payloads_source_index');
+            }
+        });
+
         Schema::table('published_review_payloads', function (Blueprint $table) {
             $table->dropColumn(array_values(array_filter([
                 'video_id', 'source', 'published_at',
