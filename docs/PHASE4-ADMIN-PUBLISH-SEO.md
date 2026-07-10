@@ -156,3 +156,43 @@ Without one, every pipeline-generated review will land as `ready_for_review`, be
 to the public site, and stall until a human edits the spreadsheet. The seeder must also
 refuse to move a row **out of** `withdrawn` without `--force`: a takedown is a public-safety
 action and a routine import must not resurrect the page.
+
+### FU-4 — 2026-07-10 — The trusted proxy address must be VERIFIED, never assumed
+
+**VALUE: NOT YET CAPTURED.** `TRUSTED_PROXIES` is unset, and
+`config('reviews.trusted_proxies')` therefore defaults to `[]` — no proxy is trusted, in
+any environment. This is deliberate: `bootstrap/app.php` previously trusted `at: '*'`, and
+the admin backend is directly reachable, so any client could forge `X-Forwarded-Host` and
+pull an AU-only review page onto any host.
+
+Do **not** assume the Apache→Laravel connection arrives from `127.0.0.1`. The regional
+vhosts `ProxyPass` to the review-bstg vhost by hostname, which may resolve to the
+instance's private address (`172.31.x.x`) rather than loopback.
+
+**How to derive it, without creating a public diagnostic endpoint:**
+
+1. Confirm `mod_remoteip` is NOT enabled — if it is, the logged address has already been
+   rewritten and will not match `REMOTE_ADDR`:
+   `apachectl -M | grep -i remoteip`
+2. Find the review-bstg vhost's access log:
+   `sudo grep -riE "ServerName|CustomLog" /etc/apache2/sites-enabled/ | grep -i review`
+3. Request a regional URL from outside the box, then read the newest line. Its first field
+   is the address Laravel will see as `REMOTE_ADDR`:
+   `curl -s -o /dev/null https://au.fstg.beastierated.com/robots.txt`
+   `sudo tail -1 /var/log/apache2/<review-bstg>-access.log | awk '{print $1}'`
+
+Only if the log is ambiguous, fall back to a **temporary** log line inside an EXISTING
+controller (never a new route): `Log::info('proxy-src', ['ip' => $request->server('REMOTE_ADDR')])`
+in `SitemapController::robots()`. Capture once, then remove it and *verify* the removal —
+`git diff --exit-code app/Http/Controllers/SitemapController.php` and
+`grep -c proxy-src app/Http/Controllers/SitemapController.php` returning `0` — before
+redeploying. Do not assume the cleanup happened.
+
+Set `TRUSTED_PROXIES` to the exact verified address(es). Never `*`. Then confirm
+functionally: all four regional hosts must emit a canonical on their own host. A wrong
+address fails closed — the canonical falls back to `review-bstg.beastierated.com` and the
+region gate stops resolving — so the functional check is itself the confirmation, and no
+diagnostic endpoint needs to survive.
+
+Record the captured address here when it is known, so the next session does not rediscover
+it, and does not quietly re-assume `127.0.0.1`.
