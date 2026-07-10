@@ -443,3 +443,40 @@ system, not reading the source more carefully:
 When a claim is about what the system DOES, assert against the running system. A grep and a
 careful read both answer the question asked; only the running system answers the question
 meant.
+
+### FU-4 correction #2 — 2026-07-11 — the captured line must be provably MINE
+
+A private address is necessary, not sufficient. `tail`-ing the log and reading "the newest
+line" can capture a stale line from someone else's earlier request, or a line from a
+different private-facing log — yielding a plausible, private, WRONG address. TRUSTED_PROXIES
+then points at something real and incorrect, and the failure is silent: regions stop
+resolving, canonical falls back to review-bstg, and it reads as a rollback fault, not a
+config error.
+
+Fix: make the request uniquely identifiable and grep for that marker, rather than tailing.
+
+  - Step 3 (from your laptop): request a unique path AND a unique User-Agent —
+      MARK=fu4-<pick-something-unique>
+      curl -s -o /dev/null -A "beastie-fu4/$MARK" "https://au.fstg.beastierated.com/robots.txt?probe=$MARK"
+    Two markers on purpose. A unique query string usually forces an edge cache MISS (query
+    is part of the default cache key), so the request actually reaches the origin; the
+    unique User-Agent is a fallback that the combined log format records (%{User-Agent}i)
+    if the query is stripped somewhere.
+
+  - Step 4 (on the box): grep the ORIGIN log for the marker, do NOT tail:
+      sudo grep "$MARK" /var/log/apache2/<review-bstg-ORIGIN-access-log> | tail -1
+    The first field of THAT line is the address. **If grep returns nothing, that is the
+    answer, not a retry prompt:** the request never reached this origin log — wrong log, or
+    it was served from an edge cache — so STOP and re-confirm which log belongs to the
+    review-bstg ServerName.
+
+Then apply BOTH gates: the address must be private (loopback/RFC1918) AND it must be the
+grep-matched line from your own marked request. Public address, or empty grep, = hard stop.
+
+Application-side safety confirmed from the code (server-side proxy/edge behaviour is not
+verifiable from the repo, hence the dual marker):
+  - SitemapController::robots() depends only on config + getSchemeAndHttpHost(), never on
+    the query string, so ?probe cannot change the robots body;
+  - robots is not wrapped in Cache (no application cache to disturb);
+  - /robots.txt is not behind EnsurePublicReviewRendering, so the probe reaches the
+    controller regardless of the rendering flag.
