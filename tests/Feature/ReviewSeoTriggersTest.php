@@ -13,6 +13,9 @@ use App\Models\Video;
 use App\Services\ReviewPayloadPublisher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\ViewErrorBag;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /**
@@ -81,6 +84,17 @@ class ReviewSeoTriggersTest extends TestCase
         return PublishedReviewPayload::where('video_id', $v->id)->first();
     }
 
+    /** Publishing a public page requires video.edit, like the other sensitive video routes. */
+    private function adminUser(): User
+    {
+        Permission::findOrCreate('video.edit', 'web');
+        $user = User::factory()->create();
+        $user->givePermissionTo('video.edit');
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return $user;
+    }
+
     // ───────────── the explicit gate ─────────────
 
     public function test_observer_never_creates_the_first_payload(): void
@@ -97,7 +111,7 @@ class ReviewSeoTriggersTest extends TestCase
     {
         $v = $this->makeVideo(['review' => $this->realReview(122)]);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($this->adminUser())
             ->from('/admin')
             ->post(route('admin.videos.seo-publish', $v))
             ->assertRedirect('/admin')
@@ -114,7 +128,7 @@ class ReviewSeoTriggersTest extends TestCase
     {
         $v = $this->makeVideo(['product_name' => null]);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($this->adminUser())
             ->from('/admin')
             ->post(route('admin.videos.seo-publish', $v))
             ->assertRedirect('/admin')
@@ -129,7 +143,7 @@ class ReviewSeoTriggersTest extends TestCase
         $v = $this->makeVideo(['review' => $this->realReview(122)]);
         $this->publisher()->publish($v);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($this->adminUser())
             ->from('/admin')
             ->post(route('admin.videos.seo-withdraw', $v))
             ->assertRedirect('/admin');
@@ -253,5 +267,60 @@ class ReviewSeoTriggersTest extends TestCase
         RefreshSeoPayloadJob::dispatchSync($v->id);
 
         $this->assertSame(0, PublishedReviewPayload::count());
+    }
+
+    // ───────────── step 4: permission gate + admin UI panel ─────────────
+
+    public function test_publish_route_requires_video_edit_permission(): void
+    {
+        $v = $this->makeVideo(['review' => $this->realReview(122)]);
+
+        $this->actingAs(User::factory()->create())   // authenticated, but no video.edit
+            ->post(route('admin.videos.seo-publish', $v))
+            ->assertForbidden();
+
+        $this->assertSame(0, PublishedReviewPayload::count());
+    }
+
+    public function test_seo_panel_shows_live_state_and_withdraw_action(): void
+    {
+        view()->share('errors', new ViewErrorBag);
+        $v = $this->makeVideo(['review' => $this->realReview(122)]);
+        $this->publisher()->publish($v);
+        $v = $v->fresh();
+
+        $html = view('admin.videos._seo-publish', ['video' => $v])->render();
+
+        $this->assertStringContainsString('Public SEO review page', $html);
+        $this->assertStringContainsString('/review/' . $v->review_slug, $html);
+        $this->assertStringContainsString('rich content', $html);
+        $this->assertStringContainsString('Withdraw from SEO', $html);
+        $this->assertStringContainsString('Re-publish to SEO', $html);
+    }
+
+    public function test_seo_panel_explains_why_an_unpublishable_video_is_blocked(): void
+    {
+        view()->share('errors', new ViewErrorBag);
+        $v = $this->makeVideo(['product_name' => null]);
+
+        $html = view('admin.videos._seo-publish', ['video' => $v])->render();
+
+        $this->assertStringContainsString('Not ready to publish', $html);
+        $this->assertStringContainsString('product_name', $html);
+        $this->assertStringContainsString('disabled', $html);              // publish button disabled
+        $this->assertStringNotContainsString('Withdraw from SEO', $html);  // nothing live to withdraw
+    }
+
+    public function test_seo_panel_surfaces_last_error_while_page_stays_live(): void
+    {
+        view()->share('errors', new ViewErrorBag);
+        $v = $this->makeVideo(['review' => $this->realReview(122)]);
+        $this->publisher()->publish($v);
+        $v->fresh()->update(['product_name' => null]);   // data gap → error, page stays live
+
+        $html = view('admin.videos._seo-publish', ['video' => $v->fresh()])->render();
+
+        $this->assertStringContainsString('Last publish failed', $html);
+        $this->assertStringContainsString('still live and unchanged', $html);
     }
 }

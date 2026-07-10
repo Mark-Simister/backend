@@ -86,7 +86,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
 // Explicit "Publish to SEO" sign-off — the ONLY thing that creates the first
 // public review payload. Reaching status=published never auto-publishes.
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+// Requires video.edit, matching the other consequential video admin routes
+// (edit-seo/update-seo) — publishing a public page is at least as sensitive.
+Route::middleware(['auth', 'permission:video.edit'])->prefix('admin')->name('admin.')->group(function () {
     Route::post('videos/{video}/seo-publish', [\App\Http\Controllers\Admin\ReviewSeoPublishController::class, 'publish'])->name('videos.seo-publish');
     Route::post('videos/{video}/seo-withdraw', [\App\Http\Controllers\Admin\ReviewSeoPublishController::class, 'withdraw'])->name('videos.seo-withdraw');
 });

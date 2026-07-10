@@ -10,4 +10,11 @@
         @endcan
     </div>
 </div>
+
+{{-- Public SEO review page: explicit publish/withdraw + current state --}}
+@can('video.edit')
+    @if ($video->review_type === 'review')
+        @include('admin.videos._seo-publish', ['video' => $video])
+    @endif
+@endcan
 @endsection
