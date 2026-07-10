@@ -59,8 +59,20 @@ Run `snapshot.sh pre-a1`. Records hostname/user/UTC, both repos' branch+commit+`
   ```
 
 **Clean-tree baseline (FU CI/mode finding):** both checkouts must be byte-clean.
-- admin: only the 11 `storage/*` + `bootstrap/cache/*` `.gitignore` mode-churn lines are
-  acceptable *once `core.fileMode=false` is set*; set it, then `git status` must be empty.
+- admin: the 11 `storage/*` + `bootstrap/cache/*` `.gitignore` files show **pure mode churn**
+  (`100644`→`100755` from CI's old `chmod -R 775`, zero content lines). **Remedy by
+  NORMALISING, not by disabling mode tracking** — `core.fileMode=false` would hide every
+  future legitimate exec-bit change on that checkout, permanently, to paper over churn the
+  corrected `stg.yml` no longer produces (the same suppress-the-signal trade refused
+  elsewhere here). Sequence:
+    1. `chmod 644` the eleven `.gitignore` files
+    2. `git status --porcelain` → expect **clean**
+    3. run the corrected `stg.yml` step: `find storage bootstrap/cache -type f -exec chmod 664 {} +`
+    4. `git status --porcelain` → **if still clean, `core.fileMode` stays at its default (true)** and this item is done.
+  `664` sets group-write, not exec, so git mode stays `100644` — git's `fileMode` compares
+  only the exec bit (demonstrated: `chmod 664`/`644` leave the tree clean; only `775`/`755`
+  set the exec bit that dirties it). **Fall back to `core.fileMode=false` ONLY if step 4
+  dirties the tree — and if it does, that is itself a finding to explain before disabling.**
   Delete the four Aug-2025 zero-byte debris files (`foun`, `found`, `php`, `satisfiable`)
   before WT preservation.
 - renderer: `composer.lock` is now committed (`fd44a8a`); working tree must be clean
@@ -97,7 +109,7 @@ Promote the Vecomfy row in `beastie_review` (bump `updated_at`), set
 | A2 | [deploy] | `git fetch`; `git merge-base --is-ancestor 37bc517 $ADMIN_TARGET`; `git merge --ff-only $ADMIN_TARGET`; assert `HEAD==$ADMIN_TARGET` | `reset --hard 5694a72` + WT restore |
 | A3-PRE | [deploy] | **hard gate (FU-7):** `php -m` shows `sodium hash json mbstring openssl` all loaded; `composer install --dry-run` succeeds on 8.3.6 | — |
 | A3 | [deploy] | **MUST RUN / MUST SUCCEED:** `composer install` — installs clock 3.5.0 / jwt 4.3.0, repairs the stale pre-8.3 vendor | reinstall prior vendor from backup |
-| A3.5 | [deploy] | reconcile the 3 pending migrations in their own batch (P-7 guards no-op the theme pair; FU-1) | `migrate:rollback --step=1` |
+| A3.5 | [deploy] | reconcile the 3 pending migrations, own batch (P-7 guards no-op the theme pair). **Recording the theme migrations as run does NOT mean they built the live tables — they diverge (FU-1 addendum): collation split (`utf8mb4_0900_ai_ci` vs `utf8mb4_general_ci`); `user_themes` has NO FK and NO unique on `(user_id, theme_id)`; colour columns are `varchar(20)`/`varchar(50)` vs the migration's `varchar(255)`. Treat the theme tables as hand-managed, not migration-managed.** | `migrate:rollback --step=1` |
 | A4 | [deploy] | the six `--path` migrations, own batch, last | `migrate:rollback --step=1` *(pre-A8 only)* |
 | A4.5 | [admin] | post-migration backup + restore test (before A8) | — |
 | A5 | [deploy] | admin `.env`: `TRUSTED_PROXIES=` (empty), `PUBLIC_REVIEW_RENDERING_ENABLED=false`, `PUBLIC_REVIEW_INDEXABLE=false` | restore `.env` |
@@ -161,7 +173,7 @@ the PoC DB.
 - [ ] Gate 0.2 preflight — `origin` advertises `fd44a8a`
 - [ ] `ADMIN_TARGET` frozen and recorded in SNAP-0; `git merge-base --is-ancestor 37bc517 $ADMIN_TARGET` succeeds
 - [ ] Prereq test suites green on the merged tree (Proxy/Rendering/AdminBaseline/AdminSurfaceCoverage/AdminResourceVerb/AdminLooseRoute/UserMassAssignment/ReviewSeoAsync/Profile)
-- [ ] SNAP-0 clean-tree; `core.fileMode=false` on admin; debris deleted; both checkouts byte-clean
+- [ ] SNAP-0 clean-tree: admin modes NORMALISED (chmod 644 the 11 `.gitignore`; corrected `find … -exec chmod 664` keeps it clean; `core.fileMode` stays default — NOT disabled); debris deleted; both checkouts byte-clean
 - [ ] A1 both DBs dumped + restore-tested
 - [ ] **A3-PRE hard gate:** `sodium hash json mbstring openssl` all loaded on admin CLI; `composer install --dry-run` succeeds on 8.3.6
 - [ ] A4.5 taken + restore-tested **before A8**
