@@ -689,11 +689,34 @@ RegionResolver.fromHost() = null, publicForRegion(null) serves only all-region p
 region-gated pages 404, canonical falls back to review-bstg. No fail-open path: forging
 X-Forwarded-Host still requires presenting the peer, which is closed.
 
-Made load-bearing (not documentary):
-  - SNAP-0 / SNAP-1 assert the instance's own metadata public-ipv4 == TRUSTED_PROXIES:
+Made load-bearing (not documentary). TWO checks at two times — both use EXACT equality on
+the parsed value and HARD-STOP on an empty META_IP. (An earlier draft used
+`grep -q "TRUSTED_PROXIES=.*${META_IP}"`, which was decorative: it passed on a trailing
+extra proxy `13.238.27.223,10.0.5.85` AND passed on an empty META_IP because `.*` matches
+anything. Do not reintroduce a substring match here.)
+
+  CHECK-A — SNAP-0 and SNAP-1 (pre-cutover; the renderer .env has no TRUSTED_PROXIES yet).
+  The instance's public IPv4 must still be the decided EIP. Catches an EIP change between
+  baseline and go-time.
       TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
       META_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
-      grep -q "TRUSTED_PROXIES=.*${META_IP}" backend-review/.env  || STOP
+      [ -n "$META_IP" ] || { echo "STOP: IMDS returned no public-ipv4"; exit 1; }
+      [ "$META_IP" = "13.238.27.223" ] || { echo "STOP: public-ipv4 [$META_IP] != decided EIP 13.238.27.223"; exit 1; }
+      echo "OK: instance public-ipv4 == 13.238.27.223"
+
+  CHECK-B — immediately after B5 sets TRUSTED_PROXIES, and again at B7. The CONFIGURED value
+  must EXACTLY equal the live peer.
+      TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+      META_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
+      [ -n "$META_IP" ] || { echo "STOP: IMDS returned no public-ipv4"; exit 1; }
+      TP=$(grep -E '^TRUSTED_PROXIES=' /home/beastierated/backend-review/.env | head -1 | cut -d= -f2- | tr -d '"'"'"'\r' | xargs)
+      [ "$TP" = "$META_IP" ] || { echo "STOP: TRUSTED_PROXIES [$TP] != public-ipv4 [$META_IP]"; exit 1; }
+      echo "OK: TRUSTED_PROXIES == public-ipv4 == $META_IP"
+
+  Mutation-tested (2026-07-11): CHECK-B STOPs on 13.238.27.223,10.0.5.85 (extra proxy), on
+  13.238.27.224 (wrong value), and on empty META_IP; CHECK-A STOPs on a changed IP and on
+  empty/garbage META_IP. The old grep passed the extra-proxy and empty-META cases.
+
   - B7's four-region 200 check is the end-to-end guard: a stale TRUSTED_PROXIES 404s all
     regions and fails the retirement gate loudly.
   - Recommended follow-up (not rollout-blocking): a scheduled IMDS-vs-TRUSTED_PROXIES drift

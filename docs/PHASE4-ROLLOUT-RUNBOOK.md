@@ -46,11 +46,16 @@ Run `snapshot.sh pre-a1`. Records hostname/user/UTC, both repos' branch+commit+`
 --short`, `.env` (no secrets), compiled caches, `migrate:status`, jobs/failed_jobs,
 `after_commit`, worker state, PHP versions, LogFormat. **Additionally at freeze:**
 - record the exact frozen `ADMIN_TARGET` hash;
-- **EIP assertion (FU-4):**
+- **EIP CHECK-A (FU-4) — exact match, hard-stop on empty. Runs at SNAP-0 AND SNAP-1.**
+  Pre-cutover the renderer `.env` has no `TRUSTED_PROXIES` yet, so this asserts the instance
+  public IP is still the decided EIP (catches an EIP change before cutover). NOT a substring
+  grep — exact equality, empty `META_IP` is a STOP.
   ```bash
   TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
   META_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
-  echo "instance public-ipv4 = $META_IP (expect 13.238.27.223)"
+  [ -n "$META_IP" ] || { echo "STOP: IMDS returned no public-ipv4"; exit 1; }
+  [ "$META_IP" = "13.238.27.223" ] || { echo "STOP: public-ipv4 [$META_IP] != decided EIP 13.238.27.223"; exit 1; }
+  echo "OK: instance public-ipv4 == 13.238.27.223"
   ```
 
 **Clean-tree baseline (FU CI/mode finding):** both checkouts must be byte-clean.
@@ -118,8 +123,9 @@ recovery is A4.5, else A1.**
 
 `snapshot.sh go-time`. Assert: admin `after_commit=true`, exactly one `queue:work` process,
 `PUBLIC_REVIEW_RENDERING_ENABLED=false` + `TRUSTED_PROXIES` empty on admin, A8 disposable
-video `seo_publish_status=published`, renderer still `09b63d3`/`beastie_review`. **EIP
-assertion** (IMDS `public-ipv4` == `13.238.27.223`).
+video `seo_publish_status=published`, renderer still `09b63d3`/`beastie_review`.
+**Run EIP CHECK-A again here** (the exact-match/empty-guard block from SNAP-0) — SNAP-1 is the
+go-time snapshot and is the one that catches an EIP change between baseline and cutover.
 
 ## Phase B — cutover
 
@@ -134,7 +140,8 @@ assertion** (IMDS `public-ipv4` == `13.238.27.223`).
 | B4-PRE | [deploy] | A3-PRE extension gate + `composer install` on the renderer (PHP ≥ 8.3 floor, FU-7) | — |
 | B5 | [deploy] | renderer `.env`, **one edit**: `DB_DATABASE=bstd_staging`, `DB_USERNAME=review_reader`, `DB_PASSWORD=…`, `SESSION_DRIVER=file`, `CACHE_STORE=file`, `QUEUE_CONNECTION=null`, **`TRUSTED_PROXIES=13.238.27.223`**, `PUBLIC_REVIEW_RENDERING_ENABLED=true`, `PUBLIC_REVIEW_INDEXABLE=false`, `PUBLIC_REVIEW_STATUSES=published` | restore `.env` |
 | B6 | [deploy] | `config:clear && route:clear` | — |
-| B7 | [deploy] | admin region-gating end-to-end (10 checks) + **the EIP guard**: all four regions 200 | — |
+| B6.5 | [admin] | **EIP CHECK-B (FU-4):** now that B5 has set `TRUSTED_PROXIES`, assert the configured value EXACTLY equals the live peer — exact match, empty `META_IP` STOPs (see FU-4 for the block). STOP on any mismatch or trailing extra proxy. | fix `.env`, re-run |
+| B7 | [deploy] | admin region-gating end-to-end (10 checks) + **the EIP guard**: all four regions 200 (a stale/forged `TRUSTED_PROXIES` 404s them) | — |
 
 **B5 `TRUSTED_PROXIES=13.238.27.223`** — the verified Elastic-IP peer (FU-4). Not loopback,
 not `*`. Credentials + drivers change in one edit (a `SELECT`-only account with
@@ -160,7 +167,8 @@ the PoC DB.
 - [ ] A4.5 taken + restore-tested **before A8**
 - [ ] A8 deterministic: `jobs 1→0`, `payload.updated_at` advanced, `seo_publish_status='published'`; A8b no cascade
 - [ ] Acknowledged: after A8, `migrate:rollback` prohibited
-- [ ] SNAP-1: `after_commit=true`, one worker, admin rendering disabled + no trusted proxies; **IMDS public-ipv4 == 13.238.27.223 == TRUSTED_PROXIES**
+- [ ] SNAP-1: `after_commit=true`, one worker, admin rendering disabled + no trusted proxies; **EIP CHECK-A passes** (exact match, empty→STOP; not a substring grep)
+- [ ] B6.5 EIP CHECK-B: configured `TRUSTED_PROXIES` exactly equals the live peer (STOPs on extra proxy / wrong value / empty META_IP)
 - [ ] B4: `HEAD==fd44a8a`, ancestry holds, `route:list` = 7 GET routes zero admin/auth
 - [ ] B2: `review_reader` cannot `SELECT *` videos / read users / write / create
 - [ ] B3 before B5; seeder re-run does not demote the live page
