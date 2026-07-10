@@ -343,3 +343,30 @@ control. It should be.
 
 **Also fixed.** `admin/vimeo/assign` used `can:video.update` — an UNSEEDED ability, so it
 was super-admin-only by the same accident; normalised to `permission:video.edit`.
+
+### FU-6 addendum — 2026-07-11 — "fails closed" was wrong about the renderer's admin routes
+
+We said twice that after Phase B the renderer's admin routes would "fail closed" because
+it runs as `review_reader` with no INSERT. That is wrong, and it is the same mistake as
+`$guarded` reading like protection while doing nothing: a control that is really the
+absence of one, disguised by something adjacent.
+
+A `SELECT`-only grant does not make an admin write route safe. It makes it **500** — the
+write is attempted and the database rejects it. A 500 is not an authorization boundary; it
+is an error page, and it still ran the controller, the model binding, and any read the
+handler did first. And per the column-scoped grant note above, a future renderer feature
+may legitimately require widening the grant — at which point "it can't write" quietly stops
+being true, with nothing to signal that a route which was "safe because it 500s" is now a
+route that succeeds.
+
+Separately, "just delete `routes/auth.php`" does not disarm the admin routes either: with
+no `login` route, the `auth` middleware redirects to `route('login')` and throws
+`RouteNotFoundException`. Broken is not absent.
+
+**Resolution: the review-renderer branch declares no admin surface at all.** Its
+`routes/web.php` contains only `/review/{id}`, `/review/{slug}`, `/sitemap.xml`,
+`/robots.txt`; `routes/api.php` is empty; `routes/auth.php` is deleted; `bootstrap/app.php`
+carries no admin gate because there is nothing to gate. The routes are gone, not unreachable
+— the only state in which "the renderer has no admin surface" is actually true rather than
+true-until-the-grant-changes. Built from 09b63d3 as commit c71692e; held locally, lands
+with runbook v3.
