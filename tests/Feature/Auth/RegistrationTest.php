@@ -3,75 +3,71 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
+/**
+ * There is no self-service registration on this backend.
+ *
+ * `GET/POST /register` used to sit behind `guest` middleware only, and
+ * RegisteredUserController::store() granted `super_admin` on the web guard to every
+ * account it created. `User` does not implement MustVerifyEmail, so the `verified`
+ * middleware on /dashboard never blocked anything: a registrant was authenticated,
+ * super-admin and on the dashboard in one request.
+ *
+ * These tests are the load-bearing part of the fix. Reintroducing either route — or the
+ * controller behind it — fails the suite.
+ */
 class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * RegisteredUserController::store() calls assignRole('super_admin'), so registration
-     * throws Spatie's RoleDoesNotExist against a database with no roles — which is what
-     * RefreshDatabase leaves behind. Seeding the real RolePermissionSeeder keeps role
-     * assignment inside the test's coverage instead of stubbing it out, and proves the
-     * role name the controller uses matches the one the seeder creates.
-     */
-    private function seedRoles(): void
+    public function test_the_registration_screen_does_not_exist(): void
     {
-        $this->seed(RolePermissionSeeder::class);
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->get('/register')->assertNotFound();
     }
 
-    public function test_registration_screen_can_be_rendered(): void
+    public function test_registration_cannot_be_submitted(): void
     {
-        $response = $this->get('/register');
-
-        $response->assertStatus(200);
-    }
-
-    public function test_new_users_can_register(): void
-    {
-        $this->seedRoles();
-
-        $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
-
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
-
-        $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'name' => 'Test User']);
-    }
-
-    /**
-     * Documents current behaviour — and it is not behaviour anyone should want. `POST
-     * /register` sits behind `guest` middleware only, and every account it creates is
-     * granted `super_admin` on the web guard. Anyone who can reach the admin backend can
-     * make themselves an administrator of it.
-     *
-     * Asserted rather than quietly fixed: changing authentication behaviour on a
-     * reachable admin host is not a test-cleanup decision. A deliberate fix will fail
-     * this test, which is exactly the point — it forces the change to be reviewed.
-     */
-    public function test_registration_currently_grants_super_admin_to_anyone(): void
-    {
-        $this->seedRoles();
-
         $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Attacker',
+            'email' => 'attacker@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
-        ]);
+        ])->assertNotFound();
 
-        $user = User::where('email', 'test@example.com')->firstOrFail();
+        $this->assertDatabaseCount('users', 0);
+        $this->assertGuest();
+    }
 
-        $this->assertTrue($user->hasRole('super_admin'), 'public registration grants super_admin');
+    public function test_no_route_is_named_register(): void
+    {
+        $this->assertFalse(
+            \Illuminate\Support\Facades\Route::has('register'),
+            'a named `register` route would let a Blade link resurrect the endpoint'
+        );
+    }
+
+    /**
+     * The controller itself is gone, so it cannot be re-wired by accident.
+     *
+     * Asserted on the file rather than class_exists(): a stale optimised classmap still
+     * maps the class name to the deleted path, so class_exists() tries to include it and
+     * raises an ErrorException instead of returning false.
+     */
+    public function test_the_registration_controller_no_longer_exists(): void
+    {
+        $this->assertFileDoesNotExist(app_path('Http/Controllers/Auth/RegisteredUserController.php'));
+    }
+
+    /** Admins are created by the seeder, not by a public endpoint. */
+    public function test_the_seeder_is_the_supported_way_to_mint_an_admin(): void
+    {
+        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+
+        $admin = User::factory()->create();
+        $admin->assignRole('super_admin');
+
+        $this->assertTrue($admin->fresh()->hasRole('super_admin'));
     }
 }
