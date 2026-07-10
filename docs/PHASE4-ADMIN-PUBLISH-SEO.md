@@ -589,3 +589,27 @@ Server update command (to be blast-radius-verified before committing):
 Committed lock must show: changes confined to lcobucci/jwt, lcobucci/clock (2.3.0->3.5.0),
 stella-maris/clock (removed), psr/clock (added); content-hash UNCHANGED
 (b56f8bb532b451ec1704c1a1f5b319e0); platform/platform-overrides UNCHANGED.
+
+### FU-7 addendum — 2026-07-11 — jwt 4.3.0 adds ext-sodium; hard A3 pre-flight
+
+The lock fix bumps lcobucci/jwt 4.0.4 -> 4.3.0, which adds runtime requirements 4.0.4 did
+NOT have: ext-hash, ext-json, ext-sodium (on top of the existing ext-mbstring, ext-openssl).
+`composer install` at A3 checks these against the admin host's PHP and FAILS if any is
+absent. hash and json are compiled into PHP 8.3; ext-sodium is separable (php8.3-sodium on
+Ubuntu) and is the real risk.
+
+Corroboration it is present: review-bstg already ran `composer install` with this exact
+lock (jwt 4.3.0) and succeeded — composer would not have, without ext-sodium — on the same
+box/CLI. But confirm explicitly on the admin path before relying on A3:
+
+  cd /home/beastierated/backend
+  php -r 'foreach (["sodium","hash","json","mbstring","openssl"] as $e) printf("%-10s %s\n", $e, extension_loaded($e)?"loaded":"MISSING");'
+
+All five must be "loaded". MISSING sodium => install php8.3-sodium and reload FPM BEFORE A3,
+or A3 fails composer install on the freshly-merged admin host. This is a hard A3 pre-flight,
+same tier as the composer install --dry-run check.
+
+Diff verification (received from the box): confined to lcobucci/clock (2.3.0->3.5.0),
+lcobucci/jwt (4.0.4->4.3.0), stella-maris/clock (removed); psr/clock already present so no
+add; league/commonmark and stripe/stripe-php are context only; content-hash unchanged
+(b56f8bb532b451ec1704c1a1f5b319e0). 34 insertions, 83 deletions, one file.
