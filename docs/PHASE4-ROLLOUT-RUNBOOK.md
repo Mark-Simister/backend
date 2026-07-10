@@ -60,21 +60,21 @@ Run `snapshot.sh pre-a1`. Records hostname/user/UTC, both repos' branch+commit+`
 
 **Clean-tree baseline (FU CI/mode finding):** both checkouts must be byte-clean.
 - admin: the 11 `storage/*` + `bootstrap/cache/*` `.gitignore` files show **pure mode churn**
-  (`100644`→`100755` from CI's old `chmod -R 775`, zero content lines). **Remedy by
-  NORMALISING, not by disabling mode tracking** — `core.fileMode=false` would hide every
-  future legitimate exec-bit change on that checkout, permanently, to paper over churn the
-  corrected `stg.yml` no longer produces (the same suppress-the-signal trade refused
-  elsewhere here). Sequence:
-    1. `chmod 644` the eleven `.gitignore` files
-    2. `git status --porcelain` → expect **clean**
-    3. run the corrected `stg.yml` step: `find storage bootstrap/cache -type f -exec chmod 664 {} +`
-    4. `git status --porcelain` → **if still clean, `core.fileMode` stays at its default (true)** and this item is done.
-  `664` sets group-write, not exec, so git mode stays `100644` — git's `fileMode` compares
-  only the exec bit (demonstrated: `chmod 664`/`644` leave the tree clean; only `775`/`755`
-  set the exec bit that dirties it). **Fall back to `core.fileMode=false` ONLY if step 4
-  dirties the tree — and if it does, that is itself a finding to explain before disabling.**
-  Delete the four Aug-2025 zero-byte debris files (`foun`, `found`, `php`, `satisfiable`)
-  before WT preservation.
+  (`100644`→`100755` from CI's old `chmod -R 775`, zero content lines). **Remedy — run the
+  corrected `stg.yml` step once; it is SELF-HEALING** (it strips the exec bit from every file
+  under those paths, the eleven `.gitignore` included, as a side effect of its actual job):
+  ```bash
+  find storage bootstrap/cache -type f -exec chmod 664 {} +
+  git status --porcelain    # → the eleven `M` entries gone; only ?? untracked remain
+  ```
+  VERIFIED ON THE BOX (2026-07-11): one run cleared all eleven; `core.fileMode` **stays at its
+  default (true)** — do NOT disable mode tracking (it would hide every future legitimate
+  exec-bit change; the suppress-the-signal trade refused elsewhere). `664` is group-write, not
+  exec, so git mode returns to `100644` (git's `fileMode` compares only the exec bit). No
+  manual pre-normalisation step is needed — an earlier draft prescribed
+  `git ls-files -s | awk '$1=="100755"'`, which is a NO-OP (it reads the INDEX, staged as
+  `100644`; the exec bit was unstaged on disk). See FU-6. Delete the four Aug-2025 zero-byte
+  debris files (`foun`, `found`, `php`, `satisfiable`) before WT preservation.
 - renderer: `composer.lock` is now committed (`fd44a8a`); working tree must be clean
   (`out.html` removed).
 Any other dirty path is a **no-go**.
@@ -95,6 +95,29 @@ ref), `git stash apply` (never `pop`), verify `git status --porcelain` byte-iden
 saved baseline. Retain the stash until the rollback window closes. `git reset --hard` is
 forbidden until preservation prints OK. (The renderer's ~140 untracked media inflate the tar
 — bloat, not risk; `reset --hard` never touches untracked files.)
+
+**B4 carve-out — the renderer's tracked `composer.lock` change is DISCARDED on the forward
+path, NOT restored.** The renderer box's ONLY tracked working-tree change is `composer.lock`
+(the clock 3.5.0 / jwt 4.3.0 fix, FU-7). **`fd44a8a` already carries byte-identical content**
+— it is the commit that fix landed in. So:
+
+  - **Forward (`git checkout fd44a8a`):** do NOT `stash apply` the preserved `composer.lock`.
+    The checkout brings the identical file; re-applying the preserved copy on top would
+    re-dirty a tree that now matches the branch (exactly the failure mode to avoid). Because
+    the working-tree content already equals `fd44a8a:composer.lock`, the checkout needs no
+    overwrite and leaves the file clean; if git nonetheless reports "local changes would be
+    overwritten," run `git checkout -- composer.lock` first (safe — it discards a change
+    `fd44a8a` re-supplies), THEN `git checkout fd44a8a`. Post-checkout `git status` must show
+    `composer.lock` clean, not modified.
+  - **Rollback (`git checkout 09b63d3`):** DO restore it. `09b63d3` pins clock 2.3.0, which
+    will not `composer install` on the box's PHP 8.3.6; the box's installed vendor is already
+    3.5.0. Re-apply the preserved `composer.lock` after the rollback checkout so the lock
+    matches the installed vendor. (No reinstall runs on rollback, so a mismatch would not
+    break the running app — but restore it anyway to keep lock and vendor consistent.)
+
+Everything else in the preserved set (the ~140 untracked media, any genuinely-uncommitted
+local edits) restores normally on the forward path. `composer.lock` is the sole carve-out
+because it is the one tracked change the target commit already contains.
 
 ## Phase A½ — narrow visibility to `published` (live, `beastie_review`, reversible) [deploy]
 

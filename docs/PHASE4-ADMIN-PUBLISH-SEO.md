@@ -744,14 +744,53 @@ must assert META == decided-EIP (CHECK-A) and only the post-B5 step can assert T
 (CHECK-B). Reviewing the check would not have found this; breaking it did. This is the
 strongest single argument in these docs for the standing rule below.
 
-## STANDING RULE — every control must be mutation-tested (six instances that read like protection and enforced nothing)
+### FU-8 — 2026-07-11 — `git ls-files -s` reads the INDEX, not the working tree (a no-op normalisation, inside the fix for the mode churn)
+
+(Filed as FU-8 because FU-6 is already the admin-authorization finding; this is the
+mode-churn item, which had no prior FU heading — it lived only in the runbook.)
+
+The eleven `storage/*` + `bootstrap/cache/*` `.gitignore` files carried pure exec-bit churn
+(`100644`→`100755` from CI's old `chmod -R 775`). The remedy runbook prescribed a
+"normalise first" step:
+
+    git ls-files -s | awk '$1=="100755"{print $4}' | xargs -r chmod 644
+
+Run on the box, it did NOTHING, and the tree stayed dirty. `git ls-files -s` prints the
+**staged** mode from the INDEX — and the index still recorded `100644` for all eleven,
+because the exec bit was an UNSTAGED working-tree change never added. So the `awk`
+`$1=="100755"` filter matched zero rows, `xargs` ran `chmod` on nothing, and
+`git status --porcelain` still showed all eleven `M` afterward. The command asked "which
+files have a STAGED exec bit" when the question was "which files have an UNSTAGED exec bit."
+
+Why this matters, and why it is the dangerous kind of wrong:
+
+  - **Index vs working tree is the whole point.** `git ls-files -s` = index (what is staged).
+    Unstaged mode changes surface only through `git diff` (`old mode 100644` / `new mode
+    100755`) or `git status`. A normalisation that targets on-disk modes must read the disk,
+    not the index — so `git diff`/`git status`, or just `chmod` the paths directly, never
+    `git ls-files`.
+  - **A no-op leaves no trace.** It does not error; it succeeds having done nothing. Nothing
+    in the output distinguishes "normalised zero files because none needed it" from
+    "normalised zero files because I read the wrong list." Only running `git status`
+    immediately AFTER the step — an empirical post-assertion, not trust — revealed it.
+  - **The self-healing find is sufficient alone.** `find storage bootstrap/cache -type f
+    -exec chmod 664 {} +` (the corrected `stg.yml` step) strips the exec bit from every file
+    under those paths as a side effect of its real job, so it clears all eleven with no
+    pre-normalisation. Verified on the box 2026-07-11: one run → clean tree; `core.fileMode`
+    stays default. The runbook's manual pre-step was deleted. `664` is group-write, not exec,
+    so git mode returns to `100644` (git's `fileMode` compares only the exec bit).
+
+Added to the standing-rule list below as the seventh instance — notable because it was a
+control-that-did-nothing written INSIDE the fix for the previous one (the FU-4 EIP grep).
+
+## STANDING RULE — every control must be mutation-tested (seven instances that read like protection and enforced nothing)
 
 A control is not "in place" because a test is green. Green-forever/red-never is the signature
 of a control that does nothing. Before trusting any guard, BREAK the thing it protects and
 confirm something goes red. If nothing does, the control is decorative — no matter how correct
 it looks.
 
-This is not a hypothetical. Six times in the Phase-4 hardening work, a control read like
+This is not a hypothetical. Seven times in the Phase-4 hardening work, a control read like
 protection and enforced nothing. Every one was found by deliberately breaking it, never by
 reading it:
 
@@ -787,7 +826,17 @@ reading it:
      battery; replaced with exact-equality + empty-guard (CHECK-A/CHECK-B, FU-4). Writing the
      mutations also revealed the two-check structure the single check would have got wrong.
 
-Recurring tells across the six: a check that reads a value but compares nothing; a test whose
+  7. The normalisation `git ls-files -s | awk '$1=="100755"{print $4}' | xargs -r chmod 644`,
+     written INSIDE the fix for #6's mode churn, was itself a control that did nothing:
+     `git ls-files -s` reads the INDEX (staged mode = `100644` for all eleven files), so it
+     could not see the UNSTAGED exec bit on disk. Zero rows matched, `chmod` ran on nothing,
+     and — being a no-op — it left no trace: `git status` still showed all eleven `M`. Caught:
+     running `git status --porcelain` immediately AFTER the step (empirical post-assertion on
+     the box) instead of trusting it. The real fix (`find … -exec chmod 664`) is self-healing
+     and needed no pre-step. Doubly instructive: the no-op was in the fix for the previous
+     instance, and only a post-step assertion — never a re-read — revealed it. (FU-8.)
+
+Recurring tells across the seven: a check that reads a value but compares nothing; a test whose
 environment makes the failure it asserts impossible; a test that supplies the very condition
 it claims to verify; a property that holds by comment or by accident rather than by
 enforcement. The defence is the same every time — break it and watch. If breaking it changes
