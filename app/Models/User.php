@@ -24,9 +24,24 @@ class User extends Authenticatable
         'password',
         'phone',
         'profile_image',
-        'role',
-        'is_verified',
     ];
+
+    /**
+     * Privilege columns. Never mass-assignable - set them explicitly, after an
+     * authorization check.
+     *
+     * Taking them OUT of $fillable is the operative control. $guarded alone would do
+     * nothing: Model::isFillable() returns true the moment a key appears in $fillable and
+     * never consults $guarded. They are listed here too so the intent survives someone
+     * re-adding a column to $fillable without reading this comment.
+     *
+     * ProfileController::update() does $request->user()->fill($validated). Today
+     * ProfileUpdateRequest::rules() returns only name and email, so it is safe - but it
+     * was one careless line away from letting any user promote themselves.
+     *
+     * @var list<string>
+     */
+    protected $guarded = ['role', 'is_verified', 'is_blocked'];
 
     /**
      * The attributes that should be hidden for serialization.

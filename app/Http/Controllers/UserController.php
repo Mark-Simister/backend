@@ -167,8 +167,11 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => bcrypt($validated['password']),
-            'role' => 'sub_admin',
         ]);
+
+        // `role` is guarded on User and no longer mass-assignable. This route sits inside
+        // the `role:super_admin` group, so the caller is already authorized to set it.
+        $user->forceFill(['role' => 'sub_admin'])->save();
 
         // Assign the selected role to the user
         $user->assignRole($validated['role']);
