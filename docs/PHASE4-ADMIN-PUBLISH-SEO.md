@@ -491,3 +491,36 @@ it is private. So the check is: the marker MUST appear in the request path
 (/robots.txt?probe=…) or the User-Agent field of the matched line, AND the first field must
 be private. Read the whole line, confirm the marker is where it belongs, THEN take the
 address. Marker anywhere unexpected = hard stop, same as public or empty-grep.
+
+### FU-1 addendum — 2026-07-11 — the theme migrations do NOT reproduce the live tables
+
+Verified against bstd_staging (SHOW CREATE TABLE). Both `themes` and `user_themes` exist,
+are populated (AUTO_INCREMENT 8 and 21), and neither migration is in the `migrations` ledger.
+P-7's Schema::hasTable() guard therefore correctly no-ops them, and A3.5 records them as run
+without altering the live tables — the rollout is NOT blocked by this.
+
+But "recorded as run" must be read narrowly: it means "this migration will never execute
+against this DB", NOT "this migration produced this schema". It did not. The committed
+migration diverges from the live tables in three ways:
+
+  - colour columns: migration `->string()` = varchar(255); live themes = varchar(50),
+    live user_themes = varchar(20). Matches neither.
+  - user_themes.user_id / theme_id: migration nullable()->index(); live NOT NULL with no
+    index. So recording-as-run over-claims two indexes and the wrong nullability. (Neither
+    the migration nor the live table has an FK or a unique(user_id, theme_id).)
+  - collation: migration inherits one DB default so both tables are consistent; live is
+    inconsistent — themes utf8mb4_0900_ai_ci, user_themes utf8mb4_general_ci with per-column
+    general_ci on the colour columns. Evidence these tables were hand-built at different
+    times, not migration-produced.
+
+Consequence: a fresh `migrate` (tests, a new environment) yields varchar(255) / nullable+
+indexed user_id — a different schema from staging, permanently and invisibly, until someone
+diffs. Not a live fault: the only cross-table links are integer id joins
+(UserTheme.theme_id -> themes.id, UserTheme.user_id -> users.id), where collation is
+irrelevant, and no code compares the colour columns across the two tables. So the collation
+mismatch breaks nothing today.
+
+Follow-up (not this rollout): decide which schema is canonical — align the migration to the
+live tables (varchar 50/20, NOT NULL, no index, matching collations) or migrate the live
+tables to the migration — so fresh installs and staging converge. Until then, treat the
+theme tables as hand-managed, not migration-managed.
