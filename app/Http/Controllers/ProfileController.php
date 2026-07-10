@@ -23,38 +23,19 @@ class ProfileController extends Controller
 
     /**
      * Update the user's profile information.
+     *
+     * Email is intentionally NOT editable through this form — it is the login identifier
+     * on a table shared by User and ApiUser across two guards. ProfileUpdateRequest no
+     * longer accepts `email`, so the earlier isDirty('email') → clear-verification branch
+     * was unreachable (email can never become dirty here) and has been removed.
      */
-    // public function update(ProfileUpdateRequest $request): RedirectResponse
-    // {
-    //     $request->user()->fill($request->validated());
-
-    //     if ($request->user()->isDirty('email')) {
-    //         $request->user()->email_verified_at = null;
-    //     }
-
-    //     $request->user()->save();
-
-    //     return Redirect::route('profile.edit')->with('status', 'profile-updated');
-    // }
     public function update(ProfileUpdateRequest $request): RedirectResponse
-{
-    // Remove email from validated data
-    $validatedData = $request->validated();
-    unset($validatedData['email']);  // Ensure email isn't updated
+    {
+        $request->user()->fill($request->validated());
+        $request->user()->save();
 
-    // Fill user with remaining validated data
-    $request->user()->fill($validatedData);
-
-    // Check if the email is dirty and reset the email_verified_at if changed
-    if ($request->user()->isDirty('email')) {
-        $request->user()->email_verified_at = null;
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
-
-    // Save the user
-    $request->user()->save();
-
-    return Redirect::route('profile.edit')->with('status', 'profile-updated');
-}
 
 
     /**

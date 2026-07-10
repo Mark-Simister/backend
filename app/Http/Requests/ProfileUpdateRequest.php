@@ -2,44 +2,24 @@
 
 namespace App\Http\Requests;
 
-use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
     /**
      * Get the validation rules that apply to the request.
      *
+     * Email is deliberately absent: it is not editable through the profile form (it is the
+     * login identifier on a table shared by User and ApiUser across two guards). The
+     * controller previously accepted an `email` rule and then unset it before saving — a
+     * rule for a field that was always discarded. Only `name` is editable here.
+     *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    // public function rules(): array
-    // {
-    //     return [
-    //         'name' => ['required', 'string', 'max:255'],
-    //         'email' => [
-    //             'required',
-    //             'string',
-    //             'lowercase',
-    //             'email',
-    //             'max:255',
-    //             Rule::unique(User::class)->ignore($this->user()->id),
-    //         ],
-    //     ];
-    // }
     public function rules(): array
-{
-    return [
-        'name' => ['required', 'string', 'max:255'],
-        'email' => [
-            'nullable',  // Make email optional
-            'string',
-            'lowercase',
-            'email',
-            'max:255',
-            Rule::unique(User::class)->ignore($this->user()->id),  // Ignore the current user's email in uniqueness check
-        ],
-    ];
-}
-
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+        ];
+    }
 }
