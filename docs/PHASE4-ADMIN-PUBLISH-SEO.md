@@ -638,3 +638,24 @@ Where each is needed:
 A3 pre-flight (already recorded above) asserts sodium/hash/json/mbstring/openssl on the admin
 CLI before the merge. This addendum records WHY the check exists and the rule that produced
 it, so the next lock bump gets the same require-block audit rather than a version glance.
+
+### FU-7 constraint — 2026-07-11 — the fixed lock raises the PHP floor to >= 8.3 (first-class, not a side effect)
+
+lcobucci/clock 3.5.0 requires php ~8.3||~8.4||~8.5. So the fixed composer.lock (37bc517 on
+carousel-data, fd44a8a on review-renderer) WILL NOT `composer install` on PHP 8.2 — including
+local developer tooling still on 8.2. This is a hard constraint, not a side effect:
+
+  - Every host that runs `composer install` against this lock must be PHP 8.3-8.5. The staging
+    box is 8.3.6 (confirmed, CLI + web mod_php). Any 8.2 environment is now incompatible.
+  - This project's local tooling is PHP 8.2, which is WHY the lock cannot be regenerated or
+    validated here: `composer update` on 8.2 keeps clock 2.3.0 (it satisfies 8.2), and a
+    fresh `composer install --dry-run` of the fixed lock would fail the platform check on
+    8.2. The committed lock was produced ON THE 8.3.6 BOX and reconstructed here by exact
+    diff-match (content-hash unchanged, 34 ins / 83 del, git-apply round-trip byte-identical),
+    NOT by regenerating it locally. Treat the box as the only environment that can produce or
+    validate this lock until local tooling moves to 8.3+.
+
+Commit method note: the lock was reconstructed by targeted replacement on 1c710c6:composer.lock
+and verified three ways (content-hash, 34/83 stat, clean git-apply round-trip producing a
+byte-identical file). The git diff of the commit is line-identical to the box's
+`git diff composer.lock`.
