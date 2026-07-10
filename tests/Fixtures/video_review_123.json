@@ -1,0 +1,230 @@
+{
+    "h1": "Amazon Basics Automatic Dog Feeder and Waterer Review: Worth It?",
+    "product_subtitle": "Large-capacity gravity feeder and waterer set that many owners find convenient and good value, but does it deliver on the “automatic” promise?",
+    "reviews_analysed": 71037,
+    "quick_verdict": {
+        "good_for": "Busy pet owners who want large-capacity food and water refills.",
+        "watch_out_for": "Gravity-feed inconsistency, leaks, rust, and durability issues.",
+        "beastie_take": "Convenient and good value, but not as hands-off as “automatic” suggests."
+    },
+    "character_take": {
+        "quote": "Automatic should mean automatic. Not ‘nudge it with your paw every afternoon.’",
+        "text": "Raj values durability, performance and affordability. He likes the large-capacity practicality, but is unimpressed by gravity-feed issues and parts that fail too early.",
+        "trait_chips": [
+            "Durability",
+            "Performance",
+            "Affordability"
+        ]
+    },
+    "product_details": {
+        "category": "Automatic Dog Feeder & Waterer",
+        "brand": "Amazon Basics",
+        "type": "Gravity Feeder & Waterer Set",
+        "capacity": "Large",
+        "colour": "Grey",
+        "retailer": "Amazon"
+    },
+    "pros": [
+        "Large capacity reduces refill frequency",
+        "Easy to clean compared with electric fountains",
+        "Spill-preventing valve helps with refills",
+        "Good value for the price",
+        "Transparent hoppers make levels easy to check"
+    ],
+    "cons": [
+        "Food does not always gravity-feed smoothly",
+        "Water dispenser can leak or overfill",
+        "Internal spring/plunger may break",
+        "Some reports of rust or mold",
+        "Newer design seen by some as lower quality"
+    ],
+    "owner_consensus": "Most owners like the convenience, capacity and simple cleaning. The waterer is often praised more than the food feeder. The main pattern of complaints is that the feeder does not always gravity-feed reliably, while the water unit can leak, overfill or develop durability problems.",
+    "evidence": {
+        "public_ratings": 71037,
+        "amazon_points": 99,
+        "youtube_videos": 10,
+        "reddit_threads": 0,
+        "external_pages": 0,
+        "strength_label": "Moderate",
+        "strength_why": "Strong Amazon and YouTube signal, but limited external independent review coverage."
+    },
+    "best_for": [
+        "Busy pet owners",
+        "Multi-pet homes",
+        "People who want fewer refills",
+        "Dogs or cats who don’t attack lids or moving parts",
+        "Owners who prefer simple gravity systems over electric fountains"
+    ],
+    "not_best_for": [
+        "Pets who chew plastic parts",
+        "Owners expecting perfect automatic feeding",
+        "People worried about leaks",
+        "Anyone who wants dishwasher-simple deep cleaning",
+        "Pets needing portion control"
+    ],
+    "chapters": [
+        {
+            "time": "00:00",
+            "label": "The Promise"
+        },
+        {
+            "time": "00:18",
+            "label": "What Owners Loved"
+        },
+        {
+            "time": "00:42",
+            "label": "The Gravity-Feed Problem"
+        },
+        {
+            "time": "01:05",
+            "label": "Leaks & Waterer Issues"
+        },
+        {
+            "time": "01:28",
+            "label": "Durability Concerns"
+        },
+        {
+            "time": "01:56",
+            "label": "Cleaning & Maintenance"
+        },
+        {
+            "time": "02:20",
+            "label": "Who It’s Best For"
+        },
+        {
+            "time": "02:46",
+            "label": "Raj’s Verdict"
+        },
+        {
+            "time": "03:06",
+            "label": "BeastieScore Breakdown"
+        },
+        {
+            "time": "03:26",
+            "label": "Final Thoughts"
+        }
+    ],
+    "full_report": [
+        {
+            "heading": "What Owners Loved",
+            "body": "Thousands of owners love the large capacity. The feeder holds a good amount of kibble, which means fewer top-ups. The waterer’s gravity system is praised for keeping bowls topped up with minimal effort. Many also like how easy both parts are to take apart and clean compared to electric fountains."
+        },
+        {
+            "heading": "Where It Falls Short",
+            "body": "The biggest complaint by far: the food doesn’t always flow. Kibble can get stuck, especially with certain shapes or if the hopper gets low. The waterer leaks for some, or overfills when the vacuum breaks. Durability is another issue — reports of broken springs, rusted parts, and plastic that doesn’t hold up long-term."
+        },
+        {
+            "heading": "Who It’s Best For",
+            "body": "Busy pet parents who want large capacity and don’t mind checking it daily. Great for multi-pet homes. Not ideal if you expect true ‘set it and forget it’ convenience."
+        },
+        {
+            "heading": "Raj’s Verdict",
+            "body": "Good value. Practical. But don’t believe the marketing. Automatic? Only if your dog helps out."
+        }
+    ],
+    "retailers": [
+        {
+            "name": "Amazon",
+            "url": "https://www.amazon.com/dp/B06ZY6Q66G",
+            "price": 34.99,
+            "currency": "USD",
+            "primary": true,
+            "sponsored": false
+        },
+        {
+            "name": "Chewy",
+            "url": "https://www.chewy.com/",
+            "price": 36.49,
+            "currency": "USD",
+            "primary": false,
+            "sponsored": false
+        },
+        {
+            "name": "Walmart",
+            "url": "https://www.walmart.com/",
+            "price": 33.88,
+            "currency": "USD",
+            "primary": false,
+            "sponsored": false
+        },
+        {
+            "name": "PetSmart",
+            "url": "https://www.petsmart.com/",
+            "price": 37.99,
+            "currency": "USD",
+            "primary": false,
+            "sponsored": true
+        },
+        {
+            "name": "Target",
+            "url": "https://www.target.com/",
+            "price": 35.49,
+            "currency": "USD",
+            "primary": false,
+            "sponsored": false
+        }
+    ],
+    "alternatives": [
+        {
+            "name": "PetSafe Smart Feed Automatic Dog Feeder",
+            "image": "https://m.media-amazon.com/images/I/61Qb6mQdVUL._AC_SL1000_.jpg",
+            "url": "https://www.amazon.com/",
+            "price": 169.95,
+            "currency": "USD",
+            "score": 4.3,
+            "retailer": "Amazon",
+            "sponsored": false
+        },
+        {
+            "name": "WOPET 6L Automatic Cat & Dog Feeder",
+            "image": "https://m.media-amazon.com/images/I/71l28m5aQ4L._AC_SL1500_.jpg",
+            "url": "https://www.amazon.com/",
+            "price": 59.99,
+            "currency": "USD",
+            "score": 4.1,
+            "retailer": "Amazon",
+            "sponsored": true
+        },
+        {
+            "name": "PETLIBRO Granary Automatic Feeder",
+            "image": "https://m.media-amazon.com/images/I/61x1w5kQ7SL._AC_SL1500_.jpg",
+            "url": "https://www.amazon.com/",
+            "price": 45.99,
+            "currency": "USD",
+            "score": 4.5,
+            "retailer": "Amazon",
+            "sponsored": false
+        }
+    ],
+    "sources": [
+        {
+            "name": "Amazon",
+            "url": "https://www.amazon.com/dp/B06ZY6Q66G"
+        },
+        {
+            "name": "Reddit r/dogs",
+            "url": "https://www.reddit.com/r/dogs/"
+        }
+    ],
+    "disclosure": "BeastieRated may earn a commission from qualifying purchases made through retailer links. Prices and availability are indicative and updated periodically — check the retailer for the current price.",
+    "confidence": "Moderate",
+    "qa": [
+        {
+            "q": "Is the Amazon Basics Automatic Dog Feeder actually automatic?",
+            "a": "Not in the electronic sense. It's a gravity feeder and waterer, so it refills the bowl as your pet eats — but there's no timer or portion control, and food doesn't always flow smoothly, so many owners still nudge it daily."
+        },
+        {
+            "q": "Does the Amazon Basics dog feeder leak?",
+            "a": "Some owners report the water dispenser leaking or overfilling when the vacuum seal breaks. It's the most common durability complaint alongside the gravity-feed inconsistency."
+        },
+        {
+            "q": "Who is the Amazon Basics feeder best for?",
+            "a": "Busy pet owners and multi-pet homes who want large-capacity food and water with fewer refills, and who don't mind checking it daily. It's not ideal for pets that chew plastic or need portion control."
+        },
+        {
+            "q": "What is the BeastieScore for the Amazon Basics Automatic Dog Feeder?",
+            "a": "4.1 out of 5, with Moderate confidence — based on a 4.4/5 public rating across 71,037 ratings, cross-checked against analysed review signals. This is an aggregation-based verdict, not a hands-on test."
+        }
+    ],
+    "transcript": null
+}
