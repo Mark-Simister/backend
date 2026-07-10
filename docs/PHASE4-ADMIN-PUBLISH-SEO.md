@@ -659,3 +659,53 @@ Commit method note: the lock was reconstructed by targeted replacement on 1c710c
 and verified three ways (content-hash, 34/83 stat, clean git-apply round-trip producing a
 byte-identical file). The git diff of the commit is line-identical to the box's
 `git diff composer.lock`.
+
+### FU-4 DECISION — 2026-07-11 — TRUSTED_PROXIES = 13.238.27.223 (the Elastic IP)
+
+Settled. The regional vhosts and review-bstg are one instance; every A record resolves to
+13.238.27.223, an ELASTIC IP (allocation bstd-ip, associated with beastierated-staging), so
+it survives stop/start. The ProxyPass targets https://review-bstg.beastierated.com, which
+resolves through public DNS, so the proxy hop hairpins out and back via the public interface
+and Apache logs the peer as 13.238.27.223 (captured in review-bstg-access.log with a unique
+marker; the same request appeared at the edge vhost log as the external client 180.150.70.142).
+
+Why the public IP and not loopback (/etc/hosts -> 127.0.0.1):
+  - Forgery is closed by the network, not by loopback. An off-box client CANNOT make Apache
+    log a peer of 13.238.27.223: a direct client presents its own IP; TCP source-spoofing
+    can't complete a handshake to deliver an HTTP request; AWS dest-NAT preserves external
+    source IPs. The two-log split is the empirical proof (laptop = 180.150.70.142 at edge,
+    never 13.238.27.223 at origin).
+  - Loopback's only advantage is that 127.0.0.1 is non-routable off-box — but 13.238.27.223
+    is also unpresentable off-box (above), and ON-box any process can present EITHER. So
+    loopback reduces neither surface; its benefit here is illusory.
+  - Loopback trades a DOCUMENTED dependency (an EIP allocation, visible in the console, this
+    doc, and the runbook) for an UNDOCUMENTED one (an /etc/hosts line in no repo, no snapshot,
+    no test, silently lost on an AMI rebuild) — the exact "control nobody looks at" class this
+    project has been removing. Rejected for that reason.
+
+Failure mode if the EIP is released/disassociated: FAILS CLOSED. The hairpin then presents a
+different source, TrustProxies ignores X-Forwarded-Host, getHost() = review-bstg,
+RegionResolver.fromHost() = null, publicForRegion(null) serves only all-region payloads ->
+region-gated pages 404, canonical falls back to review-bstg. No fail-open path: forging
+X-Forwarded-Host still requires presenting the peer, which is closed.
+
+Made load-bearing (not documentary):
+  - SNAP-0 / SNAP-1 assert the instance's own metadata public-ipv4 == TRUSTED_PROXIES:
+      TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+      META_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
+      grep -q "TRUSTED_PROXIES=.*${META_IP}" backend-review/.env  || STOP
+  - B7's four-region 200 check is the end-to-end guard: a stale TRUSTED_PROXIES 404s all
+    regions and fails the retirement gate loudly.
+  - Recommended follow-up (not rollout-blocking): a scheduled IMDS-vs-TRUSTED_PROXIES drift
+    check that alerts, so a later EIP release pages instead of silently 404ing.
+
+B5 value: TRUSTED_PROXIES=13.238.27.223 (single value; NOT loopback, NOT '*'). No /etc/hosts
+change, no Apache reload, no SNI test needed.
+
+### FU-7 note — 2026-07-11 — mod_php confirmed empirically (CLI/web SAPI split)
+
+The FPM checks returned nothing: no SetHandler/proxy:unix/php*-fpm in the vhost, and
+`systemctl list-units --type=service | grep -i php` is empty. So the web tier is mod_php, not
+PHP-FPM — CLI and web read different php.ini. This is now VERIFIED, not inferred. Inert today
+because JWT_ALGO is unset (HS256, never reaches sodium); becomes relevant if JWT_ALGO is set
+to an EdDSA variant, which would then require ext-sodium in the apache2 SAPI too.
