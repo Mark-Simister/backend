@@ -841,3 +841,128 @@ environment makes the failure it asserts impossible; a test that supplies the ve
 it claims to verify; a property that holds by comment or by accident rather than by
 enforcement. The defence is the same every time — break it and watch. If breaking it changes
 no test, the test was decorative; fix the test before trusting the control.
+
+---
+
+## FU-9 — 2026-07-11 — WF4 database ingestion, thin Sheet records, and authenticated editorial preview (DESIGN CAPTURE — do not implement in Phase 4)
+
+**Status: documentation only. This records a permanent target workflow. It does NOT expand or
+block the current Phase 4 rollout, and nothing below is to be built now.** Phase 4 keeps its
+existing source chain (Sheet → extractor → committed JSON → seeder → DB); FU-9 is the flow that
+replaces it later.
+
+### The permanent workflow
+
+```text
+WF4 builds the complete review payload
+→ Laravel ingestion endpoint stores the full payload in published_review_payloads
+→ status remains ready_for_review
+→ review appears in an authenticated backend publishing queue
+→ publishing admin opens a fully rendered preview
+→ admin explicitly publishes or returns it for correction
+→ only published reviews become available through the public regional renderer
+```
+
+### Canonical payload and Google Sheets
+
+The complete `review_page_json` must eventually be stored in MySQL through an **authenticated
+Laravel endpoint**. The `Published_Review_Payloads` Google Sheet becomes a compact QA/index
+surface — identifiers, status, hashes, sync metadata, and a **deliberately constructed valid
+JSON preview**. Do NOT blindly substring serialized JSON to build that preview: the Sheet
+preview must remain valid JSON and must be clearly marked **non-canonical**. The database row is
+the source of truth; the Sheet is an index.
+
+### Public read-path gating — HARD, mutation-tested requirement (not implemented now)
+
+WF4 places `ready_for_review` payloads in `published_review_payloads` — the **same table the
+public renderer reads** through `PublishedReviewPayload::scopePublicForRegion()`. So the read
+path must be provably gated: a non-`published` row must never render publicly.
+
+Current-code confirmation (as of 2026-07-11):
+- The gate already exists: `scopePublicForRegion()` filters `publish_status` to
+  `config('reviews.public_statuses')` (default `['published']`) AND applies region eligibility.
+  `PublicReviewPageController::show()` calls it and `abort_unless($payload, 404)`.
+- It is partially tested: `PublicReviewPageTest::test_status_not_in_whitelist_is_hidden` inserts
+  a `ready_for_review` row under a production-like `['published']` gate and asserts 404 — but on
+  the **single default request path only**, not per region.
+
+Gap / requirement: **before WF4 ingestion is enabled**, broaden this to a mutation test that
+inserts a `ready_for_review` row and confirms it 404s on **every region** (AU/US/UK/CA and the
+unknown-host fail-safe path), per the standing rule (insert the row, break nothing, confirm the
+red). Document as a hard pre-enable gate; do not implement now.
+
+### Authenticated editorial preview (not implemented now)
+
+Every pipeline payload in `ready_for_review` must be physically reviewable by a publishing admin
+as a **fully rendered review page** before publication. The preview must:
+- live on the **authenticated admin backend**, not on `review-bstg` or any public regional host;
+- require an explicit publishing/edit permission;
+- render the **complete canonical database payload**;
+- use the **same Blade components, score formatting, content blocks, sources, disclosures and
+  images** as the public page (`resources/views/reviews/public-show.blade.php`);
+- be excluded from public routes, sitemaps and search indexing; use **no public page cache**;
+- remain inaccessible to unauthenticated users;
+- NOT assign or expose a public URL merely because it was viewed;
+- NOT change `ready_for_review` → `published`;
+- NOT trigger publication or affiliate/public tracking.
+
+QA information to expose alongside the rendered page:
+
+```text
+source
+publish status
+regions
+payload size
+payload hash
+last WF4 sync
+validation warnings
+missing images
+source count
+BeastieScore
+product identifier
+character/channel
+```
+
+Actions to expose (eventually):
+
+```text
+Preview
+Publish to SEO
+Return for correction
+Withdraw
+Refresh from latest payload
+View raw payload
+```
+
+### Pipeline vs. admin-video distinction
+
+- **WF4 pipeline reviews:** the preview renders the stored `ready_for_review` payload directly
+  (the payload already IS the canonical `review_page_json`).
+- **Video-backed admin reviews:** preserve the current explicit-gate rule — the first permanent
+  public snapshot is created ONLY by `Publish to SEO` (`ReviewPayloadPublisher::publish()` →
+  `VideoReviewMapper::map()`, writing `publish_status='published'`, never `ready_for_review`).
+  Their preview must therefore be generated **temporarily through the mapper**
+  (`app/Support/Reviews/VideoReviewMapper.php::map($video, $slug, $tier)` already returns the
+  `review_page` array the public blade consumes) and rendered **without** creating the permanent
+  public payload row or the immutable public slug.
+
+### Current-code gap + recommended implementation boundary (confirmed, not built)
+
+No full-page authenticated preview exists today. The only admin "preview" is the SEO-meta /
+Twitter-card **live text preview** (JS) in `resources/views/admin/videos/edit-seo.blade.php` and
+image thumbnails — neither renders the review page. Recommended boundary when it is built:
+- a new authenticated admin route (`permission:video.edit` or a dedicated publish permission),
+  e.g. `GET admin/reviews/{payload}/preview` (pipeline) and `GET admin/videos/{video}/seo-preview`
+  (video-backed), both `noindex`, uncached, never public-URL-assigning;
+- reuse `reviews/public-show.blade.php` unchanged by passing it `$rp` = the stored
+  `review_page_json` (pipeline) or `VideoReviewMapper::map(...)` output (video-backed);
+- read-only: no writes to `published_review_payloads`, `seo_publish_status`, slugs, or tracking.
+
+### Publishing authority
+
+Long-term publication authority is the **backend admin panel, not a Google Sheet cell**. The
+immediate Vecomfy Gate 0.1 promotion is a **one-off transitional Sheet action** only because the
+current chain is `Sheet → extractor → committed JSON → seeder → database`. The future WF4
+ingestion flow must submit new reviews as `ready_for_review`, and only an **authorised backend
+action** may promote them to `published`. A routine ingestion or refresh must **never resurrect a
+`withdrawn` review**.
