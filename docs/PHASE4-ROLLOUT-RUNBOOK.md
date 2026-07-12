@@ -43,8 +43,9 @@ disjoint branches):**
 ## Gate 0 — before Phase A
 
 1. **Gate 0.1 (yours):** promote the Vecomfy row to `published` in cell **`Y2`** of the
-   workbook the extractor selects by newest mtime (FU-3 — confirm the `sheet file:` line and
-   the `publish_status` header, and beware the two-workbook trap); re-run
+   workbook the extractor selects by newest mtime (FU-3 — confirm the extractor's printed
+   `source:` line names the intended workbook, and the `publish_status` header, and beware the
+   two-workbook trap); re-run
    `extract_published_payloads.py`; commit the regenerated JSON.
 2. **Gate 0.2 (Phase-B preflight, gates B4):** when Phase B is authorised, before B1:
    `git push origin review-renderer` then `git ls-remote --heads origin review-renderer | grep -q fd44a8a` — no-go if absent.
@@ -224,7 +225,7 @@ the PoC DB.
 
 ## Go / No-Go
 
-- [ ] Gate 0.1 — Vecomfy promoted (Y2, correct workbook, `sheet file:` confirmed); JSON re-extracted + committed
+- [ ] Gate 0.1 — Vecomfy promoted (Y2, correct workbook, extractor's printed `source:` line confirmed); JSON re-extracted + committed
 - [ ] Gate 0.2 preflight — `origin` advertises `fd44a8a`
 - [ ] `ADMIN_TARGET` frozen and recorded in SNAP-0; `git merge-base --is-ancestor 37bc517 $ADMIN_TARGET` succeeds; `HEAD:composer.lock == $LOCKBLOB` (e8fd6e9…) after the ff-merge
 - [ ] Prereq test suites green on the merged tree (Proxy/Rendering/AdminBaseline/AdminSurfaceCoverage/AdminResourceVerb/AdminLooseRoute/UserMassAssignment/ReviewSeoAsync/Profile)
