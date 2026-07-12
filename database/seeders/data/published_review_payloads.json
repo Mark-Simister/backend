@@ -2,7 +2,7 @@
  {
   "published_review_id": "wr__us_barktastic_asin_b07hcb1jps__bella_beans__us",
   "website_review_id": "wr__us_barktastic_asin_b07hcb1jps__bella_beans",
-  "project_id": "brproj__run_1783566736632__bella_beans__us_barktastic_asin_b07hcb1jps",
+  "project_id": "brproj__run_1783602569475__bella_beans__us_barktastic_asin_b07hcb1jps",
   "product_uid": "US::BARKTASTIC::ASIN_B07HCB1JPS",
   "market_id": "US",
   "language_variant": "en-US",
@@ -12,9 +12,9 @@
   "character_name": "Bella Beans",
   "review_slug": "vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps",
   "canonical_url": "https://us.fstg.beastierated.com/review/vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps",
-  "h1": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, But Watch That Sizing!",
+  "h1": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, but Sizing Drama",
   "seo_title": "Vecomfy Fleece Dog Hoodie Review | BeastieRated",
-  "seo_description": "This Vecomfy fleece hoodie is a style win for pups who need extra warmth and cuteness in winter. Sizing runs small, so double-check before you buy.",
+  "seo_description": "This vecomfy fleece hoodie is a total win for warmth and cuteness, but sizing is a real headache. If you nail the fit, your pup’s winter style is sorted.",
   "og_image_url": "https://m.media-amazon.com/images/I/61+VyRVvXrL._AC_SX679_.jpg",
   "hero_image_url": "https://m.media-amazon.com/images/I/61+VyRVvXrL._AC_SX679_.jpg",
   "final_beastie_score": 4.7,
@@ -24,7 +24,7 @@
   "source_count": 5,
   "confidence_tier": "High",
   "status": "draft_payload",
-  "publish_status": "ready_for_review",
+  "publish_status": "published",
   "qa_status": "passed_with_warnings",
   "qa_errors_json": [],
   "qa_warnings_json": null,
@@ -32,13 +32,13 @@
    "page_identity": {
     "published_review_id": "wr__us_barktastic_asin_b07hcb1jps__bella_beans__us",
     "website_review_id": "wr__us_barktastic_asin_b07hcb1jps__bella_beans",
-    "project_id": "brproj__run_1783566736632__bella_beans__us_barktastic_asin_b07hcb1jps",
+    "project_id": "brproj__run_1783602569475__bella_beans__us_barktastic_asin_b07hcb1jps",
     "product_uid": "US::BARKTASTIC::ASIN_B07HCB1JPS",
     "review_slug": "vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps",
     "canonical_url": "https://us.fstg.beastierated.com/review/vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps",
-    "h1": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, But Watch That Sizing!",
+    "h1": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, but Sizing Drama",
     "seo_title": "Vecomfy Fleece Dog Hoodie Review | BeastieRated",
-    "seo_description": "This Vecomfy fleece hoodie is a style win for pups who need extra warmth and cuteness in winter. Sizing runs small, so double-check before you buy.",
+    "seo_description": "This vecomfy fleece hoodie is a total win for warmth and cuteness, but sizing is a real headache. If you nail the fit, your pup’s winter style is sorted.",
     "og_image_url": "https://m.media-amazon.com/images/I/61+VyRVvXrL._AC_SX679_.jpg",
     "status": "draft_payload"
    },
@@ -57,19 +57,19 @@
     "brand_pdp_image_drive_url": "https://drive.google.com/file/d/1F6NOMYIOQHg_zvMBhsv91VC4cUKMEfU9/view?usp=drivesdk"
    },
    "hero": {
-    "title": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, But Watch That Sizing!",
-    "subtitle": "This Vecomfy fleece hoodie is a style win for pups who need extra warmth and cuteness in winter. Sizing runs small, so double-check before you buy.",
+    "title": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, but Sizing Drama",
+    "subtitle": "This vecomfy fleece hoodie is a total win for warmth and cuteness, but sizing is a real headache. If you nail the fit, your pup’s winter style is sorted.",
     "image_url": "https://m.media-amazon.com/images/I/61+VyRVvXrL._AC_SX679_.jpg",
     "channel": "BarkTastic",
     "character_name": "Bella Beans",
     "character_id": "bella_beans"
    },
    "quick_verdict": {
-    "summary": "This Vecomfy fleece hoodie is a style win for pups who need extra warmth and cuteness in winter. Sizing runs small, so double-check before you buy.",
-    "good_for": "Best for small to medium dogs who need extra warmth and love a cute look, especially if you’re willing to double-check sizing and don’t need full waterproofing. Not ideal for owners who want a rugged, all-weather jacket or fuss-free sizing.",
+    "summary": "This vecomfy fleece hoodie is a total win for warmth and cuteness, but sizing is a real headache. If you nail the fit, your pup’s winter style is sorted.",
+    "good_for": "Best for small to medium pups who need serious warmth and don’t mind a snug fit—just be ready to size up and maybe swap sizes. If you want a fuss-free, perfect-fit jacket or have a dog who hates clothes, this isn’t your match.",
     "watch_out_for": "Sizing runs small, often requiring customers to order one or two sizes up.",
-    "beastie_take": "The BeastieScore of 4.7/5 reflects strong owner satisfaction with warmth, comfort, and style, balanced by recurring sizing and some durability complaints. High confidence is based on a large review base and diverse sources.",
-    "cta_text": "Check your pup’s measurements twice before you buy—this hoodie is worth it if you get the sizing right!"
+    "beastie_take": "The BeastieScore of 4.7/5 reflects strong warmth, comfort, and style feedback, balanced by recurring sizing and some durability complaints. High confidence comes from thousands of ratings and diverse review sources.",
+    "cta_text": "Ready to level up your pup’s winter style? Check sizing charts twice before you buy!"
    },
    "review_facts": {
     "product": "Fleece Lining Extra Warm Dog Hoodie in Winter,Small Dog Jacket Puppy Coats with Hooded,Red XS",
@@ -93,26 +93,28 @@
      "small dogs",
      "cold weather",
      "style lovers",
-     "indoor-outdoor pups"
+     "owners who measure",
+     "light rain"
     ],
     "watch_out_for": [
      "large dogs",
      "heavy chewers",
-     "rainy climates",
-     "budget buyers"
+     "zero-fuss buyers",
+     "waterproof seekers",
+     "dogs who hate clothes"
     ],
     "disclosure_note": "AI-generated review from aggregated public review and third-party data; not a hands-on product test."
    },
    "character_take": {
     "character_id": "bella_beans",
     "character_name": "Bella Beans",
-    "quote": "It’s giving… snuggle queen.",
-    "summary": "It’s giving snuggle queen vibes, but only if you nail the sizing—this hoodie is super soft and cute, but runs tiny and can be fussy to fit. If you want your pup to serve looks and stay warm, just be ready to play the size-up game. For style and comfort, it’s a yes from me, but don’t expect it to survive a downpour or a wild tug-of-war.",
+    "quote": "It’s giving… cozy-core realness.",
+    "summary": "It’s giving cozy-core realness with that plush fleece, and honestly, the cuteness is next level. But babes, the sizing drama is real—expect to size up, maybe twice. If you’re ready to gamble for the perfect fit, your pup will be the warmest (and cutest) on the block. Savage honesty: not for anyone who hates returns.",
     "highlights": [
-     "Fleece lining is ultra-soft and keeps pups warm in cold weather.",
-     "Snap closures are easy for owners and more durable than Velcro.",
-     "Sizing runs small—many buyers need to size up, sometimes more than once.",
-     "Some durability issues reported, like buttons falling off or stitching coming loose."
+     "Super soft fleece lining keeps pups extra warm.",
+     "Snap closures are easier than Velcro for most owners.",
+     "Sizing runs small and can be inconsistent between batches.",
+     "Some durability issues with buttons and stitching reported."
     ]
    },
    "beastiescore": {
@@ -125,7 +127,7 @@
     "score_version_status": "current",
     "score_basis_summary": "Based on a public rating of 4.5/5 across 7,763 public ratings, cross-checked against 520 analysed review/source signals across 5 source families, with high confidence.",
     "score_disclosure_line": "BeastieScore is an aggregation-based verdict from review data and third-party signals, not a hands-on product test.",
-    "score_explanation": "The BeastieScore of 4.7/5 reflects strong owner satisfaction with warmth, comfort, and style, balanced by recurring sizing and some durability complaints. High confidence is based on a large review base and diverse sources.",
+    "score_explanation": "The BeastieScore of 4.7/5 reflects strong warmth, comfort, and style feedback, balanced by recurring sizing and some durability complaints. High confidence comes from thousands of ratings and diverse review sources.",
     "raw": {
      "score_version": "v1.2",
      "aggregate_sentiment": 4.5,
@@ -158,7 +160,7 @@
      "score_formula_summary": "final_score = (3 + ((4.5 - 3) × 1)) + 0.2 - 0 - 0",
      "score_source_breakdown": "aggregate_sentiment=verified_public_score/public_score; public_rating_count=verified_public_rating_count/public_score_count; analysed_evidence_count=total_evidence_count; review_count=public_rating_count compatibility alias; source_count=source family count; external_alignment_adjustment only applies with credible non-Amazon external review evidence; low safety risk is watch-out only; safety_penalty applies from moderate risk or official possible/confirmed safety matches",
      "beastiescore_status": "score_ready_with_warnings",
-     "calculated_at": "2026-07-09T03:13:02.228Z",
+     "calculated_at": "2026-07-09T13:11:31.352Z",
      "score_authority": "locked_pre_character_review",
      "score_may_be_explained_by_script": true,
      "score_may_be_modified_by_script": false,
@@ -172,26 +174,28 @@
       "warnings": [
        "Unexpected or missing score_version: v1.2. Expected v1.1."
       ],
-      "checked_at": "2026-07-09T03:13:02.536Z"
+      "checked_at": "2026-07-09T13:11:32.746Z"
      },
      "verified_public_score": 4.5,
      "preserved_by_node": "Parse Review & Compute Scores v6.3",
-     "preserved_at": "2026-07-09T03:13:31.979Z"
+     "preserved_at": "2026-07-09T13:12:33.607Z"
     }
    },
    "buyer_fit": {
-    "summary": "Best for small to medium dogs who need extra warmth and love a cute look, especially if you’re willing to double-check sizing and don’t need full waterproofing. Not ideal for owners who want a rugged, all-weather jacket or fuss-free sizing.",
+    "summary": "Best for small to medium pups who need serious warmth and don’t mind a snug fit—just be ready to size up and maybe swap sizes. If you want a fuss-free, perfect-fit jacket or have a dog who hates clothes, this isn’t your match.",
     "best_for": [
      "small dogs",
      "cold weather",
      "style lovers",
-     "indoor-outdoor pups"
+     "owners who measure",
+     "light rain"
     ],
     "not_best_for": [
      "large dogs",
      "heavy chewers",
-     "rainy climates",
-     "budget buyers"
+     "zero-fuss buyers",
+     "waterproof seekers",
+     "dogs who hate clothes"
     ],
     "value_choice_flag": false,
     "quality_choice_flag": false,
@@ -227,52 +231,52 @@
     ]
    },
    "full_character_review": {
-    "overview": "The Vecomfy Fleece Lining Extra Warm Dog Hoodie is a crowd favorite for keeping pups toasty and stylish, with soft fleece and easy snap closures that make winter walks way more bearable. Owners love the comfort and adorable look, but sizing is a real struggle—expect to size up, maybe even twice. Durability is a mixed bag: some report long-lasting wear, others mention buttons falling off or stitching issues. The hood is cute but can flop over eyes unless snapped back, and it’s only lightly water-resistant. If you want warmth and style for your small dog and don’t mind fussing with sizing, this one’s a strong contender.",
-    "character_verdict": "It’s giving snuggle queen vibes, but only if you nail the sizing—this hoodie is super soft and cute, but runs tiny and can be fussy to fit. If you want your pup to serve looks and stay warm, just be ready to play the size-up game. For style and comfort, it’s a yes from me, but don’t expect it to survive a downpour or a wild tug-of-war.",
+    "overview": "The vecomfy Fleece Lining Extra Warm Dog Hoodie is a crowd favorite for keeping pups toasty and stylish, with a super-soft lining and adorable hood. Snap closures make dressing easier than Velcro, and most dogs seem happy to strut their stuff in it. But beware: sizing runs small and inconsistent, so expect to size up—maybe more than once. Durability is hit-or-miss, with some owners reporting loose buttons or stitching. If you’re after a warm, cute jacket and don’t mind playing the sizing game, this one’s a strong contender.",
+    "character_verdict": "It’s giving cozy-core realness with that plush fleece, and honestly, the cuteness is next level. But babes, the sizing drama is real—expect to size up, maybe twice. If you’re ready to gamble for the perfect fit, your pup will be the warmest (and cutest) on the block. Savage honesty: not for anyone who hates returns.",
     "sections": [
      {
       "heading": "The Full Picture",
-      "body": "The Vecomfy Fleece Lining Extra Warm Dog Hoodie is a crowd favorite for keeping pups toasty and stylish, with soft fleece and easy snap closures that make winter walks way more bearable. Owners love the comfort and adorable look, but sizing is a real struggle—expect to size up, maybe even twice. Durability is a mixed bag: some report long-lasting wear, others mention buttons falling off or stitching issues. The hood is cute but can flop over eyes unless snapped back, and it’s only lightly water-resistant. If you want warmth and style for your small dog and don’t mind fussing with sizing, this one’s a strong contender."
+      "body": "The vecomfy Fleece Lining Extra Warm Dog Hoodie is a crowd favorite for keeping pups toasty and stylish, with a super-soft lining and adorable hood. Snap closures make dressing easier than Velcro, and most dogs seem happy to strut their stuff in it. But beware: sizing runs small and inconsistent, so expect to size up—maybe more than once. Durability is hit-or-miss, with some owners reporting loose buttons or stitching. If you’re after a warm, cute jacket and don’t mind playing the sizing game, this one’s a strong contender."
      },
      {
       "heading": "Durability",
-      "body": "Durability is a mixed story—some owners see buttons fall off or stitching unravel, while others report the hoodie lasting through many chilly walks."
+      "body": "Durability is a mixed bag—some owners report loose buttons or stitching, while others get long-term use. It’s lightweight, but not always tough."
      },
      {
       "heading": "Comfort",
-      "body": "The warmth and softness are a major win, with lots of pups reportedly shivering less and moving freely in this hoodie."
+      "body": "This hoodie is all about warmth and softness, with a fleece lining and elastic edges that keep pups comfy and moving freely."
      },
      {
       "heading": "Style Appearance",
-      "body": "This hoodie is a total cuteness overload—owners love the look, and the hood and design get plenty of compliments."
+      "body": "It’s a total style moment—adorable, compliment-magnet, and the hood is extra cute if you’re into that look."
      },
      {
       "heading": "Affordability",
-      "body": "There’s no clear evidence on price or value, but the high public score suggests most buyers feel satisfied."
+      "body": "No direct price talk, but with so many happy buyers and a high score, most see it as good value for the cozy factor."
      },
      {
       "heading": "Tech Features",
-      "body": "No fancy tech here—snap closures and a leash hole are standard for dog jackets, not groundbreaking."
+      "body": "Nothing fancy here—snap closures and a leash hole are standard for dog jackets, not high-tech."
      },
      {
       "heading": "Eco Friendliness",
-      "body": "No evidence about eco-friendly materials or sustainability, so nothing special to report here."
+      "body": "No info on eco-friendly materials or sustainability, so don’t expect green credentials."
      },
      {
       "heading": "Engagement",
-      "body": "Some dogs seem to enjoy wearing it and stay outside longer, but it’s not designed for play or enrichment."
+      "body": "Some pups love wearing it and stay outside longer, but not every dog is a fan of jackets—engagement is hit or miss."
      },
      {
       "heading": "Ease Of Use",
-      "body": "Snap closures are generally easy, but snaps under the belly and sizing issues can make dressing a hassle for some."
+      "body": "Snaps are easier than Velcro for most, but putting it on can be tricky, especially with sizing issues."
      },
      {
       "heading": "Performance",
-      "body": "It shines for warmth and cold-weather protection, but don’t expect it to keep your pup dry in heavy rain."
+      "body": "It nails the warmth brief, keeping dogs cozy in cold weather, but don’t count on it for heavy rain."
      },
      {
       "heading": "Brand Reputation",
-      "body": "No direct signals about the brand’s reputation—feedback is all about this specific hoodie."
+      "body": "No big brand reputation signals—feedback is all about this specific hoodie, not the company overall."
      }
     ]
    },
@@ -325,25 +329,25 @@
     }
    },
    "trait_breakdown": {
-    "durability": "Durability is a mixed story—some owners see buttons fall off or stitching unravel, while others report the hoodie lasting through many chilly walks.",
-    "comfort": "The warmth and softness are a major win, with lots of pups reportedly shivering less and moving freely in this hoodie.",
-    "style_appearance": "This hoodie is a total cuteness overload—owners love the look, and the hood and design get plenty of compliments.",
-    "affordability": "There’s no clear evidence on price or value, but the high public score suggests most buyers feel satisfied.",
-    "tech_features": "No fancy tech here—snap closures and a leash hole are standard for dog jackets, not groundbreaking.",
-    "eco_friendliness": "No evidence about eco-friendly materials or sustainability, so nothing special to report here.",
-    "engagement": "Some dogs seem to enjoy wearing it and stay outside longer, but it’s not designed for play or enrichment.",
-    "ease_of_use": "Snap closures are generally easy, but snaps under the belly and sizing issues can make dressing a hassle for some.",
-    "performance": "It shines for warmth and cold-weather protection, but don’t expect it to keep your pup dry in heavy rain.",
-    "brand_reputation": "No direct signals about the brand’s reputation—feedback is all about this specific hoodie."
+    "durability": "Durability is a mixed bag—some owners report loose buttons or stitching, while others get long-term use. It’s lightweight, but not always tough.",
+    "comfort": "This hoodie is all about warmth and softness, with a fleece lining and elastic edges that keep pups comfy and moving freely.",
+    "style_appearance": "It’s a total style moment—adorable, compliment-magnet, and the hood is extra cute if you’re into that look.",
+    "affordability": "No direct price talk, but with so many happy buyers and a high score, most see it as good value for the cozy factor.",
+    "tech_features": "Nothing fancy here—snap closures and a leash hole are standard for dog jackets, not high-tech.",
+    "eco_friendliness": "No info on eco-friendly materials or sustainability, so don’t expect green credentials.",
+    "engagement": "Some pups love wearing it and stay outside longer, but not every dog is a fan of jackets—engagement is hit or miss.",
+    "ease_of_use": "Snaps are easier than Velcro for most, but putting it on can be tricky, especially with sizing issues.",
+    "performance": "It nails the warmth brief, keeping dogs cozy in cold weather, but don’t count on it for heavy rain.",
+    "brand_reputation": "No big brand reputation signals—feedback is all about this specific hoodie, not the company overall."
    },
    "qa": [
     {
      "q": "Is the vecomfy worth it?",
-     "a": "The BeastieScore of 4.7/5 reflects strong owner satisfaction with warmth, comfort, and style, balanced by recurring sizing and some durability complaints. High confidence is based on a large review base and diverse sources."
+     "a": "The BeastieScore of 4.7/5 reflects strong warmth, comfort, and style feedback, balanced by recurring sizing and some durability complaints. High confidence comes from thousands of ratings and diverse review sources."
     },
     {
      "q": "Who is the Fleece Lining Extra Warm Dog Hoodie in Winter,Small Dog Jacket Puppy Coats with Hooded,Red XS best for?",
-     "a": "Best for small to medium dogs who need extra warmth and love a cute look, especially if you’re willing to double-check sizing and don’t need full waterproofing. Not ideal for owners who want a rugged, all-weather jacket or fuss-free sizing."
+     "a": "Best for small to medium pups who need serious warmth and don’t mind a snug fit—just be ready to size up and maybe swap sizes. If you want a fuss-free, perfect-fit jacket or have a dog who hates clothes, this isn’t your match."
     },
     {
      "q": "What should buyers watch out for?",
@@ -361,7 +365,7 @@
    },
    "seo": {
     "seo_title": "Vecomfy Fleece Dog Hoodie Review | BeastieRated",
-    "seo_description": "This Vecomfy fleece hoodie is a style win for pups who need extra warmth and cuteness in winter. Sizing runs small, so double-check before you buy.",
+    "seo_description": "This vecomfy fleece hoodie is a total win for warmth and cuteness, but sizing is a real headache. If you nail the fit, your pup’s winter style is sorted.",
     "og_image_url": "https://m.media-amazon.com/images/I/61+VyRVvXrL._AC_SX679_.jpg",
     "canonical_url": "https://us.fstg.beastierated.com/review/vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps",
     "review_slug": "vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps"
@@ -506,12 +510,12 @@
    },
    "safety": {
     "safety_feed_status": "clear",
-    "safety_feed_freshness_status": "current",
-    "safety_feed_checked_at": "2026-07-09T06:54:29.530Z",
-    "safety_age_days": 3.46412037037037e-05,
-    "safety_feed_summary": "No official US government safety alerts, recalls, or enforcement notices were found for the Vecomfy Fleece Lining Extra Warm Dog Hoodie (ASIN B07HCB1JPS) or similar dog apparel products. All relevant sources were checked and no matches were identified.",
+    "safety_feed_freshness_status": "missing",
+    "safety_feed_checked_at": "2026-07-09T13:12:35.827Z",
+    "safety_age_days": 8.960648148148148e-05,
+    "safety_feed_summary": "No official US government safety alerts, recalls, or warnings were found for the Vecomfy Fleece Lining Extra Warm Dog Hoodie (ASIN B07HCB1JPS) or similar dog apparel products. All relevant sources were checked and no matches were identified.",
     "public_safety_label": "Safety check incomplete",
-    "public_safety_note": "No official US government safety alerts, recalls, or enforcement notices were found for the Vecomfy Fleece Lining Extra Warm Dog Hoodie (ASIN B07HCB1JPS) or similar dog apparel products. All relevant sources were checked and no matches were identified. Safety-feed freshness is current, but this should not be treated as a safety certification.",
+    "public_safety_note": "No official US government safety alerts, recalls, or warnings were found for the Vecomfy Fleece Lining Extra Warm Dog Hoodie (ASIN B07HCB1JPS) or similar dog apparel products. All relevant sources were checked and no matches were identified. Safety-feed freshness is missing, so this should not be treated as a safety certification.",
     "safety_checks": [
      {
       "source_name": "CPSC",
@@ -532,7 +536,7 @@
       "match_confidence": "none",
       "match_type": "none",
       "source_url": "https://www.recalls.gov/",
-      "summary": "No recalls or safety notices found for this product or category.",
+      "summary": "No matching recalls or alerts for this product or category.",
       "why_relevant": "Recalls.gov aggregates US government recalls, including pet products."
      },
      {
@@ -566,17 +570,15 @@
       "match_type": "none",
       "source_url": "https://www.nhtsa.gov/recalls",
       "summary": "No relevant advisories; NHTSA does not regulate pet apparel.",
-      "why_relevant": "NHTSA is only relevant for vehicle-related pet products."
+      "why_relevant": "NHTSA is only relevant for vehicle-related products."
      }
     ],
     "matched_safety_alerts": [],
-    "cautions": [],
-    "missing_data": [
-     "No direct evidence on affordability or value.",
-     "No eco-friendliness or sustainability information.",
-     "No brand reputation evidence beyond product-level feedback.",
-     "Safety feed freshness status is missing; do not make affirmative safety-clear claims."
-    ]
+    "cautions": [
+     "Sizing and durability issues are noted in consumer reviews but are not part of official government safety alerts.",
+     "No official safety alerts or recalls found for this product or similar dog apparel. Sizing and durability issues are noted in consumer reviews but are not part of official government safety alerts."
+    ],
+    "missing_data": []
    },
    "disclosure": {
     "affiliate_disclosure_text": "BeastieRated is an AI-powered review service. Our characters and verdicts are generated by AI from aggregated public review data, retailer signals, and cited third-party sources. We do not conduct hands-on product testing or safety certification — our scores are editorial opinion based on the data available at the time of publication. As an Amazon Associate, we earn from qualifying purchases.",
@@ -605,7 +607,7 @@
       "@id": "https://us.fstg.beastierated.com/review/vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps#webpage",
       "url": "https://us.fstg.beastierated.com/review/vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps",
       "name": "Vecomfy Fleece Dog Hoodie Review | BeastieRated",
-      "description": "This Vecomfy fleece hoodie is a style win for pups who need extra warmth and cuteness in winter. Sizing runs small, so double-check before you buy.",
+      "description": "This vecomfy fleece hoodie is a total win for warmth and cuteness, but sizing is a real headache. If you nail the fit, your pup’s winter style is sorted.",
       "inLanguage": "en-US",
       "isPartOf": {
        "@type": "WebSite",
@@ -653,8 +655,8 @@
      },
      {
       "@type": "Review",
-      "name": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, But Watch That Sizing!",
-      "reviewBody": "The Vecomfy Fleece Lining Extra Warm Dog Hoodie is a crowd favorite for keeping pups toasty and stylish, with soft fleece and easy snap closures that make winter walks way more bearable. Owners love the comfort and adorable look, but sizing is a real struggle—expect to size up, maybe even twice. Durability is a mixed bag: some report long-lasting wear, others mention buttons falling off or stitching issues. The hood is cute but can flop over eyes unless snapped back, and it’s only lightly water-resistant. If you want warmth and style for your small dog and don’t mind fussing with sizing, this one’s a strong contender.",
+      "name": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, but Sizing Drama",
+      "reviewBody": "The vecomfy Fleece Lining Extra Warm Dog Hoodie is a crowd favorite for keeping pups toasty and stylish, with a super-soft lining and adorable hood. Snap closures make dressing easier than Velcro, and most dogs seem happy to strut their stuff in it. But beware: sizing runs small and inconsistent, so expect to size up—maybe more than once. Durability is hit-or-miss, with some owners reporting loose buttons or stitching. If you’re after a warm, cute jacket and don’t mind playing the sizing game, this one’s a strong contender.",
       "author": {
        "@type": "Organization",
        "name": "BeastieRated"
@@ -681,7 +683,7 @@
         "name": "Is the vecomfy worth it?",
         "acceptedAnswer": {
          "@type": "Answer",
-         "text": "The BeastieScore of 4.7/5 reflects strong owner satisfaction with warmth, comfort, and style, balanced by recurring sizing and some durability complaints. High confidence is based on a large review base and diverse sources."
+         "text": "The BeastieScore of 4.7/5 reflects strong warmth, comfort, and style feedback, balanced by recurring sizing and some durability complaints. High confidence comes from thousands of ratings and diverse review sources."
         }
        },
        {
@@ -689,7 +691,7 @@
         "name": "Who is the Fleece Lining Extra Warm Dog Hoodie in Winter,Small Dog Jacket Puppy Coats with Hooded,Red XS best for?",
         "acceptedAnswer": {
          "@type": "Answer",
-         "text": "Best for small to medium dogs who need extra warmth and love a cute look, especially if you’re willing to double-check sizing and don’t need full waterproofing. Not ideal for owners who want a rugged, all-weather jacket or fuss-free sizing."
+         "text": "Best for small to medium pups who need serious warmth and don’t mind a snug fit—just be ready to size up and maybe swap sizes. If you want a fuss-free, perfect-fit jacket or have a dog who hates clothes, this isn’t your match."
         }
        },
        {
@@ -718,7 +720,7 @@
        {
         "@type": "ListItem",
         "position": 3,
-        "name": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, But Watch That Sizing!",
+        "name": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, but Sizing Drama",
         "item": "https://us.fstg.beastierated.com/review/vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps"
        }
       ]
@@ -728,7 +730,10 @@
    "qa_meta": {
     "qa_status": "passed_with_warnings",
     "qa_errors": [],
-    "qa_warnings": []
+    "qa_warnings": [
+     "Safety status is clear but safety-feed freshness is missing/unknown/stale. Do not display as safety certified.",
+     "Disclosure policy warns safety feed is not current."
+    ]
    }
   },
   "schema_json_ld": {
@@ -739,7 +744,7 @@
      "@id": "https://us.fstg.beastierated.com/review/vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps#webpage",
      "url": "https://us.fstg.beastierated.com/review/vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps",
      "name": "Vecomfy Fleece Dog Hoodie Review | BeastieRated",
-     "description": "This Vecomfy fleece hoodie is a style win for pups who need extra warmth and cuteness in winter. Sizing runs small, so double-check before you buy.",
+     "description": "This vecomfy fleece hoodie is a total win for warmth and cuteness, but sizing is a real headache. If you nail the fit, your pup’s winter style is sorted.",
      "inLanguage": "en-US",
      "isPartOf": {
       "@type": "WebSite",
@@ -787,8 +792,8 @@
     },
     {
      "@type": "Review",
-     "name": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, But Watch That Sizing!",
-     "reviewBody": "The Vecomfy Fleece Lining Extra Warm Dog Hoodie is a crowd favorite for keeping pups toasty and stylish, with soft fleece and easy snap closures that make winter walks way more bearable. Owners love the comfort and adorable look, but sizing is a real struggle—expect to size up, maybe even twice. Durability is a mixed bag: some report long-lasting wear, others mention buttons falling off or stitching issues. The hood is cute but can flop over eyes unless snapped back, and it’s only lightly water-resistant. If you want warmth and style for your small dog and don’t mind fussing with sizing, this one’s a strong contender.",
+     "name": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, but Sizing Drama",
+     "reviewBody": "The vecomfy Fleece Lining Extra Warm Dog Hoodie is a crowd favorite for keeping pups toasty and stylish, with a super-soft lining and adorable hood. Snap closures make dressing easier than Velcro, and most dogs seem happy to strut their stuff in it. But beware: sizing runs small and inconsistent, so expect to size up—maybe more than once. Durability is hit-or-miss, with some owners reporting loose buttons or stitching. If you’re after a warm, cute jacket and don’t mind playing the sizing game, this one’s a strong contender.",
      "author": {
       "@type": "Organization",
       "name": "BeastieRated"
@@ -815,7 +820,7 @@
        "name": "Is the vecomfy worth it?",
        "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The BeastieScore of 4.7/5 reflects strong owner satisfaction with warmth, comfort, and style, balanced by recurring sizing and some durability complaints. High confidence is based on a large review base and diverse sources."
+        "text": "The BeastieScore of 4.7/5 reflects strong warmth, comfort, and style feedback, balanced by recurring sizing and some durability complaints. High confidence comes from thousands of ratings and diverse review sources."
        }
       },
       {
@@ -823,7 +828,7 @@
        "name": "Who is the Fleece Lining Extra Warm Dog Hoodie in Winter,Small Dog Jacket Puppy Coats with Hooded,Red XS best for?",
        "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Best for small to medium dogs who need extra warmth and love a cute look, especially if you’re willing to double-check sizing and don’t need full waterproofing. Not ideal for owners who want a rugged, all-weather jacket or fuss-free sizing."
+        "text": "Best for small to medium pups who need serious warmth and don’t mind a snug fit—just be ready to size up and maybe swap sizes. If you want a fuss-free, perfect-fit jacket or have a dog who hates clothes, this isn’t your match."
        }
       },
       {
@@ -852,7 +857,7 @@
       {
        "@type": "ListItem",
        "position": 3,
-       "name": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, But Watch That Sizing!",
+       "name": "Vecomfy Fleece Dog Hoodie: Cozy, Cute, but Sizing Drama",
        "item": "https://us.fstg.beastierated.com/review/vecomfy-fleece-lining-extra-warm-dog-hoodie-in-winter-small-dog-jacket-puppy-coats-with-hooded-red-xs-b07hcb1jps"
       }
      ]
@@ -977,12 +982,12 @@
   },
   "safety_json": {
    "safety_feed_status": "clear",
-   "safety_feed_freshness_status": "current",
-   "safety_feed_checked_at": "2026-07-09T06:54:29.530Z",
-   "safety_age_days": 3.46412037037037e-05,
-   "safety_feed_summary": "No official US government safety alerts, recalls, or enforcement notices were found for the Vecomfy Fleece Lining Extra Warm Dog Hoodie (ASIN B07HCB1JPS) or similar dog apparel products. All relevant sources were checked and no matches were identified.",
+   "safety_feed_freshness_status": "missing",
+   "safety_feed_checked_at": "2026-07-09T13:12:35.827Z",
+   "safety_age_days": 8.960648148148148e-05,
+   "safety_feed_summary": "No official US government safety alerts, recalls, or warnings were found for the Vecomfy Fleece Lining Extra Warm Dog Hoodie (ASIN B07HCB1JPS) or similar dog apparel products. All relevant sources were checked and no matches were identified.",
    "public_safety_label": "Safety check incomplete",
-   "public_safety_note": "No official US government safety alerts, recalls, or enforcement notices were found for the Vecomfy Fleece Lining Extra Warm Dog Hoodie (ASIN B07HCB1JPS) or similar dog apparel products. All relevant sources were checked and no matches were identified. Safety-feed freshness is missing, so this should not be treated as a safety certification.",
+   "public_safety_note": "No official US government safety alerts, recalls, or warnings were found for the Vecomfy Fleece Lining Extra Warm Dog Hoodie (ASIN B07HCB1JPS) or similar dog apparel products. All relevant sources were checked and no matches were identified. Safety-feed freshness is missing, so this should not be treated as a safety certification.",
    "safety_checks": [
     {
      "source_name": "CPSC",
@@ -1003,7 +1008,7 @@
      "match_confidence": "none",
      "match_type": "none",
      "source_url": "https://www.recalls.gov/",
-     "summary": "No recalls or safety notices found for this product or category.",
+     "summary": "No matching recalls or alerts for this product or category.",
      "why_relevant": "Recalls.gov aggregates US government recalls, including pet products."
     },
     {
@@ -1037,17 +1042,15 @@
      "match_type": "none",
      "source_url": "https://www.nhtsa.gov/recalls",
      "summary": "No relevant advisories; NHTSA does not regulate pet apparel.",
-     "why_relevant": "NHTSA is only relevant for vehicle-related pet products."
+     "why_relevant": "NHTSA is only relevant for vehicle-related products."
     }
    ],
    "matched_safety_alerts": [],
-   "cautions": [],
-   "missing_data": [
-    "No direct evidence on affordability or value.",
-    "No eco-friendliness or sustainability information.",
-    "No brand reputation evidence beyond product-level feedback.",
-    "Safety feed freshness status is current."
-   ]
+   "cautions": [
+    "Sizing and durability issues are noted in consumer reviews but are not part of official government safety alerts.",
+    "No official safety alerts or recalls found for this product or similar dog apparel. Sizing and durability issues are noted in consumer reviews but are not part of official government safety alerts."
+   ],
+   "missing_data": []
   },
   "disclosure_json": {
    "affiliate_disclosure_text": "BeastieRated is an AI-powered review service. Our characters and verdicts are generated by AI from aggregated public review data, retailer signals, and cited third-party sources. We do not conduct hands-on product testing or safety certification — our scores are editorial opinion based on the data available at the time of publication. As an Amazon Associate, we earn from qualifying purchases.",
