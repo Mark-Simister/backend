@@ -6,6 +6,7 @@ use DomainException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
  * One edition of a Best For subject — draft while `published_at` is null,
@@ -72,6 +73,8 @@ class BestForEdition extends Model
         'operational_at',
         'operational_by',
         'video_consistency_verified_at',
+        'manual_recommendation_suspended_at',
+        'manual_noindex_at',
     ];
 
     protected $fillable = [
@@ -92,6 +95,8 @@ class BestForEdition extends Model
         'operational_reason',
         'operational_at',
         'operational_by',
+        'manual_recommendation_suspended_at',
+        'manual_noindex_at',
     ];
 
     protected $casts = [
@@ -103,11 +108,14 @@ class BestForEdition extends Model
         'current_for_subject_id' => 'integer',
         'operational_at' => 'datetime',
         'operational_by' => 'integer',
+        'manual_recommendation_suspended_at' => 'datetime',
+        'manual_noindex_at' => 'datetime',
     ];
 
     protected static function booted(): void
     {
         static::creating(function (BestForEdition $edition) {
+            $edition->allocatePermanentIdentityIfMissing();
             $edition->assertCurrentPointerIsCoherent();
         });
 
@@ -143,6 +151,33 @@ class BestForEdition extends Model
                 ));
             }
         });
+    }
+
+    /**
+     * Allocate the two identity columns the schema requires on EVERY persisted row,
+     * including a draft: `public_edition_key` is NOT NULL UNIQUE, and
+     * `edition_sequence` is NOT NULL and UNIQUE within the subject. Neither can wait
+     * for publication, so both are assigned once here, at creation. Publication only
+     * validates that they are present — it never reassigns them.
+     *
+     * `public_edition_key` is an OPAQUE permanent identifier: a ULID, deliberately not
+     * a slug and not a category/year routing rule. The eventual public URL is a
+     * separate later decision and must not be derived from this value.
+     *
+     * An explicitly supplied value always wins, so callers keep full control and the
+     * uniqueness constraints stay directly observable in tests.
+     */
+    protected function allocatePermanentIdentityIfMissing(): void
+    {
+        if (blank($this->public_edition_key)) {
+            $this->public_edition_key = (string) Str::ulid();
+        }
+
+        if ($this->edition_sequence === null && $this->subject_id !== null) {
+            $this->edition_sequence = 1 + (int) static::query()
+                ->where('subject_id', $this->subject_id)
+                ->max('edition_sequence');
+        }
     }
 
     /** Published as the database currently has it, ignoring unsaved changes. */
