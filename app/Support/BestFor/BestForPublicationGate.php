@@ -3,6 +3,7 @@
 namespace App\Support\BestFor;
 
 use App\Models\BestForEdition;
+use App\Models\BestForSubject;
 use App\Models\PublishedReviewPayload;
 use App\Models\ReviewPublicationDisposition;
 use Illuminate\Support\Facades\DB;
@@ -16,19 +17,46 @@ use Illuminate\Support\Str;
  * explicit human confirmation. Nothing is inferred from absent evidence — a condition
  * that cannot be established is a refusal, not a pass.
  *
+ * ### Regional eligibility — stricter than the review page, on purpose
+ *
+ * A collection is published for exactly one region, carried by its subject. Every
+ * selection must show EXPLICIT regional evidence for that region: an explicit row for
+ * the subject's region, or an explicit GLOBAL row. A GLOBAL collection accepts only an
+ * explicit GLOBAL row, because a collection served on every host cannot rest on a
+ * review that is evidenced for one country.
+ *
+ * This deliberately does NOT reuse PublishedReviewPayload::scopePublicForRegion(). That
+ * scope answers a different question — "is this page visible on THIS host right now" —
+ * and treats an empty region set as "all regions" for backwards-compatibility with
+ * pipeline-seeded payloads. Best For refuses that reading: an empty region set is
+ * ABSENT EVIDENCE, and this gate never reads absent evidence as satisfaction. A review
+ * page merely being visible somewhere is a weaker claim than recommending a product to
+ * an audience. The scope's status clause is still reused; its region clause is not.
+ *
+ * `market_id` is not consulted anywhere in this class. It is nullable free text mirrored
+ * from an external sheet, has no reference table and no consumer, and can change under an
+ * existing review on re-import — so it cannot carry eligibility. `category_region` is not
+ * consulted either: it has no foreign keys and its operational reliability is unproved,
+ * and inventing a gate condition from an unverified pivot would refuse valid publications.
+ *
  * ### Deliberately NOT part of this gate
  *
- * Regional / market suitability. PublishedReviewPayload::scopePublicForRegion() exists,
- * but it answers a different question — "is this page visible on THIS host for THIS
- * request's region right now" — and Best For editions carry no market identity at all.
- * No approved contract authorises an all-region or GLOBAL restriction, so none is
- * imposed here. Its status clause is reused; the region clause is not. Regional
- * suitability remains a known later renderer/publication-workflow dependency and must
- * be resolved before any real production publication workflow is approved.
+ * What happens AFTER publication when a payload's regions change. That affects live link
+ * and action availability only; it never rewrites the immutable snapshot and never moves
+ * recommendation_state or indexing_state on its own. It is later renderer work.
  */
 final class BestForPublicationGate
 {
     public const REQUIRED_SELECTION_COUNT = 5;
+
+    /**
+     * The region code denoting "every host". A global collection is an ordinary subject
+     * pointing at this region row, not a null. Its existence as reference data is an
+     * invariant the operational boundary must establish and protect before a real GLOBAL
+     * publication — nothing here creates it, and a test fixture creating one proves only
+     * that the gate reads it correctly.
+     */
+    public const GLOBAL_REGION_CODE = 'GLOBAL';
 
     private SelectionSnapshotBuilder $snapshots;
 
@@ -50,6 +78,11 @@ final class BestForPublicationGate
 
         $errors = array_merge($errors, $this->editionErrors($edition, $confirmations));
 
+        // Resolved once, not per selection. Null means the subject's region is missing,
+        // unresolvable or inactive — editionErrors() has already said so, and repeating
+        // it five more times as a per-review regional failure would bury the real cause.
+        $subjectRegionCode = $this->publishableSubjectRegionCode($edition);
+
         $selections = $edition->selections()->get();
         $errors = array_merge($errors, $this->shapeErrors($selections));
 
@@ -65,7 +98,7 @@ final class BestForPublicationGate
                 $identifiers[$reviewId] = $snapshot['values']['source_product_identifier'] ?? null;
             }
 
-            $errors = array_merge($errors, $this->referenceErrors($edition, $reviewId, $confirmations));
+            $errors = array_merge($errors, $this->referenceErrors($edition, $reviewId, $confirmations, $subjectRegionCode));
         }
 
         $errors = array_merge($errors, $this->distinctnessErrors($identifiers, $selections->count(), $confirmations));
@@ -113,7 +146,108 @@ final class BestForPublicationGate
             return $errors;
         }
 
+        $errors = array_merge($errors, $this->subjectRegionErrors($subject));
+
         return array_merge($errors, $this->snapshots->forEdition($subject)['errors']);
+    }
+
+    /**
+     * The collection's own region must be established before any selection can be judged
+     * against it. An inactive region is a refusal rather than a pass: a region switched
+     * off is a deliberate operational act, and publishing a new collection into it would
+     * contradict that act at the moment it is least visible.
+     *
+     * @return string[]
+     */
+    private function subjectRegionErrors(BestForSubject $subject): array
+    {
+        if ($subject->region_id === null) {
+            return ['The collection subject has no region, so regional eligibility cannot be established.'];
+        }
+
+        $region = $subject->region;
+
+        if (! $region) {
+            return ['The collection subject region cannot be resolved.'];
+        }
+
+        if (! (bool) $region->is_active) {
+            return [sprintf(
+                'The collection subject region "%s" is not active.',
+                (string) $region->region_code
+            )];
+        }
+
+        return [];
+    }
+
+    /**
+     * The subject's region code, or null when it is missing, unresolvable or inactive —
+     * in which case the per-selection regional check is skipped and the single subject-level
+     * error stands on its own.
+     */
+    private function publishableSubjectRegionCode(BestForEdition $edition): ?string
+    {
+        $subject = $edition->subject;
+
+        if (! $subject || $subject->region_id === null) {
+            return null;
+        }
+
+        $region = $subject->region;
+
+        if (! $region || ! (bool) $region->is_active) {
+            return null;
+        }
+
+        return (string) $region->region_code;
+    }
+
+    /**
+     * Explicit regional evidence for one selection.
+     *
+     *   subject GLOBAL      → the payload must carry an explicit GLOBAL row
+     *   subject e.g. AU     → an explicit AU row, or an explicit GLOBAL row
+     *   no rows at all      → FAIL. Absence is not evidence of availability
+     *   only another region → FAIL
+     *
+     * The two failures are reported differently because they need different fixes: an
+     * empty set means the review has never been regionally classified, while a wrong set
+     * means it has been classified and this collection is not in it.
+     *
+     * @return string[]
+     */
+    private function regionErrors(PublishedReviewPayload $payload, string $reviewId, string $subjectRegionCode): array
+    {
+        $acceptable = $subjectRegionCode === self::GLOBAL_REGION_CODE
+            ? [self::GLOBAL_REGION_CODE]
+            : [$subjectRegionCode, self::GLOBAL_REGION_CODE];
+
+        $payloadCodes = $payload->regions()
+            ->pluck('region_code')
+            ->map(fn ($code) => (string) $code)
+            ->all();
+
+        if (array_intersect($payloadCodes, $acceptable) !== []) {
+            return [];
+        }
+
+        if ($payloadCodes === []) {
+            return [sprintf(
+                'Review %s: no explicit region rows, so eligibility for the "%s" collection cannot be established. '
+                . 'An empty region set is not read here as "all regions".',
+                $reviewId,
+                $subjectRegionCode
+            )];
+        }
+
+        return [sprintf(
+            'Review %s is regionally evidenced for %s, which does not satisfy the "%s" collection (needs %s).',
+            $reviewId,
+            implode(', ', $payloadCodes),
+            $subjectRegionCode,
+            implode(' or ', $acceptable)
+        )];
     }
 
     /** @return string[] */
@@ -165,13 +299,21 @@ final class BestForPublicationGate
     }
 
     /** @return string[] */
-    private function referenceErrors(BestForEdition $edition, string $reviewId, PublicationConfirmations $confirmations): array
-    {
+    private function referenceErrors(
+        BestForEdition $edition,
+        string $reviewId,
+        PublicationConfirmations $confirmations,
+        ?string $subjectRegionCode
+    ): array {
         $errors = [];
         $payload = $this->snapshots->resolvePayload($reviewId);
 
         if (! $payload) {
             return $errors;   // already reported by the snapshot builder
+        }
+
+        if ($subjectRegionCode !== null) {
+            $errors = array_merge($errors, $this->regionErrors($payload, $reviewId, $subjectRegionCode));
         }
 
         $publicStatuses = (array) config('reviews.public_statuses', ['published']);

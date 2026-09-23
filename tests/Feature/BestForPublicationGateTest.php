@@ -7,6 +7,7 @@ use App\Models\BestForEditionSelection;
 use App\Models\BestForSubject;
 use App\Models\Category;
 use App\Models\PublishedReviewPayload;
+use App\Models\Region;
 use App\Models\ReviewPublicationDisposition;
 use App\Services\ReviewDispositionService;
 use App\Support\BestFor\BestForPublicationGate;
@@ -31,7 +32,32 @@ class BestForPublicationGateTest extends TestCase
     /** @var string[] */
     private array $reviewIds = ['PR-1', 'PR-2', 'PR-3', 'PR-4', 'PR-5'];
 
-    private function payload(string $id, array $overrides = [], array $pageOverrides = []): PublishedReviewPayload
+    /**
+     * A test-only region fixture. Creating a GLOBAL row here proves only that the gate
+     * reads one correctly — it is not evidence that a real GLOBAL row exists in any
+     * persistent environment, which remains an outstanding reference-data prerequisite.
+     */
+    private function region(string $code = 'AU', bool $active = true): Region
+    {
+        $region = Region::firstOrCreate(
+            ['region_code' => $code],
+            ['region_name' => $code . ' region', 'currency' => 'AUD', 'is_active' => $active]
+        );
+
+        if ((bool) $region->is_active !== $active) {
+            $region->is_active = $active;
+            $region->save();
+        }
+
+        return $region;
+    }
+
+    /**
+     * @param  string[]  $regionCodes  explicit regional evidence. The default is the AU
+     *                                 row that matches the default subject, so the common
+     *                                 path passes; pass [] to test the empty-set refusal.
+     */
+    private function payload(string $id, array $overrides = [], array $pageOverrides = [], array $regionCodes = ['AU']): PublishedReviewPayload
     {
         $page = array_replace_recursive([
             'payload_schema_version' => SelectionSnapshotBuilder::REQUIRED_PAYLOAD_SCHEMA_VERSION,
@@ -52,18 +78,26 @@ class BestForPublicationGateTest extends TestCase
             'review_page_json' => $page,
         ], $overrides))->save();
 
+        $payload->regions()->sync(
+            array_map(fn (string $code) => $this->region($code)->id, $regionCodes)
+        );
+
         return $payload;
     }
 
-    private function subject(string $categoryName = 'Automatic Dog Feeders', int $year = 2026): BestForSubject
+    private function subject(string $categoryName = 'Automatic Dog Feeders', int $year = 2026, string $regionCode = 'AU'): BestForSubject
     {
         return BestForSubject::create([
             'category_id' => Category::create(['name' => $categoryName])->id,
             'year' => $year,
+            'region_id' => $this->region($regionCode)->id,
         ]);
     }
 
-    private function draft(?BestForSubject $subject = null, int $selectionCount = 5): BestForEdition
+    /**
+     * @param  string[]  $regionCodes  regional evidence applied to every generated payload
+     */
+    private function draft(?BestForSubject $subject = null, int $selectionCount = 5, array $regionCodes = ['AU']): BestForEdition
     {
         $subject = $subject ?? $this->subject();
 
@@ -79,7 +113,7 @@ class BestForPublicationGateTest extends TestCase
 
         for ($i = 0; $i < $selectionCount; $i++) {
             $reviewId = $this->reviewIds[$i];
-            $this->payload($reviewId);
+            $this->payload($reviewId, [], [], $regionCodes);
             $this->selection($edition, $i + 1, $reviewId, $superlatives[$i]);
         }
 
@@ -324,5 +358,120 @@ class BestForPublicationGateTest extends TestCase
         $edition->save();
 
         $this->assertStringContainsString('already published', $this->errors($edition->refresh()));
+    }
+
+    // ---- Regional eligibility (BR-IMPL-03) ---------------------------------------
+
+    public function test_a_regional_subject_passes_when_every_payload_carries_that_region(): void
+    {
+        $edition = $this->draft($this->subject('Automatic Dog Feeders', 2026, 'AU'), 5, ['AU']);
+
+        $this->assertSame('', $this->errors($edition));
+    }
+
+    public function test_a_regional_subject_passes_when_every_payload_carries_global(): void
+    {
+        $edition = $this->draft($this->subject('Automatic Dog Feeders', 2026, 'AU'), 5, ['GLOBAL']);
+
+        $this->assertSame('', $this->errors($edition));
+    }
+
+    public function test_a_global_subject_passes_when_every_payload_carries_global(): void
+    {
+        $edition = $this->draft($this->subject('Automatic Dog Feeders', 2026, 'GLOBAL'), 5, ['GLOBAL']);
+
+        $this->assertSame('', $this->errors($edition));
+    }
+
+    public function test_it_refuses_a_payload_with_no_region_rows_at_all(): void
+    {
+        $edition = $this->draft($this->subject('Automatic Dog Feeders', 2026, 'AU'), 5, []);
+
+        $errors = $this->errors($edition);
+
+        $this->assertStringContainsString('no explicit region rows', $errors);
+        // The whole point: the review-page contract would read this as "all regions".
+        $this->assertStringContainsString('not read here as "all regions"', $errors);
+    }
+
+    public function test_it_refuses_a_payload_evidenced_only_for_a_different_region(): void
+    {
+        $edition = $this->draft($this->subject('Automatic Dog Feeders', 2026, 'AU'), 5, ['US']);
+
+        $errors = $this->errors($edition);
+
+        $this->assertStringContainsString('regionally evidenced for US', $errors);
+        $this->assertStringContainsString('does not satisfy the "AU" collection', $errors);
+    }
+
+    /**
+     * A GLOBAL collection is served on every host, so a country-specific row is not
+     * enough evidence for it — this is the asymmetry that makes GLOBAL stricter than AU.
+     */
+    public function test_a_global_subject_refuses_a_payload_evidenced_only_for_one_region(): void
+    {
+        $edition = $this->draft($this->subject('Automatic Dog Feeders', 2026, 'GLOBAL'), 5, ['AU']);
+
+        $errors = $this->errors($edition);
+
+        $this->assertStringContainsString('regionally evidenced for AU', $errors);
+        $this->assertStringContainsString('does not satisfy the "GLOBAL" collection', $errors);
+    }
+
+    public function test_it_refuses_when_the_subject_region_is_inactive(): void
+    {
+        $edition = $this->draft($this->subject('Automatic Dog Feeders', 2026, 'AU'), 5, ['AU']);
+
+        $this->region('AU', false);
+
+        $errors = $this->errors($edition);
+
+        $this->assertStringContainsString('region "AU" is not active', $errors);
+        // One clear cause, not five per-review regional failures on top of it.
+        $this->assertStringNotContainsString('no explicit region rows', $errors);
+    }
+
+    public function test_it_refuses_when_the_subject_has_no_resolvable_region(): void
+    {
+        $edition = $this->draft();
+
+        // region_id is NOT NULL in schema, so this state is represented in memory:
+        // the gate must still refuse it rather than skip the check.
+        $subject = $edition->subject;
+        $subject->region_id = null;
+        $edition->setRelation('subject', $subject);
+
+        $this->assertStringContainsString('has no region', $this->errors($edition));
+    }
+
+    // ---- market_id and category_region are deliberately not consulted -------------
+
+    public function test_market_id_does_not_affect_the_outcome(): void
+    {
+        $subject = $this->subject('Automatic Dog Feeders', 2026, 'AU');
+        $edition = $this->draft($subject, 5, ['AU']);
+
+        $this->assertSame('', $this->errors($edition));
+
+        // Absent, matching, and contradictory market values must all behave identically,
+        // because market_id is external free text with no reference table.
+        foreach ([null, 'AU', 'US', 'ZZ-NOT-A-MARKET'] as $index => $market) {
+            PublishedReviewPayload::query()
+                ->where('published_review_id', $this->reviewIds[$index])
+                ->update(['market_id' => $market]);
+        }
+
+        $this->assertSame('', $this->errors($edition->refresh()));
+    }
+
+    public function test_a_missing_category_region_row_does_not_block_publication(): void
+    {
+        $subject = $this->subject('Automatic Dog Feeders', 2026, 'AU');
+        $edition = $this->draft($subject, 5, ['AU']);
+
+        // Nothing in this test ever writes category_region, and the edition still
+        // publishes: an unverified pivot with no foreign keys is not a gate condition.
+        $this->assertSame(0, DB::table('category_region')->where('category_id', $subject->category_id)->count());
+        $this->assertSame('', $this->errors($edition));
     }
 }

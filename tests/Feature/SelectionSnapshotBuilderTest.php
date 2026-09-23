@@ -209,7 +209,15 @@ class SelectionSnapshotBuilderTest extends TestCase
     public function test_edition_values_come_from_the_category_and_subject(): void
     {
         $category = Category::create(['name' => 'Automatic Dog Feeders']);
-        $subject = BestForSubject::create(['category_id' => $category->id, 'year' => 2026]);
+        $region = \App\Models\Region::firstOrCreate(
+            ['region_code' => 'AU'],
+            ['region_name' => 'AU region', 'currency' => 'AUD', 'is_active' => true]
+        );
+        $subject = BestForSubject::create([
+            'category_id' => $category->id,
+            'year' => 2026,
+            'region_id' => $region->id,
+        ]);
 
         $result = $this->builder()->forEdition($subject);
 

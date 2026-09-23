@@ -6,6 +6,7 @@ use App\Models\BestForEdition;
 use App\Models\BestForEditionSelection;
 use App\Models\BestForSubject;
 use App\Models\Category;
+use App\Models\Region;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,13 +22,23 @@ class BestForSchemaTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function subject(string $categoryName = 'Dog Beds', int $year = 2026): BestForSubject
+    /** A test-only region fixture. Nothing here asserts a real GLOBAL row exists anywhere. */
+    private function region(string $code = 'AU'): Region
+    {
+        return Region::firstOrCreate(
+            ['region_code' => $code],
+            ['region_name' => $code . ' region', 'currency' => 'AUD', 'is_active' => true]
+        );
+    }
+
+    private function subject(string $categoryName = 'Dog Beds', int $year = 2026, string $regionCode = 'AU'): BestForSubject
     {
         $category = Category::create(['name' => $categoryName]);
 
         return BestForSubject::create([
             'category_id' => $category->id,
             'year' => $year,
+            'region_id' => $this->region($regionCode)->id,
         ]);
     }
 
@@ -70,15 +81,16 @@ class BestForSchemaTest extends TestCase
         ], $overrides));
     }
 
-    public function test_a_category_and_year_identify_exactly_one_subject(): void
+    public function test_a_category_year_and_region_identify_exactly_one_subject(): void
     {
-        $subject = $this->subject('Dog Beds', 2026);
+        $subject = $this->subject('Dog Beds', 2026, 'AU');
 
         $this->expectException(QueryException::class);
 
         BestForSubject::create([
             'category_id' => $subject->category_id,
             'year' => 2026,
+            'region_id' => $subject->region_id,
         ]);
     }
 
@@ -89,10 +101,52 @@ class BestForSchemaTest extends TestCase
         $next = BestForSubject::create([
             'category_id' => $subject->category_id,
             'year' => 2027,
+            'region_id' => $subject->region_id,
         ]);
 
         $this->assertNotSame($subject->id, $next->id);
         $this->assertSame(2, BestForSubject::count());
+    }
+
+    public function test_a_subject_requires_a_region(): void
+    {
+        $category = Category::create(['name' => 'Dog Beds']);
+
+        $this->expectException(QueryException::class);
+
+        BestForSubject::create([
+            'category_id' => $category->id,
+            'year' => 2026,
+        ]);
+    }
+
+    /**
+     * The coexistence rule, stated as a test so nobody "fixes" it later: a GLOBAL
+     * collection and regional collections for the same category and year are all
+     * valid at once. Which one a host serves is renderer precedence, not a storage
+     * constraint, so there is deliberately no rule forbidding this combination.
+     */
+    public function test_global_and_regional_subjects_coexist_for_the_same_category_and_year(): void
+    {
+        $category = Category::create(['name' => 'Automatic Dog Feeders']);
+
+        foreach (['GLOBAL', 'AU', 'US'] as $code) {
+            BestForSubject::create([
+                'category_id' => $category->id,
+                'year' => 2026,
+                'region_id' => $this->region($code)->id,
+            ]);
+        }
+
+        $this->assertSame(3, BestForSubject::where('category_id', $category->id)->where('year', 2026)->count());
+    }
+
+    public function test_the_region_relation_resolves_to_the_subjects_region(): void
+    {
+        $subject = $this->subject('Dog Beds', 2026, 'AU');
+
+        $this->assertSame('AU', $subject->fresh()->region->region_code);
+        $this->assertSame($this->region('AU')->id, $subject->fresh()->region_id);
     }
 
     public function test_edition_sequence_is_unique_within_a_subject(): void

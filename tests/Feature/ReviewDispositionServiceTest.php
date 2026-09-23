@@ -43,9 +43,17 @@ class ReviewDispositionServiceTest extends TestCase
 
     private function publishedEdition(): BestForEdition
     {
+        // Region is part of subject identity since BR-IMPL-03, and every payload below
+        // needs explicit evidence for it — the gate refuses an empty region set.
+        $region = \App\Models\Region::firstOrCreate(
+            ['region_code' => 'AU'],
+            ['region_name' => 'AU region', 'currency' => 'AUD', 'is_active' => true]
+        );
+
         $subject = BestForSubject::create([
             'category_id' => Category::create(['name' => 'Automatic Dog Feeders'])->id,
             'year' => 2026,
+            'region_id' => $region->id,
         ]);
 
         $edition = BestForEdition::create([
@@ -75,6 +83,8 @@ class ReviewDispositionServiceTest extends TestCase
                     'review_facts' => ['public_signal' => 'Strong'],
                 ],
             ])->save();
+
+            $payload->regions()->sync([$region->id]);
 
             BestForEditionSelection::create([
                 'edition_id' => $edition->id,

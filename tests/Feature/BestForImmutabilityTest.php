@@ -26,6 +26,15 @@ class BestForImmutabilityTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** A test-only region fixture; region is part of subject identity since BR-IMPL-03. */
+    private function region(string $code = 'AU'): \App\Models\Region
+    {
+        return \App\Models\Region::firstOrCreate(
+            ['region_code' => $code],
+            ['region_name' => $code . ' region', 'currency' => 'AUD', 'is_active' => true]
+        );
+    }
+
     private function subject(string $categoryName = 'Dog Beds', int $year = 2026): BestForSubject
     {
         $category = Category::create(['name' => $categoryName]);
@@ -33,6 +42,7 @@ class BestForImmutabilityTest extends TestCase
         return BestForSubject::create([
             'category_id' => $category->id,
             'year' => $year,
+            'region_id' => $this->region()->id,
         ]);
     }
 
@@ -316,5 +326,119 @@ class BestForImmutabilityTest extends TestCase
         $this->expectException(DomainException::class);
 
         $edition->forceFill(['methodology_text' => 'Smuggled in.'])->save();
+    }
+
+    // ---- Subject identity is immutable once persisted (BR-IMPL-03A) --------------
+    //
+    // The unique index stops a duplicate triple. It does nothing to stop an existing
+    // row's triple being changed to an unused one, which would move every edition
+    // linked by subject_id to a different identity without creating a new subject.
+
+    public function test_an_unsaved_subject_may_receive_all_three_identity_fields(): void
+    {
+        $subject = new BestForSubject();
+        $subject->category_id = Category::create(['name' => 'Dog Beds'])->id;
+        $subject->year = 2026;
+        $subject->region_id = $this->region('AU')->id;
+        $subject->save();
+
+        $this->assertTrue($subject->exists);
+        $this->assertSame(2026, $subject->fresh()->year);
+    }
+
+    public function test_a_persisted_subject_saves_when_no_identity_field_changed(): void
+    {
+        $subject = $this->subject();
+
+        $subject->save();          // no-op save
+        $subject->touch();         // a real UPDATE that changes only updated_at
+
+        $this->assertSame(1, BestForSubject::whereKey($subject->id)->count());
+    }
+
+    public function test_the_category_of_a_persisted_subject_cannot_change(): void
+    {
+        $subject = $this->subject();
+        $subject->category_id = Category::create(['name' => 'Cat Trees'])->id;
+
+        $this->expectException(DomainException::class);
+        $this->expectExceptionMessage('"category_id" is immutable identity');
+
+        $subject->save();
+    }
+
+    public function test_the_year_of_a_persisted_subject_cannot_change(): void
+    {
+        $subject = $this->subject();
+        $subject->year = 2027;
+
+        $this->expectException(DomainException::class);
+        $this->expectExceptionMessage('"year" is immutable identity');
+
+        $subject->save();
+    }
+
+    public function test_the_region_of_a_persisted_subject_cannot_change(): void
+    {
+        $subject = $this->subject();
+
+        // The defect this guard exists for: relocating a whole edition history to
+        // another regional identity without creating a new subject.
+        $this->draftEdition($subject, 1);
+        $subject->region_id = $this->region('US')->id;
+
+        $this->expectException(DomainException::class);
+        $this->expectExceptionMessage('"region_id" is immutable identity');
+
+        $subject->save();
+    }
+
+    public function test_changing_several_identity_fields_at_once_is_refused(): void
+    {
+        $subject = $this->subject();
+
+        try {
+            $subject->update([
+                'year' => 2027,
+                'region_id' => $this->region('US')->id,
+            ]);
+            $this->fail('Expected the identity guard to refuse the update.');
+        } catch (DomainException $e) {
+            $this->assertStringContainsString('year', $e->getMessage());
+            $this->assertStringContainsString('region_id', $e->getMessage());
+        }
+
+        $fresh = $subject->fresh();
+        $this->assertSame(2026, $fresh->year);
+        $this->assertSame($this->region('AU')->id, $fresh->region_id);
+    }
+
+    public function test_the_identity_guard_is_not_bypassed_by_force_filling(): void
+    {
+        $subject = $this->subject();
+
+        $this->expectException(DomainException::class);
+
+        $subject->forceFill(['region_id' => $this->region('US')->id])->save();
+    }
+
+    /**
+     * The guard freezes identity; it introduces no rule about which subjects may
+     * exist alongside each other. GLOBAL and regional subjects for the same category
+     * and year remain independently creatable — there is no INV-1 prohibition.
+     */
+    public function test_global_and_regional_subjects_still_coexist(): void
+    {
+        $category = Category::create(['name' => 'Automatic Dog Feeders']);
+
+        foreach (['GLOBAL', 'AU', 'US'] as $code) {
+            BestForSubject::create([
+                'category_id' => $category->id,
+                'year' => 2026,
+                'region_id' => $this->region($code)->id,
+            ]);
+        }
+
+        $this->assertSame(3, BestForSubject::where('category_id', $category->id)->where('year', 2026)->count());
     }
 }

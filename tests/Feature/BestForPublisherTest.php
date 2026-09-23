@@ -8,6 +8,7 @@ use App\Models\BestForEditionSelection;
 use App\Models\BestForSubject;
 use App\Models\Category;
 use App\Models\PublishedReviewPayload;
+use App\Models\Region;
 use App\Services\BestForPublisher;
 use App\Support\BestFor\PublicationConfirmations;
 use App\Support\BestFor\SelectionSnapshotBuilder;
@@ -29,7 +30,19 @@ class BestForPublisherTest extends TestCase
     /** @var string[] */
     private array $reviewIds = ['PR-1', 'PR-2', 'PR-3', 'PR-4', 'PR-5'];
 
-    private function payload(string $id, array $overrides = []): PublishedReviewPayload
+    /** A test-only region fixture. It does not assert that a real GLOBAL row exists anywhere. */
+    private function region(string $code = 'AU'): Region
+    {
+        return Region::firstOrCreate(
+            ['region_code' => $code],
+            ['region_name' => $code . ' region', 'currency' => 'AUD', 'is_active' => true]
+        );
+    }
+
+    /**
+     * @param  string[]  $regionCodes  explicit regional evidence; Best For refuses an empty set
+     */
+    private function payload(string $id, array $overrides = [], array $regionCodes = ['AU']): PublishedReviewPayload
     {
         $payload = new PublishedReviewPayload();
         $payload->forceFill(array_merge([
@@ -48,14 +61,19 @@ class BestForPublisherTest extends TestCase
             ],
         ], $overrides))->save();
 
+        $payload->regions()->sync(
+            array_map(fn (string $code) => $this->region($code)->id, $regionCodes)
+        );
+
         return $payload;
     }
 
-    private function subject(string $categoryName = 'Automatic Dog Feeders', int $year = 2026): BestForSubject
+    private function subject(string $categoryName = 'Automatic Dog Feeders', int $year = 2026, string $regionCode = 'AU'): BestForSubject
     {
         return BestForSubject::create([
             'category_id' => Category::create(['name' => $categoryName])->id,
             'year' => $year,
+            'region_id' => $this->region($regionCode)->id,
         ]);
     }
 
