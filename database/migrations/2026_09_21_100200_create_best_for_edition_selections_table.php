@@ -61,7 +61,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['edition_id', 'position']);
-            $table->unique(['edition_id', 'published_review_id']);
+            $table->unique(['edition_id', 'published_review_id'], 'bfes_edition_published_review_unique');
         });
     }
 
