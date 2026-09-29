@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PublishedReviewPayload;
+use App\Support\BestFor\CurrentMembershipResolver;
 use App\Support\RegionResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +58,13 @@ class PublicReviewPageController extends Controller
         // Cache key includes the origin (canonical/OG/JSON-LD are host-specific)
         // + indexability, so au/us/uk/ca and staging→prod never serve each
         // other's cached HTML. Only public 200s cached; 404s never. TTL 0 = off.
-        $render = fn () => $this->renderHtml($payload, $indexable, $origin);
+        // $region is carried into the render so D2 Best For membership resolves
+        // against the SAME host region as the payload gate and the canonical.
+        // The cache key needs no separate region component: $origin is the
+        // regional host for every regional request, and a non-regional request
+        // always resolves $region to null, so (origin, region) is already
+        // determined by origin alone.
+        $render = fn () => $this->renderHtml($payload, $indexable, $origin, $region);
         $html = $ttl > 0
             ? Cache::remember(
                 "review_html:{$payload->review_slug}:{$payload->updated_at}:" . ($indexable ? '1' : '0') . ":{$origin}",
@@ -121,10 +128,16 @@ class PublicReviewPageController extends Controller
         abort(404);
     }
 
-    private function renderHtml(PublishedReviewPayload $payload, bool $indexable, string $origin): string
+    private function renderHtml(PublishedReviewPayload $payload, bool $indexable, string $origin, ?string $region = null): string
     {
         // Pre-built payloads (already decoded to arrays by the model casts).
         $rp = is_array($payload->review_page_json) ? $payload->review_page_json : [];
+
+        // D2: CURRENT ACTIVE Best For memberships only. Read through the Best For
+        // entities via published_review_id — never from published_review_payloads,
+        // which carries no membership data. The resolver applies the exact-region
+        // then GLOBAL precedence and exposes no numeric rank.
+        $bestFor = (new CurrentMembershipResolver())->forReview($payload->published_review_id, $region);
         $schema = $payload->schema_json_ld ?: ($rp['schema'] ?? null);
 
         // Canonical (+ OG url) are ALWAYS the slug URL on the request's host.
@@ -144,6 +157,6 @@ class PublicReviewPageController extends Controller
             );
         }
 
-        return view('reviews.public-show', compact('payload', 'rp', 'schemaJson', 'canonical', 'indexable', 'origin'))->render();
+        return view('reviews.public-show', compact('payload', 'rp', 'schemaJson', 'canonical', 'indexable', 'origin', 'bestFor'))->render();
     }
 }

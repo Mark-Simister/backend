@@ -183,6 +183,9 @@
         @if(!empty($qv['beastie_take']))<p>{{ $qv['beastie_take'] }}</p>@endif
     @endif
 
+    {{-- ── D2 current active Best For memberships ── --}}
+    @include('reviews.partials.best-for')
+
     {{-- ── Where to buy: national payload retailers, then the local mount ── --}}
     @include('reviews.partials.retailers-national')
     @include('reviews.partials.local-retailers')
