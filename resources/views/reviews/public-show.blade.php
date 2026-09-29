@@ -33,6 +33,18 @@
     $category = $prod['category'] ?? $prod['product_category_taxonomy'] ?? null;
     $heroImg = $prod['official_product_image_url'] ?? $prod['hero_image_url'] ?? $ogImg;
 
+    // PUBLIC DISPLAY AUTHORITY: payload JSON only. Flat relational columns remain
+    // available for operational/query/publication use but are NOT a display fallback.
+    $finalScore    = $facts['beastiescore'] ?? ($bs['final_score'] ?? null);
+    $publicScore   = $facts['public_score'] ?? ($bs['public_score'] ?? null);
+    $ratingCount   = $facts['public_rating_count_retailer'] ?? ($facts['public_rating_count_score_model'] ?? null);
+    $evidenceCount = $facts['analysed_evidence_count'] ?? null;
+    $sourceCount   = $facts['source_count'] ?? null;
+    $publicSignal  = $facts['public_signal'] ?? null;
+    $analysisDepth = $facts['analysis_depth'] ?? null;
+    $depthCount    = $facts['analysis_depth_count'] ?? null;
+    $depthBasis    = $bs['analysis_depth_basis'] ?? [];
+
     $curSym = ['USD'=>'$','GBP'=>'£','EUR'=>'€','AUD'=>'A$','CAD'=>'C$'];
     $money = function ($p, $c = 'USD') use ($curSym) {
         return ($p === null || $p === '') ? null : ($curSym[$c] ?? '$') . number_format((float) $p, 2);
@@ -134,7 +146,7 @@
     <p class="byline">
         @if($host)Reviewed by <strong>{{ $host }}</strong>@if($channel) · {{ $channel }}@endif — @endif
         @if($payload->created_at)Published {{ \Illuminate\Support\Carbon::parse($payload->created_at)->format('M j, Y') }}@endif
-        @if($payload->final_beastie_score !== null) · <span class="score">BeastieScore {{ $payload->final_beastie_score }}/5</span>@endif
+        @if($finalScore !== null) · <span class="score">BeastieScore {{ $finalScore }}/5</span>@endif
     </p>
 
     {{-- ── Review Facts (LLM-extractable) ── --}}
@@ -143,9 +155,11 @@
         @if($brand)<div><dt>Brand</dt><dd>{{ $brand }}</dd></div>@endif
         @if($category)<div><dt>Category</dt><dd>{{ $category }}</dd></div>@endif
         @if($host)<div><dt>Reviewer</dt><dd>{{ $host }}@if($channel) · {{ $channel }}@endif</dd></div>@endif
-        @if($payload->final_beastie_score !== null)<div><dt>BeastieScore</dt><dd>{{ $payload->final_beastie_score }} / 5{{ $payload->confidence_tier ? ' · '.$payload->confidence_tier.' confidence' : '' }}</dd></div>@endif
-        @if($payload->public_score !== null)<div><dt>Public score</dt><dd>{{ $payload->public_score }} / 5{{ $payload->public_rating_count ? ' · '.number_format($payload->public_rating_count).' ratings' : '' }}</dd></div>@endif
-        @if($payload->analysed_evidence_count)<div><dt>Evidence analysed</dt><dd>{{ number_format($payload->analysed_evidence_count) }} signals across {{ $payload->source_count }} source families</dd></div>@endif
+        {{-- confidence_tier is INTERNAL ONLY and must never render (approved contract). --}}
+        @if($finalScore !== null)<div><dt>BeastieScore</dt><dd>{{ $finalScore }} / 5</dd></div>@endif
+        @if($publicScore !== null)<div><dt>Public score</dt><dd>{{ $publicScore }} / 5{{ $ratingCount ? ' · '.number_format($ratingCount).' ratings' : '' }}</dd></div>@endif
+        @if($publicSignal)<div><dt>Public signal</dt><dd>{{ $publicSignal }}</dd></div>@endif
+        @if($analysisDepth)<div><dt>Analysis depth</dt><dd>{{ $analysisDepth }}@if($depthCount !== null) · {{ $depthCount }} independent sources examined @endif</dd></div>@endif
         @if(!empty($fit['best_for']))<div><dt>Best for</dt><dd>{{ implode(', ', $asList($fit['best_for'])) }}</dd></div>@endif
         @if(!empty($fit['not_best_for']))<div><dt>Watch out for</dt><dd>{{ implode(', ', $asList($fit['not_best_for'])) }}</dd></div>@endif
         <div><dt>Disclosure</dt><dd>AI-generated review from aggregated public data; not a hands-on product test.</dd></div>
@@ -169,38 +183,26 @@
         @if(!empty($qv['beastie_take']))<p>{{ $qv['beastie_take'] }}</p>@endif
     @endif
 
-    {{-- ── Where to buy ── --}}
-    @if(!empty($retailers))
-        <h2>Product Buying Options</h2>
-        @if($primary && !empty($primary['url']))
-            <a class="cta" href="{{ $primary['url'] }}" rel="nofollow sponsored noopener" target="_blank">
-                {{ $qv['cta_text'] ?? 'Check Current Price' }} on {{ $primary['name'] ?? 'Amazon' }}
-            </a>
-        @endif
-        <table class="retail">
-            @foreach($retailers as $rt)
-                <tr>
-                    <td><strong>{{ $rt['name'] ?? 'Retailer' }}</strong> @if($rt['sponsored'] ?? false)<span class="tag">Ad</span>@endif</td>
-                    <td>{{ $money($rt['price'] ?? null, $rt['currency'] ?? 'USD') ?? 'See price' }}</td>
-                    <td>@if(!empty($rt['url']))<a href="{{ $rt['url'] }}" rel="nofollow sponsored noopener" target="_blank">View</a>@endif</td>
-                </tr>
-            @endforeach
-        </table>
-        <p class="note">{{ $commerce['commerce_disclosure'] ?? 'Affiliate links may earn BeastieRated a commission at no extra cost to you.' }}</p>
-    @endif
+    {{-- ── Where to buy: national payload retailers, then the local mount ── --}}
+    @include('reviews.partials.retailers-national')
+    @include('reviews.partials.local-retailers')
 
-    {{-- ── BeastieScore breakdown ── --}}
-    @if(($bs['final_score'] ?? $payload->final_beastie_score) !== null)
-        <h2>BeastieScore Breakdown</h2>
+    {{-- ── Public evidence fields (approved public semantics) ── --}}
+    @if($publicSignal || $analysisDepth || !empty($depthBasis))
+        <h2>How Much Evidence Sits Behind This</h2>
         <ul class="tight">
-            @if(($bs['public_score'] ?? null) !== null)<li>Public Score: {{ $bs['public_score'] }} / 5</li>@endif
-            @if(($bs['character_score'] ?? null) !== null)<li>Character Score: {{ $bs['character_score'] }} / 5 @if($host)({{ $host }})@endif</li>@endif
-            @if(($bs['editorial_score'] ?? null) !== null)<li>Editorial Adjustment: {{ $bs['editorial_score'] > 0 ? '+' : '' }}{{ $bs['editorial_score'] }}</li>@endif
-            <li><strong>Final BeastieScore: {{ $bs['final_score'] ?? $payload->final_beastie_score }} / 5</strong>@if($bs['confidence_tier'] ?? $payload->confidence_tier) · Confidence: {{ $bs['confidence_tier'] ?? $payload->confidence_tier }}@endif</li>
+            @if($publicSignal)<li>Public signal: <strong>{{ $publicSignal }}</strong></li>@endif
+            @if($analysisDepth)<li>Analysis depth: <strong>{{ $analysisDepth }}</strong>@if($depthCount !== null) ({{ $depthCount }} independent sources examined)@endif</li>@endif
+            @if(($depthBasis['professional_reviews'] ?? null) !== null)<li>Professional reviews: {{ $depthBasis['professional_reviews'] }}</li>@endif
+            @if(($depthBasis['retailer_review_sources'] ?? null) !== null)<li>Retailer review sources: {{ $depthBasis['retailer_review_sources'] }}</li>@endif
+            @if(($depthBasis['video_reviews'] ?? null) !== null)<li>Video reviews: {{ $depthBasis['video_reviews'] }}</li>@endif
         </ul>
         @if(!empty($bs['score_basis_summary']))<p class="note">{{ $bs['score_basis_summary'] }}</p>@endif
         <p class="note">{{ $bs['score_disclosure_line'] ?? 'BeastieScore is an aggregation-based verdict from public review data and third-party signals, not a hands-on product test.' }}</p>
     @endif
+
+    {{-- ── D3 curated public adjustment disclosure ── --}}
+    @include('reviews.partials.adjustments')
 
     {{-- ── Character's Take ── --}}
     @if(array_filter($take))
@@ -256,10 +258,10 @@
 
     {{-- ── Evidence & Sources ── --}}
     @php $typed = $sources['typed_source_links'] ?? []; $articles = $sources['review_articles'] ?? []; @endphp
-    @if(!empty($typed) || !empty($articles) || $payload->analysed_evidence_count)
+    @if(!empty($typed) || !empty($articles) || $evidenceCount)
         <h2>Evidence &amp; Sources</h2>
-        @if($payload->analysed_evidence_count)
-            <p>{{ number_format($payload->analysed_evidence_count) }} analysed signals across {{ $payload->source_count }} source families{{ $payload->public_rating_count ? ', from '.number_format($payload->public_rating_count).' public ratings' : '' }}.</p>
+        @if($evidenceCount)
+            <p>{{ number_format($evidenceCount) }} analysed signals across {{ $sourceCount }} source families{{ $ratingCount ? ', from '.number_format($ratingCount).' public ratings' : '' }}.</p>
         @endif
         @if(!empty($typed))
             <h3>Review sources</h3>

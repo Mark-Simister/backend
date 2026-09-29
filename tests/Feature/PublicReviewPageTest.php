@@ -30,9 +30,49 @@ class PublicReviewPageTest extends TestCase
         config(['reviews.rendering_enabled' => true]);
     }
 
-    private function makePayload(string $status, string $slug = 'test-product-b000test'): PublishedReviewPayload
+    /**
+     * Build a payload. PUBLIC DISPLAY SEMANTICS LIVE IN review_page_json - the flat
+     * columns are retained because they are legitimate operational/query columns, but
+     * the renderer must not use them as a display source. $overrides is merged into
+     * review_page_json so each contract state is a deterministic in-test mutation
+     * rather than a fixture file. $columns overrides flat columns (e.g. product_uid).
+     */
+    private function makePayload(string $status, string $slug = 'test-product-b000test', array $overrides = [], array $columns = []): PublishedReviewPayload
     {
-        return PublishedReviewPayload::create([
+        $rp = [
+            'hero' => ['title' => 'Test Product Review', 'channel' => 'TestChannel', 'character_name' => 'Testy'],
+            'quick_verdict' => ['summary' => 'A solid pick.'],
+            'disclosure' => ['affiliate_disclosure_text' => 'Affiliate links may earn a commission.'],
+            // confidence_tier is deliberately POPULATED here so the negative assertion
+            // that it never reaches public HTML is meaningful.
+            'review_facts' => [
+                'beastiescore' => 4.5,
+                'public_score' => 4.3,
+                'public_rating_count_retailer' => 1234,
+                'analysed_evidence_count' => 520,
+                'source_count' => 5,
+                'public_signal' => 'Very strong',
+                'analysis_depth' => 'Standard',
+                'analysis_depth_count' => 10,
+                'confidence_tier' => 'High',
+            ],
+            'beastiescore' => [
+                'final_score' => 4.5,
+                'public_score' => 4.3,
+                'confidence_tier' => 'High',
+                'score_basis_summary' => 'Based on a public rating of 4.3/5 across 1,234 public ratings.',
+                'analysis_depth_basis' => [
+                    'professional_reviews' => 1,
+                    'retailer_review_sources' => 2,
+                    'video_reviews' => 7,
+                    'total' => 10,
+                ],
+            ],
+        ];
+
+        $rp = array_replace_recursive($rp, $overrides);
+
+        return PublishedReviewPayload::create(array_merge([
             'published_review_id' => 'pr__' . $slug,
             'review_slug' => $slug,
             'publish_status' => $status,
@@ -44,16 +84,12 @@ class PublicReviewPageTest extends TestCase
             'public_rating_count' => 1234,
             'analysed_evidence_count' => 520,
             'source_count' => 5,
-            'review_page_json' => [
-                'hero' => ['title' => 'Test Product Review', 'channel' => 'TestChannel', 'character_name' => 'Testy'],
-                'quick_verdict' => ['summary' => 'A solid pick.'],
-                'disclosure' => ['affiliate_disclosure_text' => 'Affiliate links may earn a commission.'],
-            ],
+            'review_page_json' => $rp,
             'schema_json_ld' => [
                 '@context' => 'https://schema.org',
                 '@graph' => [['@type' => 'Product', 'name' => 'Test Product']],
             ],
-        ]);
+        ], $columns));
     }
 
     /** Create a Region, bypassing mass-assignment (test schema-agnostic). */
@@ -172,26 +208,237 @@ class PublicReviewPageTest extends TestCase
 
     /**
      * Regression: an inline @if glued to a word char (e.g. "5@if(...)") is not
-     * compiled by Blade and leaks as literal text. The Review Facts BeastieScore
-     * / Public-score / Evidence lines must render their conditional suffixes AND
-     * never emit raw directives.
+     * compiled by Blade and leaks as literal text. The Review Facts lines must render
+     * their conditional suffixes AND never emit raw directives.
+     *
+     * AMENDED (RP-RENDER-IMPL-01): this test previously asserted that "High confidence"
+     * RENDERS, which locked in a breach of the approved contract - confidence_tier must
+     * never render. The raw-directive regression is retained; the confidence assertion
+     * is inverted.
      */
-    public function test_beastiescore_confidence_renders_without_raw_blade_directives(): void
+    public function test_review_facts_render_without_raw_blade_directives(): void
     {
         config(['reviews.public_statuses' => ['ready_for_review']]);
         $p = $this->makePayload('ready_for_review');
 
         $res = $this->get('/review/' . $p->review_slug)->assertOk();
 
-        // Facts render, including the conditional confidence text.
         $res->assertSee('BeastieScore', false);
-        $res->assertSee('High confidence', false);
         $res->assertSee('1,234 ratings', false);
 
-        // No raw Blade directive may appear anywhere in the HTML.
         foreach (['@if', '@endif', '@foreach', '@endforeach', '@php', '@else'] as $directive) {
             $res->assertDontSee($directive, false);
         }
+    }
+
+    /** confidence_tier is INTERNAL ONLY and must never appear in public HTML. */
+    public function test_confidence_tier_never_renders(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review');
+
+        $res = $this->get('/review/' . $p->review_slug)->assertOk();
+
+        $res->assertDontSee('High confidence', false);
+        $res->assertDontSee('Confidence:', false);
+        $res->assertDontSee('confidence_tier', false);
+    }
+
+    /** No character or editorial component score may be presented publicly. */
+    public function test_character_and_editorial_scores_never_render(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review', 'ce-b000ce', [
+            'beastiescore' => ['character_score' => 4.9, 'editorial_score' => -0.2],
+        ]);
+
+        $res = $this->get('/review/' . $p->review_slug)->assertOk();
+
+        $res->assertDontSee('Character Score', false);
+        $res->assertDontSee('Editorial Adjustment', false);
+        $res->assertDontSee('4.9', false);
+    }
+
+    /** Public display semantics come from payload JSON, never the flat columns. */
+    public function test_payload_json_is_the_display_authority(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        // Flat columns say 1.1 / 9999; payload JSON says 4.5 / 1234. JSON must win.
+        $p = $this->makePayload('ready_for_review', 'auth-b000auth', [], [
+            'final_beastie_score' => 1.1,
+            'public_rating_count' => 9999,
+        ]);
+
+        $res = $this->get('/review/' . $p->review_slug)->assertOk();
+
+        $res->assertSee('4.5', false);
+        $res->assertSee('1,234 ratings', false);
+        $res->assertDontSee('1.1/5', false);
+        $res->assertDontSee('9,999', false);
+    }
+
+    /** public_signal / analysis_depth are the approved public evidence fields. */
+    public function test_public_signal_and_analysis_depth_render(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review');
+
+        $res = $this->get('/review/' . $p->review_slug)->assertOk();
+
+        $res->assertSee('Very strong', false);
+        $res->assertSee('Standard', false);
+        $res->assertSee('independent sources examined', false);
+    }
+
+    /** beastiescore.raw is internal and must never be surfaced. */
+    public function test_beastiescore_raw_is_never_surfaced(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review', 'raw-b000raw', [
+            'beastiescore' => ['raw' => ['safety_penalty' => 0.25, 'source_penalty' => 0.1, 'secret_internal' => 'LEAKME']],
+        ]);
+
+        $res = $this->get('/review/' . $p->review_slug)->assertOk();
+
+        $res->assertDontSee('LEAKME', false);
+        $res->assertDontSee('safety_penalty', false);
+        $res->assertDontSee('source_penalty', false);
+    }
+
+    /** D3: a clean payload shows a visibly distinct no-adjustment state. */
+    public function test_d3_no_adjustment_state(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review', 'd3none-b000n', [
+            'beastiescore' => ['public_score_adjustments' => [
+                'base_public_rating' => 4.3, 'final_beastie_score' => 4.3,
+                'adjustments' => [], 'net_adjustment' => 0,
+                'no_adjustment_occurred' => true, 'adjustments_cancel_to_zero' => false,
+            ]],
+        ]);
+
+        $this->get('/review/' . $p->review_slug)->assertOk()
+            ->assertSee('data-adjustment-state="none"', false)
+            ->assertSee('No adjustment was applied', false);
+    }
+
+    /** D3: one adjustment renders signed amount, reason and evidence references. */
+    public function test_d3_single_adjustment(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review', 'd3one-b000o', [
+            'beastiescore' => ['public_score_adjustments' => [
+                'base_public_rating' => 4.7, 'final_beastie_score' => 4.4,
+                'adjustments' => [[
+                    'kind' => 'divergence', 'amount' => -0.3,
+                    'reason' => 'Independent reviews report rusting.',
+                    'evidence_references' => ['https://example.test/expert-review'],
+                ]],
+                'net_adjustment' => -0.3,
+                'no_adjustment_occurred' => false, 'adjustments_cancel_to_zero' => false,
+            ]],
+        ]);
+
+        $this->get('/review/' . $p->review_slug)->assertOk()
+            ->assertSee('data-adjustment-state="applied"', false)
+            ->assertSee('-0.3', false)
+            ->assertSee('Independent reviews report rusting.', false)
+            ->assertSee('https://example.test/expert-review', false);
+    }
+
+    /** D3: multiple adjustments each render independently. */
+    public function test_d3_multiple_adjustments(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review', 'd3many-b000m', [
+            'beastiescore' => ['public_score_adjustments' => [
+                'base_public_rating' => 4.7, 'final_beastie_score' => 4.2,
+                'adjustments' => [
+                    ['kind' => 'divergence', 'amount' => -0.3, 'reason' => 'Durability shortfall.'],
+                    ['kind' => 'safety', 'amount' => -0.2, 'reason' => 'Moderate safety risk.'],
+                ],
+                'net_adjustment' => -0.5,
+                'no_adjustment_occurred' => false, 'adjustments_cancel_to_zero' => false,
+            ]],
+        ]);
+
+        $this->get('/review/' . $p->review_slug)->assertOk()
+            ->assertSee('Durability shortfall.', false)
+            ->assertSee('Moderate safety risk.', false)
+            ->assertSee('-0.5', false);
+    }
+
+    /** D3: cancellation to zero is visibly distinct from no adjustment. */
+    public function test_d3_cancelling_adjustments(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review', 'd3canc-b000c', [
+            'beastiescore' => ['public_score_adjustments' => [
+                'base_public_rating' => 4.5, 'final_beastie_score' => 4.5,
+                'adjustments' => [
+                    ['kind' => 'divergence', 'amount' => 0.2, 'reason' => 'Experts rate above the stars.'],
+                    ['kind' => 'safety', 'amount' => -0.2, 'reason' => 'Moderate safety risk.'],
+                ],
+                'net_adjustment' => 0,
+                'no_adjustment_occurred' => false, 'adjustments_cancel_to_zero' => true,
+            ]],
+        ]);
+
+        $this->get('/review/' . $p->review_slug)->assertOk()
+            ->assertSee('data-adjustment-cancels="1"', false)
+            ->assertSee('cancel out', false)
+            ->assertDontSee('data-adjustment-state="none"', false);
+    }
+
+    /** Retailer prices are suppressed while RP-PRICE-01 is unresolved. */
+    public function test_retailer_price_is_suppressed_even_when_present(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review', 'price-b000p', [
+            'commerce' => ['retailers' => [
+                ['name' => 'Amazon', 'url' => 'https://example.test/a', 'primary' => true, 'price' => 41.99, 'currency' => 'USD'],
+            ]],
+        ]);
+
+        $res = $this->get('/review/' . $p->review_slug)->assertOk();
+
+        $res->assertSee('Amazon', false);
+        $res->assertDontSee('41.99', false);
+        $res->assertDontSee('$41', false);
+    }
+
+    /** Sponsored treatment must not appear inside the national retailer loop. */
+    public function test_sponsored_treatment_absent_from_national_loop(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review', 'spon-b000s', [
+            'commerce' => ['retailers' => [
+                ['name' => 'Walmart', 'url' => 'https://example.test/w', 'sponsored' => true],
+            ]],
+        ]);
+
+        $res = $this->get('/review/' . $p->review_slug)->assertOk();
+
+        $res->assertSee('data-retailers="national"', false);
+        $res->assertSee('Walmart', false);
+        $res->assertDontSee('>Ad<', false);
+    }
+
+    /** The local-retailer hydration mount contract exists below the national block. */
+    public function test_local_retailer_mount_placeholder_exists(): void
+    {
+        config(['reviews.public_statuses' => ['ready_for_review']]);
+        $p = $this->makePayload('ready_for_review');
+
+        $html = $this->get('/review/' . $p->review_slug)->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-island="local-retailers"', $html);
+        $this->assertStringContainsString('data-island-state="ssr-placeholder"', $html);
+        $this->assertLessThan(
+            strpos($html, 'data-island="local-retailers"'),
+            strpos($html, 'data-retailers="national"'),
+            'the local mount must appear below the national retailer block'
+        );
     }
 
     public function test_draft_is_hidden(): void

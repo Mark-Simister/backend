@@ -68,6 +68,55 @@ class PublishedReviewPayload extends Model
                 if ($region) {
                     $q->orWhereHas('regions', fn (Builder $r) => $r->where('region_code', $region));
                 }
+            })
+            ->tap(fn (Builder $q) => $this->applyDivergenceHold($q))
+            ->tap(fn (Builder $q) => $this->applySafetyContradictionGate($q));
+    }
+
+    /**
+     * TEMPORARY D3 divergence-evidence hold (RP-DIV-02B1). Excludes reviews whose
+     * legacy divergence adjustment has no D3-grade evidentiary grounding. They are
+     * NOT wrong - they are unproven to the current disclosure standard, so they fail
+     * closed at the public boundary. Exact product_uid match only; never LIKE.
+     * Applied here so /review/{slug} and the sitemap share one determination.
+     */
+    private function applyDivergenceHold(Builder $q): void
+    {
+        $held = array_values(array_filter((array) config('reviews.divergence_hold_product_uids', [])));
+
+        if ($held !== []) {
+            // NULL-safe: `product_uid NOT IN (...)` is NULL for a NULL product_uid,
+            // which would silently 404 every payload that has no product_uid.
+            $q->where(function (Builder $w) use ($held) {
+                $w->whereNull('product_uid')->orWhereNotIn('product_uid', $held);
             });
+        }
+    }
+
+    /**
+     * D1 - a materially contradictory public safety state fails closed.
+     *
+     * The qualified predicate is exactly:
+     *   safety_feed_status === "clear" AND
+     *   safety_feed_freshness_status IN ("missing","unknown","stale")
+     *
+     * The renderer never reconciles, reinterprets or chooses between contradictory
+     * safety fields - it declines to publish. Expressed positively and NULL-safe:
+     * a payload with no safety block is not contradictory and stays eligible,
+     * because SQL NULL comparisons would otherwise silently exclude it.
+     */
+    private function applySafetyContradictionGate(Builder $q): void
+    {
+        $status = 'review_page_json->safety->safety_feed_status';
+        $fresh  = 'review_page_json->safety->safety_feed_freshness_status';
+
+        $q->where(function (Builder $outer) use ($status, $fresh) {
+            $outer->where(function (Builder $s) use ($status) {
+                $s->whereNull($status)->orWhere($status, '!=', 'clear');
+            })->orWhere(function (Builder $f) use ($fresh) {
+                $f->whereNull($fresh)
+                  ->orWhereNotIn($fresh, ['missing', 'unknown', 'stale']);
+            });
+        });
     }
 }

@@ -99,4 +99,70 @@ return [
         'ca' => 'CA',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | TEMPORARY D3 divergence-evidence hold (RP-DIV-02B1)
+    |--------------------------------------------------------------------------
+    | These reviews carry LEGACY DIVERGENCE ADJUSTMENTS whose evidentiary
+    | grounding has NOT been demonstrated to the current D3 standard. They are
+    | NOT declared wrong and their stored scores are untouched. They must fail
+    | closed at the public publication/indexing boundary for as long as the
+    | displayed BeastieScore incorporates the unresolved divergence adjustment
+    | without its required D3 disclosure.
+    |
+    | This is a TEMPORARY evidence hold, not a general publication mechanism.
+    | It is cleared by RP-DIV-03 (divergence evidence grounding), not by editing
+    | this list to make a page visible.
+    |
+    | Identity is the exact `product_uid` (US::BARKTASTIC::ASIN_<ASIN>) and is
+    | matched exactly - never by LIKE or substring. Enforced once, in
+    | PublishedReviewPayload::scopePublicForRegion(), so /review/{slug} and the
+    | sitemap cannot diverge.
+    */
+    'divergence_hold_product_uids' => [
+        'US::BARKTASTIC::ASIN_B00008DFGY',
+        'US::BARKTASTIC::ASIN_B000296N7S',
+        'US::BARKTASTIC::ASIN_B0002AR0I8',
+        'US::BARKTASTIC::ASIN_B0002J1FOE',
+        'US::BARKTASTIC::ASIN_B000L3XYZ4',
+        'US::BARKTASTIC::ASIN_B000NVA06A',
+        'US::BARKTASTIC::ASIN_B001FK4BLI',
+        'US::BARKTASTIC::ASIN_B001IN3JCY',
+        'US::BARKTASTIC::ASIN_B004QN0M2S',
+        'US::BARKTASTIC::ASIN_B005VS9WO6',
+        'US::BARKTASTIC::ASIN_B0062JFGFC',
+        'US::BARKTASTIC::ASIN_B007R1BN56',
+        'US::BARKTASTIC::ASIN_B007S9JOO4',
+        'US::BARKTASTIC::ASIN_B0081XIKYG',
+        'US::BARKTASTIC::ASIN_B00JZIDFKK',
+        'US::BARKTASTIC::ASIN_B00P0YQYYW',
+        'US::BARKTASTIC::ASIN_B00WWP1U7I',
+        'US::BARKTASTIC::ASIN_B01DOP5S9K',
+        'US::BARKTASTIC::ASIN_B01DSOVB70',
+        'US::BARKTASTIC::ASIN_B01L0QQNJE',
+        'US::BARKTASTIC::ASIN_B06XKKPPMP',
+        'US::BARKTASTIC::ASIN_B076F7HM8T',
+        'US::BARKTASTIC::ASIN_B07BVL8TQF',
+        'US::BARKTASTIC::ASIN_B07HCB1JPS',
+        'US::BARKTASTIC::ASIN_B07L3HPQG7',
+        'US::BARKTASTIC::ASIN_B07NSFR681',
+        'US::BARKTASTIC::ASIN_B07VT1468W',
+        'US::BARKTASTIC::ASIN_B07XF3TH73',
+        'US::BARKTASTIC::ASIN_B07ZN238CL',
+        'US::BARKTASTIC::ASIN_B07ZPPSR2L',
+        'US::BARKTASTIC::ASIN_B08CK5Z5Q1',
+        'US::BARKTASTIC::ASIN_B08NCDBT7Q',
+        'US::BARKTASTIC::ASIN_B097S74FZK',
+        'US::BARKTASTIC::ASIN_B09D7DWTVB',
+        'US::BARKTASTIC::ASIN_B09LD2CD1L',
+        'US::BARKTASTIC::ASIN_B0B2DM5Q7N',
+        'US::BARKTASTIC::ASIN_B0B5ZJY9MT',
+        'US::BARKTASTIC::ASIN_B0CC23VLBL',
+        'US::BARKTASTIC::ASIN_B0CFFKWYH6',
+        'US::BARKTASTIC::ASIN_B0CL3WC4MT',
+        'US::BARKTASTIC::ASIN_B0CLB6BD1B',
+        'US::BARKTASTIC::ASIN_B0D5B6RLYY',
+        'US::BARKTASTIC::ASIN_B0DK4787M3',
+    ],
+
 ];
