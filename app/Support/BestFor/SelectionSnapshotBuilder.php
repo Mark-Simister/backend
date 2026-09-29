@@ -49,8 +49,8 @@ use App\Models\PublishedReviewPayload;
  */
 final class SelectionSnapshotBuilder
 {
-    /** The v6 contract. A payload that does not declare exactly this cannot be published into a collection. */
-    public const REQUIRED_PAYLOAD_SCHEMA_VERSION = 'confidence_fields_v6_2026-07-27';
+    /** The v7 contract. A payload that does not declare exactly this cannot be published into a collection. */
+    public const REQUIRED_PAYLOAD_SCHEMA_VERSION = 'confidence_fields_v7_2026-07-27';
 
     /** The four-value public_signal domain, as shipped by the v6 confidence patcher. */
     public const PUBLIC_SIGNAL_DOMAIN = ['Very strong', 'Strong', 'Moderate', 'Limited'];
@@ -115,7 +115,7 @@ final class SelectionSnapshotBuilder
         $product = is_array($page['product'] ?? null) ? $page['product'] : [];
         $facts = is_array($page['review_facts'] ?? null) ? $page['review_facts'] : [];
 
-        // v6 contract. Without it there is no trustworthy public_signal to publish.
+        // v7 contract. Without it there is no trustworthy public_signal to publish.
         $schemaVersion = $page['payload_schema_version'] ?? null;
         if ($schemaVersion !== self::REQUIRED_PAYLOAD_SCHEMA_VERSION) {
             $errors[] = sprintf(

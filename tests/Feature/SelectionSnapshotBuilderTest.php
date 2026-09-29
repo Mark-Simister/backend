@@ -120,7 +120,7 @@ class SelectionSnapshotBuilderTest extends TestCase
         $this->assertStringContainsString('no published review payload', $result['errors'][0]);
     }
 
-    public function test_the_v6_schema_version_is_required(): void
+    public function test_a_mismatched_payload_schema_version_is_rejected(): void
     {
         $this->payload('5', [], ['payload_schema_version' => 'something_else']);
 
@@ -128,6 +128,40 @@ class SelectionSnapshotBuilderTest extends TestCase
 
         $this->assertSame([], $result['values']);
         $this->assertStringContainsString('payload_schema_version', implode(' ', $result['errors']));
+    }
+
+    /**
+     * The two tests below pin the PRODUCTION literal, deliberately hard-coded.
+     *
+     * Every other test here builds its fixture from REQUIRED_PAYLOAD_SCHEMA_VERSION,
+     * so the whole suite passes unchanged whichever version the constant names — it
+     * can prove that a mismatch is rejected, never WHICH version is accepted. That is
+     * exactly how a v6 consumer survived a 198-test qualification while the published
+     * producer had already moved to v7. Deriving the expected value from the constant
+     * here would reproduce that blind spot, so it must stay written out in full.
+     */
+    public function test_the_required_schema_version_is_the_production_v7_literal(): void
+    {
+        $this->assertSame(
+            'confidence_fields_v7_2026-07-27',
+            SelectionSnapshotBuilder::REQUIRED_PAYLOAD_SCHEMA_VERSION
+        );
+    }
+
+    /**
+     * The externally observable half: a payload shaped exactly like real published
+     * producer output is accepted. Asserts no schema-version error specifically,
+     * rather than an empty error list, so an unrelated validation change cannot
+     * silently turn this into a failure about something else.
+     */
+    public function test_a_payload_carrying_the_production_v7_literal_is_accepted(): void
+    {
+        $this->payload('9', [], ['payload_schema_version' => 'confidence_fields_v7_2026-07-27']);
+
+        $result = $this->builder()->forSelection('9');
+
+        $this->assertStringNotContainsString('payload_schema_version', implode(' ', $result['errors']));
+        $this->assertNotSame([], $result['values']);
     }
 
     public function test_an_absent_public_signal_refuses(): void
