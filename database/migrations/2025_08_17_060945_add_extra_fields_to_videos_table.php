@@ -12,21 +12,44 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('videos', function (Blueprint $table) {
+            // FU-2: six of these seven columns already exist on the long-lived staging
+            // database while this migration is still Pending, so a bare `php artisan
+            // migrate` dies here on the first duplicate column and never reaches any
+            // later migration. Each addition is guarded individually, in the same way
+            // as add_tag_ids_to_videos_table and add_seo_fields_to_videos_table, so a
+            // fresh database still receives all seven with their intended definitions
+            // while staging receives only the ones it is actually missing. The guards
+            // check existence only; no column definition is changed.
+
             // Tags / metadata
-            $table->json('tags')->nullable()->after('affiliate_link');
-            $table->enum('rating_type', ['rating', 'review'])->default('rating')->after('tags');
-            $table->enum('sponsorship_type', ['sponsored', 'unsponsored'])->default('unsponsored')->after('rating_type');
-            $table->json('highlight_tags')->nullable()->after('sponsorship_type');
-            $table->json('auto_tags')->nullable()->after('highlight_tags');
+            if (! Schema::hasColumn('videos', 'tags')) {
+                $table->json('tags')->nullable()->after('affiliate_link');
+            }
+            if (! Schema::hasColumn('videos', 'rating_type')) {
+                $table->enum('rating_type', ['rating', 'review'])->default('rating')->after('tags');
+            }
+            if (! Schema::hasColumn('videos', 'sponsorship_type')) {
+                $table->enum('sponsorship_type', ['sponsored', 'unsponsored'])->default('unsponsored')->after('rating_type');
+            }
+            if (! Schema::hasColumn('videos', 'highlight_tags')) {
+                $table->json('highlight_tags')->nullable()->after('sponsorship_type');
+            }
+            if (! Schema::hasColumn('videos', 'auto_tags')) {
+                $table->json('auto_tags')->nullable()->after('highlight_tags');
+            }
             // $table->enum('video_type', ['short', 'full_review', 'reel', 'live', 'compilation'])->default('short')->after('auto_tags');
            // $table->json('video_platforms')->nullable()->after('video_type');
 
             // Files
-             $table->string('raw_video_file')->nullable()->after('video_platforms');
+            if (! Schema::hasColumn('videos', 'raw_video_file')) {
+                $table->string('raw_video_file')->nullable()->after('video_platforms');
+            }
             //$table->string('caption_file')->nullable()->after('raw_video_file');
 
             // Workflow
-            $table->enum('status', ['draft', 'published'])->default('draft')->after('caption_file');
+            if (! Schema::hasColumn('videos', 'status')) {
+                $table->enum('status', ['draft', 'published'])->default('draft')->after('caption_file');
+            }
             // $table->boolean('is_ai_generated')->default(false)->after('status');
             //$table->boolean('is_finalized')->default(false)->after('is_ai_generated');
           //  $table->boolean('is_qa_passed')->default(false)->after('is_finalized');
