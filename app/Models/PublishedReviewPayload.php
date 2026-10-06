@@ -49,6 +49,39 @@ class PublishedReviewPayload extends Model
     }
 
     /**
+     * The Admin key of two-key publication (Admin Content & Media design record,
+     * section 4). Keyed by the stable review identity, not this row's id.
+     */
+    public function editorialRecord()
+    {
+        return $this->hasOne(ReviewEditorialRecord::class, 'published_review_id', 'published_review_id');
+    }
+
+    /**
+     * Rows NOT held by the D3 divergence hold. Exposes the SAME private predicate that
+     * scopePublicForRegion() applies, so Admin's Release guard evaluates D3 with the
+     * identical query code rather than a reimplementation. Does not change the public
+     * scope in any way.
+     */
+    public function scopePassesDivergenceHold(Builder $query): Builder
+    {
+        $this->applyDivergenceHold($query);
+
+        return $query;
+    }
+
+    /**
+     * Rows NOT D1-contradictory. Exposes the SAME private predicate that
+     * scopePublicForRegion() applies (see scopePassesDivergenceHold()).
+     */
+    public function scopePassesSafetyContradictionGate(Builder $query): Builder
+    {
+        $this->applySafetyContradictionGate($query);
+
+        return $query;
+    }
+
+    /**
      * The single source of truth for "is this payload publicly visible on this
      * region's host". Used by BOTH the controller and the sitemap so the rule
      * is never duplicated. Combines the publish_status gate with region

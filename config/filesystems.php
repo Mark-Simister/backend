@@ -47,6 +47,19 @@ return [
             'report' => false,
         ],
 
+        // Admin Content & Media Operations: BeastieRated-managed images and audio
+        // (design record section 7). Never the checkout's public/ directory. MEDIA_URL
+        // is explicit so APP_URL never becomes load-bearing for media URLs; when it is
+        // unset, no public media URL is produced (fail closed).
+        'media' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/media'),
+            'url' => env('MEDIA_URL'),
+            'visibility' => 'public',
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

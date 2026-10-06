@@ -72,6 +72,12 @@ class VideosSchemaForwardMigrationsTest extends TestCase
                 : 'fixture';
         }
 
+        // videos.type is ENUM('youtube', 'vimeo'). MySQL strict mode rejects any other
+        // literal (SQLite here does not enforce it), so the neutral fixture uses a valid one.
+        if (array_key_exists('type', $row)) {
+            $row['type'] = 'vimeo';
+        }
+
         return $row;
     }
 

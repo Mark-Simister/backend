@@ -25,7 +25,10 @@ class Channel extends Model
         'channel_category',
     ];
 
-    protected $hidden = ['image'];
+    // bio, category_label and pipeline_code are Admin Content & Media columns (design
+    // record section 9.2). Hidden until the public channel API composes them explicitly
+    // (Sprint C), so adding the columns changes no public output.
+    protected $hidden = ['image', 'bio', 'category_label', 'pipeline_code'];
     protected $appends = ['image_url'];
 
     public function getImageUrlAttribute()

@@ -58,6 +58,25 @@ class RolePermissionSeeder extends Seeder
             // product-message deletion). Split it into per-domain permissions BEFORE it is
             // ever granted to a sub_admin, or a colour-editor also gains message deletion.
             'settings.manage',
+
+            // Admin Content & Media Operations (design record section 11): the complete
+            // frozen seed matrix. Every action with public consequences has its own
+            // explicit permission. The bestfor.* permissions are seeded now, with the rest
+            // of the matrix; no route or screen uses them until the Best For curation
+            // sprint (Sprint D).
+            'review.view',
+            'review.edit',
+            'review.qa',
+            'review.hold',
+            'review.release',
+            'review.withdraw',
+            'media.view',
+            'media.manage',
+            'bestfor.view',
+            'bestfor.edit',
+            'bestfor.publish',
+            'bestfor.hold',
+            'bestfor.unpublish',   // unpublish and restore - super_admin only
         ];
 
         // Create permissions
@@ -102,5 +121,25 @@ class RolePermissionSeeder extends Seeder
 
         // Assign no permissions to user
         $user->syncPermissions([]);
+
+        // Admin Content & Media Operations roles (design record section 11), least
+        // privilege. sub_admin deliberately gains nothing new. One authorised person may
+        // hold both review.qa and review.release (M4); QA pass and Release remain two
+        // separately permissioned, separately audited transitions.
+        Role::firstOrCreate(['name' => 'publisher'])->syncPermissions([
+            'review.view', 'review.edit', 'review.qa', 'review.hold', 'review.release', 'review.withdraw',
+            'media.view', 'media.manage',
+            'bestfor.view', 'bestfor.edit', 'bestfor.publish', 'bestfor.hold',
+        ]);
+        Role::firstOrCreate(['name' => 'qa_reviewer'])->syncPermissions([
+            'review.view', 'review.qa', 'review.hold',
+            'media.view',
+            'bestfor.view',
+        ]);
+        Role::firstOrCreate(['name' => 'editor'])->syncPermissions([
+            'review.view', 'review.edit',
+            'media.view', 'media.manage',
+            'bestfor.view', 'bestfor.edit',
+        ]);
     }
 }

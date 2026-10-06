@@ -85,6 +85,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Video authority (Admin Content & Media design record, section 8)
+    |--------------------------------------------------------------------------
+    | The RAW value. It is interpreted only by App\Support\Reviews\VideoAuthority:
+    |
+    |     unset                -> payload (Mode P, scheme br-render-canonical-v1:P1)
+    |     exactly "payload"    -> Mode P
+    |     exactly "admin"      -> Mode A (scheme br-render-canonical-v1:A1)
+    |     anything else        -> configuration error: fail closed
+    |
+    | Never default an unknown value to payload. Sprint A builds the resolver and the
+    | Admin/verifier foundation only; it is not wired to public rendering.
+    */
+    'video_authority' => env('PUBLIC_REVIEW_VIDEO_AUTHORITY'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Regional host → region code
     |--------------------------------------------------------------------------
     | Maps the leading host label (e.g. "au" in au.fstg.beastierated.com) to a

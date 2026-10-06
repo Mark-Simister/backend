@@ -102,6 +102,56 @@ Route::middleware(['auth', 'permission:video.edit'])->prefix('admin')->name('adm
     Route::post('videos/{video}/seo-withdraw', [\App\Http\Controllers\Admin\ReviewSeoPublishController::class, 'withdraw'])->name('videos.seo-withdraw');
 });
 
+// Admin Content & Media Operations - Sprint A (BeastieRated-ADMIN-CONTENT-MEDIA-DESIGN-RECORD-2026-10-06.md,
+// section 11). Authenticated Admin only: EnsureAdminAccess (web group, path-keyed) is the baseline and
+// EVERY route carries its own explicit permission. None of these is a public route; every response,
+// including the review preview, is noindex and never cached (AdminPrivateResponse). The legacy
+// "Publish to SEO" route above is neither used nor surfaced here.
+Route::middleware(['auth', \App\Http\Middleware\AdminPrivateResponse::class])->prefix('admin')->name('admin.')->group(function () {
+    $review = '[A-Za-z0-9_\-:.]+';
+    $editorial = \App\Http\Controllers\Admin\ReviewEditorialController::class;
+    $preview = \App\Http\Controllers\Admin\ReviewPreviewController::class;
+    $media = \App\Http\Controllers\Admin\MediaLibraryController::class;
+
+    // Review queue and workspace.
+    Route::get('review-editorial', [$editorial, 'index'])->name('review-editorial.index')->middleware('permission:review.view');
+    Route::get('review-editorial/{review}', [$editorial, 'show'])->name('review-editorial.show')->middleware('permission:review.view')->where('review', $review);
+    Route::get('review-editorial/{review}/preview', [$preview, 'show'])->name('review-editorial.preview')->middleware('permission:review.view')->where('review', $review);
+    Route::get('review-editorial/{review}/preview/frame', [$preview, 'frame'])->name('review-editorial.preview.frame')->middleware('permission:review.view')->where('review', $review);
+
+    // Associations, notes and media staging.
+    Route::post('review-editorial/{review}/associations', [$editorial, 'associations'])->name('review-editorial.associations')->middleware('permission:review.edit')->where('review', $review);
+    Route::post('review-editorial/{review}/notes', [$editorial, 'notes'])->name('review-editorial.notes')->middleware('permission:review.edit')->where('review', $review);
+    Route::post('review-editorial/{review}/media', [$editorial, 'stageMedia'])->name('review-editorial.media.stage')->middleware('permission:review.edit')->where('review', $review);
+    Route::post('review-editorial/{review}/media/{attachment}/discard', [$editorial, 'discardMedia'])->name('review-editorial.media.discard')->middleware('permission:review.edit')->where('review', $review)->whereNumber('attachment');
+
+    // Region eligibility changes public visibility -> review.release.
+    Route::post('review-editorial/{review}/regions', [$editorial, 'regions'])->name('review-editorial.regions')->middleware('permission:review.release')->where('review', $review);
+
+    // QA & Release (T1-T4) and holds.
+    Route::post('review-editorial/{review}/qa-pass', [$editorial, 'qaPass'])->name('review-editorial.qa-pass')->middleware('permission:review.qa')->where('review', $review);
+    Route::post('review-editorial/{review}/return', [$editorial, 'returnForCorrection'])->name('review-editorial.return')->middleware('permission:review.qa')->where('review', $review);
+    Route::post('review-editorial/{review}/release', [$editorial, 'release'])->name('review-editorial.release')->middleware('permission:review.release')->where('review', $review);
+    Route::post('review-editorial/{review}/unrelease', [$editorial, 'unrelease'])->name('review-editorial.unrelease')->middleware('permission:review.release')->where('review', $review);
+    Route::post('review-editorial/{review}/hold', [$editorial, 'hold'])->name('review-editorial.hold')->middleware('permission:review.hold')->where('review', $review);
+    Route::post('review-editorial/{review}/lift-hold', [$editorial, 'liftHold'])->name('review-editorial.lift-hold')->middleware('permission:review.hold')->where('review', $review);
+
+    // Dispositions (existing ReviewDispositionService, unchanged).
+    Route::post('review-editorial/{review}/disposition/withdraw', [$editorial, 'withdraw'])->name('review-editorial.disposition.withdraw')->middleware('permission:review.withdraw')->where('review', $review);
+    Route::post('review-editorial/{review}/disposition/classify', [$editorial, 'classify'])->name('review-editorial.disposition.classify')->middleware('permission:review.withdraw')->where('review', $review);
+    Route::post('review-editorial/{review}/disposition/validity', [$editorial, 'validity'])->name('review-editorial.disposition.validity')->middleware('permission:review.withdraw')->where('review', $review);
+    Route::post('review-editorial/{review}/disposition/availability', [$editorial, 'availability'])->name('review-editorial.disposition.availability')->middleware('permission:review.withdraw')->where('review', $review);
+    Route::post('review-editorial/{review}/disposition/reinstate', [$editorial, 'reinstate'])->name('review-editorial.disposition.reinstate')->middleware('permission:review.withdraw')->where('review', $review);
+
+    // Media library.
+    Route::get('media-library', [$media, 'index'])->name('media-library.index')->middleware('permission:media.view');
+    Route::get('media-library/{asset}', [$media, 'show'])->name('media-library.show')->middleware('permission:media.view')->whereNumber('asset');
+    Route::post('media-library/external', [$media, 'storeExternal'])->name('media-library.external')->middleware('permission:media.manage');
+    Route::post('media-library/upload', [$media, 'upload'])->name('media-library.upload')->middleware('permission:media.manage');
+    Route::post('media-library/{asset}/metadata', [$media, 'updateMetadata'])->name('media-library.metadata')->middleware('permission:media.manage')->whereNumber('asset');
+    Route::post('media-library/{asset}/archive', [$media, 'archive'])->name('media-library.archive')->middleware('permission:media.manage')->whereNumber('asset');
+});
+
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // FU-6 gate A: per-verb permissions (was permission:channel.view|create|edit|delete on the whole resource; Spatie pipe = ANY). create-group first preserves Laravel's create-before-show ordering.
     Route::resource('channels', ChannelController::class)->only(['create', 'store'])->middleware('permission:channel.create');

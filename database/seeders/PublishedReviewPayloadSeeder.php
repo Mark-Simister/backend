@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Services\Reviews\ReviewPayloadIngestor;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
-use App\Models\PublishedReviewPayload;
 
 /**
  * Imports the Published_Review_Payloads (via extract_published_payloads.py →
@@ -45,25 +45,30 @@ class PublishedReviewPayloadSeeder extends Seeder
                 continue;
             }
 
-            $existing = PublishedReviewPayload::where('published_review_id', $r['published_review_id'])->first();
-
-            // A withdrawn page was taken down deliberately. updateOrCreate() would
-            // overwrite publish_status from the sheet and put it straight back on the
-            // public web. A takedown is a public-safety action; a routine import must
-            // not undo it. Forward transitions (→ published) still flow from the sheet.
-            if ($existing && $existing->publish_status === 'withdrawn' && ! $force) {
-                $this->command?->warn("  skipped {$existing->review_slug}: withdrawn (re-run with --force to resurrect)");
-                $skipped++;
-                continue;
-            }
-
+            // Supported ingestion (Admin Content & Media design record, section 4.6):
+            // every row goes through ReviewPayloadIngestor, which keeps the withdrawn
+            // protection below, maintains the derived render fingerprint and, in the
+            // same transaction, invalidates a QA pass/release whose bound content no
+            // longer matches.
+            //
+            // A withdrawn page was taken down deliberately. Overwriting publish_status
+            // from the sheet would put it straight back on the public web. A takedown is
+            // a public-safety action; a routine import must not undo it. Forward
+            // transitions (→ published) still flow from the sheet.
+            //
             // Normalise raw sheet values that SQLite tolerated but MySQL strict
             // mode rejects (ISO-8601 datetimes, stringy numerics). The *_json
             // fields stay decoded arrays; the model's array casts re-encode them.
-            PublishedReviewPayload::updateOrCreate(
-                ['published_review_id' => $r['published_review_id']],
-                $this->sanitize($r)
-            );
+            $result = app(ReviewPayloadIngestor::class)->upsert($this->sanitize($r), $force);
+
+            if ($result['status'] === ReviewPayloadIngestor::SKIPPED_WITHDRAWN) {
+                $this->command?->warn("  skipped {$result['payload']->review_slug}: withdrawn (re-run with --force to resurrect)");
+                $skipped++;
+                continue;
+            }
+            if ($result['invalidation'] !== null) {
+                $this->command?->warn("  {$r['published_review_id']}: QA/release invalidated ({$result['invalidation']}) - needs a fresh QA pass and Release");
+            }
             $count++;
         }
 

@@ -60,6 +60,21 @@ class Character extends Model
         'character_tag',
         'video',
     ];
+
+    /**
+     * Admin Content & Media Operations columns (design record section 9.3). Hidden from
+     * serialisation: public character output is composed later (Sprint C) through an
+     * explicit allowlist presenter, never toArray(). `production_profile` is internal and
+     * must never reach any public API; `insights` is public-ELIGIBLE only via the governed
+     * allowlist. Not mass-assignable here - Admin writes them explicitly.
+     */
+    protected $hidden = ['insights', 'production_profile', 'pipeline_code'];
+
+    protected $casts = [
+        'insights' => 'array',
+        'production_profile' => 'array',
+    ];
+
     public function channel()
     {
         return $this->belongsTo(Channel::class);

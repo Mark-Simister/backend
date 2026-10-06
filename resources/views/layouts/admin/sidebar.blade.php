@@ -124,6 +124,23 @@
                 </a>
             </li>
         @endcan
+        {{-- Admin Content & Media Operations (Sprint A) --}}
+        @can('review.view')
+            <li class="nav-item {{ request()->is('admin/review-editorial*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('admin.review-editorial.index') }}">
+                    <i class="ti-check-box menu-icon"></i>
+                    <span class="menu-title">Review Editorial</span>
+                </a>
+            </li>
+        @endcan
+        @can('media.view')
+            <li class="nav-item {{ request()->is('admin/media-library*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('admin.media-library.index') }}">
+                    <i class="ti-gallery menu-icon"></i>
+                    <span class="menu-title">Media Library</span>
+                </a>
+            </li>
+        @endcan
         {{-- @can('rating_review.view')
             <li class="nav-item {{ request()->is('admin/reviews*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->is('admin/reviews*') ? 'active' : '' }}"
