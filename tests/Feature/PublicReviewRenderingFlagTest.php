@@ -6,6 +6,7 @@ use App\Models\PublishedReviewPayload;
 use App\Models\Region;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Feature\AdminContent\Concerns\ReleasesPublicReviews;
 use Tests\TestCase;
 
 /**
@@ -19,6 +20,7 @@ use Tests\TestCase;
 class PublicReviewRenderingFlagTest extends TestCase
 {
     use RefreshDatabase;
+    use ReleasesPublicReviews;
 
     private const SLUG = 'vecomfy-fleece-dog-hoodie-b07hcb1jps';
 
@@ -33,6 +35,8 @@ class PublicReviewRenderingFlagTest extends TestCase
             'h1' => 'Vecomfy Fleece Dog Hoodie',
             'review_page_json' => [],
         ])->save();
+
+        $this->releaseForPublic($p);   // Sprint B: only a human-released review renders
 
         return $p;   // empty pivot = all regions (pipeline back-compat)
     }

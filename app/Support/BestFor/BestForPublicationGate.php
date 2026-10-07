@@ -6,6 +6,7 @@ use App\Models\BestForEdition;
 use App\Models\BestForSubject;
 use App\Models\PublishedReviewPayload;
 use App\Models\ReviewPublicationDisposition;
+use App\Support\Reviews\PublicReleaseVerifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -314,6 +315,16 @@ final class BestForPublicationGate
 
         if ($subjectRegionCode !== null) {
             $errors = array_merge($errors, $this->regionErrors($payload, $reviewId, $subjectRegionCode));
+
+            // "Publicly visible" now includes the human release binding (Admin Content &
+            // Media design record, section 5): the review must pass the shared public-release
+            // verifier for this collection's region, or the edition is not publishable.
+            if (app(PublicReleaseVerifier::class)->verify($payload, $subjectRegionCode) === null) {
+                $errors[] = sprintf(
+                    'Review %s does not pass public-release verification (not released, or its current content or media no longer match the release binding).',
+                    $reviewId
+                );
+            }
         }
 
         $publicStatuses = (array) config('reviews.public_statuses', ['published']);

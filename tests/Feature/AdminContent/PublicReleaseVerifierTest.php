@@ -14,9 +14,10 @@ use Tests\Feature\AdminContent\Concerns\AdminContentFixtures;
 use Tests\TestCase;
 
 /**
- * PublicReleaseVerifier (design record section 5): candidates() is the E1-E7 SQL
- * prefilter, verify()/verifyMany() add E8 by recomputing from the row actually loaded.
- * Built and tested in Sprint A; NOT wired to any public surface.
+ * PublicReleaseVerifier (design record section 5): candidates() is the SQL prefilter
+ * (E1-E4, E6, E7 since DESIGN-CORR-03), verify()/verifyMany() add structural
+ * evaluability, D1 and E8 on the row actually loaded. Built and tested in Sprint A;
+ * wired to the public surfaces in Sprint B.
  */
 class PublicReleaseVerifierTest extends TestCase
 {
@@ -139,8 +140,11 @@ class PublicReleaseVerifierTest extends TestCase
         DB::table('published_review_payloads')->where('id', $d1->id)->update(['review_page_json' => json_encode($rp)]);        // E5
         DB::table('review_publication_dispositions')->insert(['published_review_id' => $withdrawn->published_review_id, 'withdrawn_at' => now()]); // E7
 
-        $this->assertSame(['pr_ok'], $this->candidateIds());
-        $verified = $this->verifier->verifyMany([$withdrawn, $ok, $status, $legacy, $d3, $d1], null);
+        // DESIGN-CORR-03: E5 (D1) is evaluated in application code on the structurally
+        // validated payload, not by the SQL prefilter - which therefore admits pr_d1 - and
+        // the full pipeline still refuses it.
+        $this->assertSame(['pr_d1', 'pr_ok'], $this->candidateIds());
+        $verified = $this->verifier->verifyMany([$withdrawn, $ok, $status, $legacy, $d3, $d1->fresh()], null);
         $this->assertSame(['pr_ok'], $verified->map->publishedReviewId->all());
     }
 
@@ -168,12 +172,17 @@ class PublicReleaseVerifierTest extends TestCase
         $this->assertSame(['pr_b', 'pr_a'], $ids);
     }
 
-    public function test_the_verifier_is_not_wired_to_the_public_review_page_in_sprint_a(): void
+    /** Sprint B supersedes Sprint A's "not wired publicly" expectation. */
+    public function test_the_verifier_now_governs_the_public_review_page(): void
     {
         config(['reviews.rendering_enabled' => true, 'reviews.cache_ttl' => 0]);
         $unreleased = $this->ingest($this->reviewRow('pr_public'));
 
         $this->assertNull($this->verifier->verify($unreleased, null));
-        $this->get('http://example.test/review/' . $unreleased->review_slug)->assertOk();
+        $this->get('http://example.test/review/' . $unreleased->review_slug)->assertNotFound();
+
+        $released = $this->releasedReview('pr_public_released');
+        $this->assertNotNull($this->verifier->verify($released, null));
+        $this->get('http://example.test/review/' . $released->review_slug)->assertOk();
     }
 }

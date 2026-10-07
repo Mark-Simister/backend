@@ -10,6 +10,7 @@ use App\Models\PublishedReviewPayload;
 use App\Models\Region;
 use App\Support\BestFor\CurrentMembershipResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Feature\AdminContent\Concerns\ReleasesPublicReviews;
 use Tests\TestCase;
 
 /**
@@ -25,6 +26,7 @@ use Tests\TestCase;
 class BestForCurrentMembershipTest extends TestCase
 {
     use RefreshDatabase;
+    use ReleasesPublicReviews;
 
     private const REVIEW = 'pr__vecomfy-orthopedic-bed';
 
@@ -284,6 +286,7 @@ class BestForCurrentMembershipTest extends TestCase
             'h1' => 'Vecomfy Orthopedic Bed',
             'review_page_json' => ['hero' => ['title' => 'Vecomfy Orthopedic Bed']],
         ]);
+        $this->releaseForPublic(self::REVIEW);   // Sprint B: the page renders released reviews only
 
         $this->publishedEditionWithReview(
             $this->subject('dog-beds', 2026, 'GLOBAL'),
@@ -315,6 +318,7 @@ class BestForCurrentMembershipTest extends TestCase
             'h1' => 'No Membership',
             'review_page_json' => ['hero' => ['title' => 'No Membership']],
         ]);
+        $this->releaseForPublic('pr__no-membership');   // Sprint B: released reviews only
 
         $response = $this->get('/review/no-membership');
 

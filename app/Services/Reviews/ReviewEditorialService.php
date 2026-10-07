@@ -13,6 +13,7 @@ use App\Models\ReviewPublicationDisposition;
 use App\Services\Audit\AdminAuditLog;
 use App\Services\Media\MediaRegistry;
 use App\Services\ReviewDispositionService;
+use App\Support\Reviews\FingerprintScheme;
 use App\Support\Reviews\ReviewFingerprints;
 use App\Support\Reviews\ReviewMediaSet;
 use App\Support\Reviews\VideoAuthority;
@@ -221,6 +222,7 @@ class ReviewEditorialService
             }
             $errors = array_merge($errors, $this->fingerprintErrors($now, $submittedContent, $submittedMedia));
             $errors = array_merge($errors, $this->mediaPublishabilityErrors(ReviewMediaSet::proposed($payload->published_review_id)));
+            $errors = array_merge($errors, $this->modeAPosterErrors($now['scheme'], $payload->published_review_id));
             if ($errors !== []) {
                 throw new EditorialTransitionException($errors);
             }
@@ -319,8 +321,28 @@ class ReviewEditorialService
 
         return array_values(array_unique(array_merge(
             $errors,
-            $this->mediaPublishabilityErrors(ReviewMediaSet::proposed($payload->published_review_id))
+            $this->mediaPublishabilityErrors(ReviewMediaSet::proposed($payload->published_review_id)),
+            $this->modeAPosterErrors($now['scheme'], $payload->published_review_id)
         )));
+    }
+
+    /**
+     * Mode A poster rule (RP-ADMIN-CONTENT-MEDIA-DESIGN-CORR-01): under the A1 scheme a
+     * proposed review video needs a proposed poster, captured together at Release.
+     *
+     * @return string[]
+     */
+    private function modeAPosterErrors(?string $scheme, string $publishedReviewId): array
+    {
+        if ($scheme !== FingerprintScheme::A1) {
+            return [];
+        }
+
+        $roles = ReviewMediaSet::proposed($publishedReviewId)->pluck('role')->all();
+
+        return ReviewMediaSet::modeAPosterSatisfied($roles)
+            ? []
+            : ['Mode A: a review video needs a bound poster in the same release; there is no provider-thumbnail fallback.'];
     }
 
     /** T3 - release, capturing the bound review media set. */

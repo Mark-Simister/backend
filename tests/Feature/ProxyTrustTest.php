@@ -10,6 +10,7 @@ use App\Models\Region;
 use App\Providers\ProxyTrustServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Middleware\TrustProxies;
+use Tests\Feature\AdminContent\Concerns\ReleasesPublicReviews;
 use Tests\TestCase;
 
 /**
@@ -25,6 +26,7 @@ use Tests\TestCase;
 class ProxyTrustTest extends TestCase
 {
     use RefreshDatabase;
+    use ReleasesPublicReviews;
 
     private const AU_SLUG = 'vecomfy-fleece-dog-hoodie-b07hcb1jps';
 
@@ -58,17 +60,21 @@ class ProxyTrustTest extends TestCase
         $au = Region::firstOrNew(['region_code' => 'AU']);
         $au->forceFill(['region_name' => 'AU', 'is_active' => 1, 'currency' => 'AUD', 'currency_symbol' => '$'])->save();
 
+        // Sprint B: legacy admin-source rows are never publicly eligible (E1), so the AU-only
+        // fixture is a human-released pipeline review. What this test proves is unchanged:
+        // which host - and therefore which region - a request is allowed to claim.
         $p = new PublishedReviewPayload();
         $p->forceFill([
             'published_review_id' => 'admin__1',
             'review_slug' => self::AU_SLUG,
             'publish_status' => 'published',
-            'source' => 'admin',
+            'source' => 'pipeline',
             'h1' => 'Vecomfy Fleece Dog Hoodie',
             'review_page_json' => [],
         ])->save();
 
         $p->regions()->sync([$au->id]);
+        $this->releaseForPublic($p);
 
         return $p;
     }

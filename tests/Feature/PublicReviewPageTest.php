@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\PublishedReviewPayload;
 use App\Models\Region;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Feature\AdminContent\Concerns\ReleasesPublicReviews;
 use Tests\TestCase;
 
 /**
@@ -14,6 +15,7 @@ use Tests\TestCase;
 class PublicReviewPageTest extends TestCase
 {
     use RefreshDatabase;
+    use ReleasesPublicReviews;
 
     /**
      * These tests model the PUBLIC RENDERER host (review-bstg and the regional hosts in
@@ -72,7 +74,7 @@ class PublicReviewPageTest extends TestCase
 
         $rp = array_replace_recursive($rp, $overrides);
 
-        return PublishedReviewPayload::create(array_merge([
+        $payload = PublishedReviewPayload::create(array_merge([
             'published_review_id' => 'pr__' . $slug,
             'review_slug' => $slug,
             'publish_status' => $status,
@@ -90,6 +92,12 @@ class PublicReviewPageTest extends TestCase
                 '@graph' => [['@type' => 'Product', 'name' => 'Test Product']],
             ],
         ], $columns));
+
+        // Sprint B: every fixture models a human-released review, so each test still
+        // exercises its own rule (status, region, D1, D3, rendering) at the public boundary.
+        $this->releaseForPublic($payload);
+
+        return $payload->fresh();
     }
 
     /** Create a Region, bypassing mass-assignment (test schema-agnostic). */

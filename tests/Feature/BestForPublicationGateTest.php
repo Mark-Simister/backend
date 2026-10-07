@@ -16,6 +16,7 @@ use App\Support\BestFor\SelectionSnapshotBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Feature\AdminContent\Concerns\ReleasesPublicReviews;
 use Tests\TestCase;
 
 /**
@@ -28,6 +29,7 @@ use Tests\TestCase;
 class BestForPublicationGateTest extends TestCase
 {
     use RefreshDatabase;
+    use ReleasesPublicReviews;
 
     /** @var string[] */
     private array $reviewIds = ['PR-1', 'PR-2', 'PR-3', 'PR-4', 'PR-5'];
@@ -81,6 +83,9 @@ class BestForPublicationGateTest extends TestCase
         $payload->regions()->sync(
             array_map(fn (string $code) => $this->region($code)->id, $regionCodes)
         );
+
+        // Sprint B: "publicly visible" now includes the human release binding.
+        $this->releaseForPublic($payload);
 
         return $payload;
     }
@@ -257,15 +262,24 @@ class BestForPublicationGateTest extends TestCase
         $this->assertStringContainsString('PR-4 is materially invalid', $this->errors($edition));
     }
 
-    public function test_temporary_unavailability_alone_does_not_block_publication(): void
+    /**
+     * SUPERSEDED BY SPRINT B (Admin Content & Media design record, sections 4.1 and 5).
+     * Temporary unavailability is excluded from public eligibility (E7), and the gate now
+     * requires every selection to pass the shared public-release verifier - so a
+     * temporarily unavailable review can no longer be newly published into an edition.
+     * It still restricts nothing AFTER publication (ReviewDispositionServiceTest).
+     */
+    public function test_temporary_unavailability_now_blocks_publication_through_release_verification(): void
     {
         $edition = $this->draft();
+        $this->assertSame('', $this->errors($edition));
+
         (new ReviewDispositionService())->setAvailability(
             'PR-5',
             ReviewPublicationDisposition::AVAILABILITY_TEMPORARILY_UNAVAILABLE
         );
 
-        $this->assertSame('', $this->errors($edition));
+        $this->assertStringContainsString('Review PR-5 does not pass public-release verification', $this->errors($edition));
     }
 
     public function test_it_refuses_the_same_product_in_two_slots(): void
@@ -282,6 +296,9 @@ class BestForPublicationGateTest extends TestCase
         $edition = $this->draft();
         PublishedReviewPayload::where('published_review_id', 'PR-2')
             ->first()->forceFill(['product_uid' => null])->save();
+        // product_uid is release-bound content (P1): model the fresh release that such a
+        // change requires since Sprint B, so this test still isolates distinctness.
+        $this->releaseForPublic('PR-2');
 
         $confirmations = new PublicationConfirmations(
             notDivergenceHeld: $this->reviewIds,

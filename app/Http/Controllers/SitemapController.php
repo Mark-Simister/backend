@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\PublishedReviewPayload;
 use App\Support\RegionResolver;
+use App\Support\Reviews\PublicReleaseVerifier;
+use App\Support\Reviews\VerifiedReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -15,33 +17,36 @@ use Illuminate\Support\Carbon;
 class SitemapController extends Controller
 {
     /** XML sitemap of public review pages. <loc> uses the request's regional host. */
-    public function index(Request $request)
+    public function index(Request $request, PublicReleaseVerifier $verifier)
     {
-        // Same visibility rule the /review/{slug} route uses (publish_status +
-        // region eligibility for THIS host), so the sitemap never advertises a
-        // URL that would 404 on this regional host.
+        // Exactly the rule /review/{slug} applies: the shared verifier's full pipeline for
+        // THIS host (SQL gates, structural evaluability, D1, E8) on every row - a review
+        // that fails any of them, e.g. whose recomputed content or media no longer matches
+        // its release binding, is left out, so the sitemap never knowingly advertises a URL
+        // that would 404 on this regional host. Not cached. The SQL gates read no stored
+        // JSON and run once per bounded chunk, so a row with unevaluable JSON is simply left
+        // out instead of failing or truncating the sitemap.
         // PRODUCTION NOTE: set PUBLIC_REVIEW_STATUSES=published in production.
         $region = RegionResolver::fromHost($request->getHost());
         $origin = rtrim($request->getSchemeAndHttpHost(), '/');
 
-        $rows = PublishedReviewPayload::publicForRegion($region)
-            ->orderBy('updated_at', 'desc')
-            ->get(['id', 'review_slug', 'updated_at', 'created_at']);
-
         $urls = '';
-        foreach ($rows as $r) {
-            $loc = $origin . '/review/' . $r->review_slug;   // per-region, request host
-            $lastmod = $r->updated_at ?: $r->created_at;
-            $urls .= "  <url>\n    <loc>" . e($loc) . "</loc>\n";
-            if ($lastmod) {
-                try {
-                    $urls .= "    <lastmod>" . Carbon::parse($lastmod)->toAtomString() . "</lastmod>\n";
-                } catch (\Throwable $e) {
-                    // skip an unparseable date rather than break the sitemap
+        $verifier->eachVerified($region, fn ($q) => $q->orderBy('published_review_payloads.updated_at', 'desc'),
+            function (VerifiedReview $review, PublishedReviewPayload $r) use ($origin, &$urls) {
+                // The slug comes from the verified projection; lastmod from the row's
+                // operational timestamps (outside the projection by design).
+                $loc = $origin . '/review/' . $review->projection['flat']['review_slug'];   // per-region, request host
+                $lastmod = $r->updated_at ?: $r->created_at;
+                $urls .= "  <url>\n    <loc>" . e($loc) . "</loc>\n";
+                if ($lastmod) {
+                    try {
+                        $urls .= "    <lastmod>" . Carbon::parse($lastmod)->toAtomString() . "</lastmod>\n";
+                    } catch (\Throwable $e) {
+                        // skip an unparseable date rather than break the sitemap
+                    }
                 }
-            }
-            $urls .= "  </url>\n";
-        }
+                $urls .= "  </url>\n";
+            });
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
             . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n"

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\PublishedReviewPayload;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Feature\AdminContent\Concerns\ReleasesPublicReviews;
 use Tests\TestCase;
 
 /**
@@ -22,6 +23,7 @@ use Tests\TestCase;
 class PublicReviewEligibilityTest extends TestCase
 {
     use RefreshDatabase;
+    use ReleasesPublicReviews;
 
     protected function setUp(): void
     {
@@ -39,13 +41,19 @@ class PublicReviewEligibilityTest extends TestCase
             $rp['safety'] = $safety;
         }
 
-        return PublishedReviewPayload::create(array_merge([
+        $payload = PublishedReviewPayload::create(array_merge([
             'published_review_id' => 'pr__' . $slug,
             'review_slug' => $slug,
             'publish_status' => 'ready_for_review',
             'h1' => 'T',
             'review_page_json' => $rp,
         ], $columns));
+
+        // Sprint B: every fixture is a human-released review, so a 404 here is caused by the
+        // hold or D1 under test, not by a missing release binding.
+        $this->releaseForPublic($payload);
+
+        return $payload->fresh();
     }
 
     // ---------------------------------------------------------------- hold list

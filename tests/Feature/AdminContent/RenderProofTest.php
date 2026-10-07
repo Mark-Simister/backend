@@ -7,18 +7,21 @@ use App\Support\Reviews\ReviewFingerprints;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Feature\AdminContent\Concerns\AdminContentFixtures;
+use Tests\Feature\AdminContent\Concerns\ReleasesPublicReviews;
 use Tests\TestCase;
 
 /**
  * Render proof (design record section 6.6): stored {} vs [] variants must produce
- * byte-identical page HTML and JSON-LD through the EXISTING public renderer - the
- * collapse the canonical form relies on is real at the output. Rendering is enabled
- * for this test only, as PublicReviewPageTest does; the renderer itself is unchanged.
+ * byte-identical page HTML and JSON-LD through the public renderer - the collapse the
+ * canonical form relies on is real at the output. Since Sprint B the renderer receives
+ * only the verified projection, so this also proves the {} variant verifies against a
+ * binding made for the [] variant. Rendering is enabled for this test only.
  */
 class RenderProofTest extends TestCase
 {
     use AdminContentFixtures;
     use RefreshDatabase;
+    use ReleasesPublicReviews;
 
     protected function setUp(): void
     {
@@ -47,7 +50,11 @@ class RenderProofTest extends TestCase
         $this->assertNotSame($listVariant, $objectVariant, 'the stored text really differs');
         $this->assertStringContainsString('"buyer_fit":{}', $objectVariant['review_page_json']);
 
+        // Release the [] variant (Sprint B: only a verified release renders). The {} variant
+        // written afterwards must then verify against THAT binding, because it decodes to
+        // the identical projection - the render proof and the fingerprint proof together.
         DB::table('published_review_payloads')->where('id', $payload->id)->update($listVariant);
+        $this->releaseForPublic($payload);
         $listHtml = $this->get('http://example.test/review/' . $payload->review_slug)->assertOk()->getContent();
         $listFp = ReviewFingerprints::content($payload->fresh(), FingerprintScheme::P1);
 

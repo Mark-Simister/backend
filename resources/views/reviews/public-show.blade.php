@@ -56,6 +56,19 @@
     $ytId = $video['youtube_id'] ?? '';
     $videoUrl = $video['video_url'] ?? '';
     $watchUrl = $ytId ? "https://www.youtube.com/watch?v={$ytId}" : $videoUrl;
+    $videoPoster = $heroImg;
+    $videoPosterAlt = $h1 . ' — watch the video review';
+
+    // Video authority (Admin Content & Media design record, section 8). Mode P (default):
+    // the payload video, unchanged. Mode A: ONLY the release-bound Admin video with the
+    // poster bound in the same release - never payload video fields or any other source.
+    if (($videoAuthority ?? 'payload') === 'admin') {
+        $watchUrl = $reviewVideo['embed_url'] ?? '';
+        $videoPoster = $reviewVideo['poster_url'] ?? null;
+        if (($reviewVideo['poster_alt'] ?? '') !== '') {
+            $videoPosterAlt = $reviewVideo['poster_alt'];
+        }
+    }
 @endphp
 <!doctype html>
 <html lang="{{ $payload->language_variant ?? 'en' }}">
@@ -166,9 +179,9 @@
     </dl>
 
     {{-- ── Video (externally hosted — click-to-load poster, no heavy iframe) ── --}}
-    @if($watchUrl && $heroImg)
+    @if($watchUrl && $videoPoster)
         <a class="videoposter" href="{{ $watchUrl }}" target="_blank" rel="noopener">
-            <img src="{{ $heroImg }}" alt="{{ $h1 }} — watch the video review" loading="lazy">
+            <img src="{{ $videoPoster }}" alt="{{ $videoPosterAlt }}" loading="lazy">
             <span class="play">▶</span>
         </a>
         <p class="note">Video hosted externally — opens on the source platform.</p>

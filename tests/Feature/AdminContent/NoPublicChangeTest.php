@@ -12,9 +12,11 @@ use Tests\Feature\AdminContent\Concerns\AdminContentFixtures;
 use Tests\TestCase;
 
 /**
- * Sprint A changes no public behaviour: the new channel/character columns never
- * serialise, the public review page is unchanged, and the seeder is routed through the
- * supported ingestion service without writing payloads itself.
+ * Public-contract guards carried from Sprint A: the new channel/character columns never
+ * serialise, and the seeder is routed through the supported ingestion service without
+ * writing payloads itself. Sprint A's "the public review page ignores editorial state"
+ * expectation is intentionally SUPERSEDED by Sprint B: the page now renders a review only
+ * when its release binding verifies (see PublicEnforcementTest for the full E1-E8 suite).
  */
 class NoPublicChangeTest extends TestCase
 {
@@ -47,7 +49,7 @@ class NoPublicChangeTest extends TestCase
         $this->assertSame(['voice' => 'gravel'], $character->fresh()->production_profile, 'still readable internally');
     }
 
-    public function test_the_public_review_page_ignores_editorial_state_in_sprint_a(): void
+    public function test_the_public_review_page_now_requires_a_verified_release(): void
     {
         config(['reviews.rendering_enabled' => true, 'reviews.cache_ttl' => 0]);
         $this->associations();
@@ -55,11 +57,13 @@ class NoPublicChangeTest extends TestCase
         $unreleased = $this->ingest($this->reviewRow('pr_unreleased'));
         $held = $this->releasedReview('pr_held');
         $this->editorial()->hold($held, 'Legal check', null);
+        $released = $this->releasedReview('pr_released');
         $notPublished = $this->ingest($this->reviewRow('pr_draft', ['publish_status' => 'ready_for_review']));
 
-        $this->get('http://example.test/review/' . $unreleased->review_slug)->assertOk();
-        $this->get('http://example.test/review/' . $held->review_slug)->assertOk();
+        $this->get('http://example.test/review/' . $unreleased->review_slug)->assertNotFound();
+        $this->get('http://example.test/review/' . $held->review_slug)->assertNotFound();
         $this->get('http://example.test/review/' . $notPublished->review_slug)->assertNotFound();
+        $this->get('http://example.test/review/' . $released->review_slug)->assertOk();
     }
 
     public function test_the_seeder_routes_every_row_through_the_ingestion_service(): void

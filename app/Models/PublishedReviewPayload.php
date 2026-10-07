@@ -94,6 +94,21 @@ class PublishedReviewPayload extends Model
     public function scopePublicForRegion(Builder $query, ?string $region): Builder
     {
         return $query
+            ->publicForRegionBeforeContentGate($region)
+            ->tap(fn (Builder $q) => $this->applySafetyContradictionGate($q));
+    }
+
+    /**
+     * scopePublicForRegion() without its content gate: the publish_status gate, region
+     * eligibility and the D3 hold, built by the SAME code - none of them reads stored JSON.
+     * The public release verifier applies D1 in application code to the structurally
+     * validated payload instead (RP-ADMIN-CONTENT-MEDIA-DESIGN-CORR-03), so no public
+     * candidate query asks the database to parse review_page_json. Does not change
+     * scopePublicForRegion() in any way.
+     */
+    public function scopePublicForRegionBeforeContentGate(Builder $query, ?string $region): Builder
+    {
+        return $query
             ->whereIn('publish_status', (array) config('reviews.public_statuses', ['published']))
             ->where(function (Builder $q) use ($region) {
                 $q->whereDoesntHave('regions')
@@ -102,8 +117,7 @@ class PublishedReviewPayload extends Model
                     $q->orWhereHas('regions', fn (Builder $r) => $r->where('region_code', $region));
                 }
             })
-            ->tap(fn (Builder $q) => $this->applyDivergenceHold($q))
-            ->tap(fn (Builder $q) => $this->applySafetyContradictionGate($q));
+            ->tap(fn (Builder $q) => $this->applyDivergenceHold($q));
     }
 
     /**

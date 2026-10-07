@@ -13,6 +13,7 @@ use App\Services\ReviewDispositionService;
 use App\Support\BestFor\PublicationConfirmations;
 use App\Support\BestFor\SelectionSnapshotBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Feature\AdminContent\Concerns\ReleasesPublicReviews;
 use Tests\TestCase;
 
 /**
@@ -32,6 +33,7 @@ use Tests\TestCase;
 class ReviewDispositionServiceTest extends TestCase
 {
     use RefreshDatabase;
+    use ReleasesPublicReviews;
 
     /** @var string[] */
     private array $reviewIds = ['PR-1', 'PR-2', 'PR-3', 'PR-4', 'PR-5'];
@@ -85,6 +87,9 @@ class ReviewDispositionServiceTest extends TestCase
             ])->save();
 
             $payload->regions()->sync([$region->id]);
+
+            // Sprint B: publication requires every selection to pass release verification.
+            $this->releaseForPublic($payload);
 
             BestForEditionSelection::create([
                 'edition_id' => $edition->id,

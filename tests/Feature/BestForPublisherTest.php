@@ -14,6 +14,7 @@ use App\Support\BestFor\PublicationConfirmations;
 use App\Support\BestFor\SelectionSnapshotBuilder;
 use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Feature\AdminContent\Concerns\ReleasesPublicReviews;
 use Tests\TestCase;
 
 /**
@@ -26,6 +27,7 @@ use Tests\TestCase;
 class BestForPublisherTest extends TestCase
 {
     use RefreshDatabase;
+    use ReleasesPublicReviews;
 
     /** @var string[] */
     private array $reviewIds = ['PR-1', 'PR-2', 'PR-3', 'PR-4', 'PR-5'];
@@ -64,6 +66,9 @@ class BestForPublisherTest extends TestCase
         $payload->regions()->sync(
             array_map(fn (string $code) => $this->region($code)->id, $regionCodes)
         );
+
+        // Sprint B: publication requires every selection to pass release verification.
+        $this->releaseForPublic($payload);
 
         return $payload;
     }
