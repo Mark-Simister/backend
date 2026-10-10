@@ -37,6 +37,24 @@ class ReviewPayloadIngestor
     /** Derived columns the ingestion service owns; input rows can never set them. */
     private const DERIVED = ['id', 'content_fingerprint', 'content_fingerprint_scheme'];
 
+    /**
+     * Production OS columns that are deliberately not persisted (RP-ADMIN-CONTENT-MEDIA-F3-SCHEMA-GAP-01).
+     * The first five are flat mirrors of values already stored inside review_page_json
+     * (payload_schema_version, review_facts.public_signal / analysis_depth / analysis_depth_count,
+     * beastiescore.score_basis_summary); the last two are transport-only with no approved consumer.
+     * An explicit list, not a column allowlist: any other unknown column still fails the save,
+     * so a new source field is never dropped silently.
+     */
+    public const SOURCE_ONLY_FIELDS = [
+        'payload_schema_version',
+        'public_signal',
+        'analysis_depth',
+        'analysis_depth_count',
+        'score_basis_summary',
+        'buyer_questions_json',
+        'product_facts_json',
+    ];
+
     public function __construct(private ReviewEditorialService $editorial)
     {
     }
@@ -54,7 +72,7 @@ class ReviewPayloadIngestor
             throw new InvalidArgumentException('A payload row needs a published_review_id.');
         }
 
-        foreach (self::DERIVED as $column) {
+        foreach ([...self::DERIVED, ...self::SOURCE_ONLY_FIELDS] as $column) {
             unset($row[$column]);
         }
 
