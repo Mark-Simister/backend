@@ -653,7 +653,7 @@ class CategoryController extends Controller
                         return [
                             'id' => $ch->id,
                             'name' => $ch->name,
-                            'image_url' => $ch->image_url,
+                            'image_url' => $ch->cardImageUrl(),
                             'primary_color' => $ch->primary_color,
                             'secondary_color' => $ch->secondary_color,
                             'accent_color' => $ch->accent_color,
@@ -914,7 +914,7 @@ class CategoryController extends Controller
                         return [
                             'id' => $ch->id,
                             'name' => $ch->name,
-                            'image_url' => $ch->image_url,
+                            'image_url' => $ch->cardImageUrl(),
                             'primary_color' => $ch->primary_color,
                             'secondary_color' => $ch->secondary_color,
                             'accent_color' => $ch->accent_color,
@@ -1251,7 +1251,7 @@ class CategoryController extends Controller
                         return [
                             'id' => $ch->id,
                             'name' => $ch->name,
-                            'image_url' => $ch->image_url,
+                            'image_url' => $ch->cardImageUrl(),
                             'primary_color' => $ch->primary_color,
                             'secondary_color' => $ch->secondary_color,
                             'accent_color' => $ch->accent_color,

@@ -323,7 +323,7 @@ class ChannelController extends Controller
             // enrich + hide fields
             $channels->each(function ($channel) {
                 // add image_url (but don't expose 'image')
-                $channel->image_url = $channel->image ? asset($channel->image) : null;
+                $channel->useCardImage();
 
                 // hide top-level 'image'
                 $channel->makeHidden(['image']);
@@ -450,7 +450,7 @@ class ChannelController extends Controller
 
         // enrich + hide fields
         $channels->each(function ($channel) {
-            $channel->image_url = $channel->image ? asset($channel->image) : null;
+            $channel->useCardImage();
             $channel->makeHidden(['image']);
             if ($channel->relationLoaded('regions')) {
                 $channel->regions->each->makeHidden(['pivot']);
@@ -505,7 +505,7 @@ class ChannelController extends Controller
 
             // enrich + hide fields
             $channels->each(function ($channel) {
-                $channel->image_url = $channel->image ? asset($channel->image) : null;
+                $channel->useCardImage();
                 $channel->makeHidden(['image']);
                 if ($channel->relationLoaded('regions')) {
                     $channel->regions->each->makeHidden(['pivot']);
@@ -560,7 +560,7 @@ class ChannelController extends Controller
 
             // enrich + hide fields
             $channels->each(function ($channel) {
-                $channel->image_url = $channel->image ? asset($channel->image) : null;
+                $channel->useCardImage();
                 $channel->makeHidden(['image']);
                 if ($channel->relationLoaded('regions')) {
                     $channel->regions->each->makeHidden(['pivot']);
@@ -1079,7 +1079,7 @@ class ChannelController extends Controller
 
 
         $channels = $channelsQuery->get()->each(function ($ch) {
-            $ch->image_url = $ch->image ? asset($ch->image) : null;
+            $ch->useCardImage();
             $ch->makeHidden(['image']);
             if ($ch->relationLoaded('regions'))
                 $ch->regions->each->makeHidden(['pivot']);
@@ -1425,7 +1425,7 @@ class ChannelController extends Controller
             ->latest()
             ->get()
             ->each(function ($ch) {
-                $ch->image_url = $ch->image ? asset($ch->image) : null;
+                $ch->useCardImage();
                 $ch->makeHidden(['image']);
             });
 
@@ -1531,7 +1531,7 @@ class ChannelController extends Controller
         }
 
         $channels = $channelsQuery->get()->each(function ($ch) {
-            $ch->image_url = $ch->image ? asset($ch->image) : null;
+            $ch->useCardImage();
             $ch->makeHidden(['image']);
             if ($ch->relationLoaded('regions')) {
                 $ch->regions->each->makeHidden(['pivot']);
@@ -1999,7 +1999,7 @@ class ChannelController extends Controller
 
             // Transform: add image_url, hide raw image (same as your region endpoint)
             $channels->each(function ($channel) {
-                $channel->image_url = $channel->image ? asset($channel->image) : null;
+                $channel->useCardImage();
                 $channel->makeHidden(['image']);
             });
 

@@ -215,7 +215,7 @@ trait HasSubscriptionSections
         $channelPayload = $ch ? [
             'id'               => $ch->id,
             'name'             => $ch->name,
-            'image_url'        => $ch->image ? asset($ch->image) : null,
+            'image_url'        => $ch->cardImageUrl(),
             'primary_color'    => $ch->primary_color,
             'secondary_color'  => $ch->secondary_color,
             'accent_color'     => $ch->accent_color,
@@ -397,7 +397,7 @@ trait HasSubscriptionSections
 
     protected function mapChannel($channel): array
     {
-        $imageUrl = $channel->image ? asset($channel->image) : null;
+        $imageUrl = $channel->cardImageUrl();
 
         if ($channel->relationLoaded('regions')) {
             $channel->regions->each->makeHidden(['pivot']);
