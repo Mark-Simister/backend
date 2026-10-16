@@ -74,51 +74,36 @@ Route::middleware(['auth:api', 'check_blocked'])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
 
+    // Catalogue writes (categories, regions, channels, character tags, character roles and
+    // characters) are admin-only, through the per-verb permission-gated admin routes in
+    // routes/web.php. Members keep the read routes below (SEC-CHAR-AUTH-01).
+
     // Categories list API
     Route::prefix('categories')->group(function () {
         // Route::get('/', [CategoryController::class, 'index_api']);
-        Route::post('/', [CategoryController::class, 'store_api']);
         Route::get('/{category}', [CategoryController::class, 'show_api']);
-        Route::put('/{category}', [CategoryController::class, 'update_api']);
-        Route::delete('/{category}', [CategoryController::class, 'destroy_api']);
     });
     Route::prefix('regions')->group(function () {
         // Route::get('/', [RegionController::class, 'index_api']);
-        Route::post('/', [RegionController::class, 'store_api']);
         Route::get('/{id}', [RegionController::class, 'show_api']);
-        Route::put('/{id}', [RegionController::class, 'update_api']);
-        Route::delete('/{id}', [RegionController::class, 'destroy_api']);
     });
 
     // Channels list API
     // Route::get('channels', [ChannelController::class, 'index_api']);
-    Route::post('channels', [ChannelController::class, 'store_api']);
     Route::get('channels/{channel}', [ChannelController::class, 'show_api']);
-    Route::put('channels/{channel}', [ChannelController::class, 'update_api']);
-    Route::delete('channels/{channel}', [ChannelController::class, 'destroy_api']);
 
 
 
     // Character Tags API
     // Route::get('character-tags', [CharacterTagController::class, 'index_api']);
-    Route::post('character-tags', [CharacterTagController::class, 'store_api']);
     Route::get('character-tags/{characterTag}', [CharacterTagController::class, 'show_api']);
-    Route::put('character-tags/{characterTag}', [CharacterTagController::class, 'update_api']);
-    Route::delete('character-tags/{characterTag}', [CharacterTagController::class, 'destroy_api']);
 
     // Character Roles API
     // Route::get('character-roles', [CharacterRoleController::class, 'index_api']);
-    Route::post('character-roles', [CharacterRoleController::class, 'store_api']);
     Route::get('character-roles/{characterRole}', [CharacterRoleController::class, 'show_api']);
-    Route::put('character-roles/{characterRole}', [CharacterRoleController::class, 'update_api']);
-    Route::delete('character-roles/{characterRole}', [CharacterRoleController::class, 'destroy_api']);
 
     // Route::get   ('/characters',          [CharacterController::class, 'index_api']);
-    Route::post('characters', [CharacterController::class, 'store_api']);
     // Route::get   ('characters/{id}',     [CharacterController::class, 'show_api']);
-    Route::post('characters/{id}', [CharacterController::class, 'update_api']); // if you prefer PUT/PATCH:
-    // Route::match(['put','patch'], '/characters/{id}', [CharacterController::class, 'update_api']);
-    Route::delete('characters/{id}', [CharacterController::class, 'destroy_api']);
 
     Route::post('/purchase/region/{region}', [BillingController::class, 'purchase']);
     Route::post('/subscriptions/{id}/cancel',     [BillingController::class, 'cancelAutoRenew']);
