@@ -379,26 +379,4 @@ Route::get('/explain_videos/{filename}', function ($filename) {
     }, 200, $headers);
 });
 
-Route::get('/clear-all', function () {
-    $commands = [
-        'config:clear',
-        'cache:clear',
-        'route:clear',
-        'view:clear',
-        'optimize',
-    ];
-    $output = [];
-    foreach ($commands as $command) {
-        try {
-            $result = Artisan::call($command);
-            $output[$command] = Artisan::output();
-        } catch (\Exception $e) {
-            Log::error("Artisan command '$command' failed: " . $e->getMessage());
-            $output[$command] = 'Error: ' . $e->getMessage();
-        }
-    }
-    // Show output in browser
-    return response()->json($output);
-})->name('clear.all');
-
 require __DIR__ . '/auth.php';
